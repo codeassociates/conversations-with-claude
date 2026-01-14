@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Understanding Wireguard Routing</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 2rem;
+            line-height: 1.6;
+            color: #333;
+        }
+        h1 {
+            color: #1a1a1a;
+        }
+        h2 {
+            color: #1a1a1a;
+            margin-top: 2rem;
+        }
+        a {
+            color: #0066cc;
+            text-decoration: none;
+        }
+        a:hover {
+            text-decoration: underline;
+        }
+        img {
+            max-width: 100%;
+            height: auto;
+            margin: 1rem 0;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Understanding Wireguard Routing</h1>
+
+    <h2>Background</h2>
+    <p>
+        My office's primary internet connection is a point-to-point microwave link to a solar-powered relay facility on a nearby mountan ridge.
+        Because that facility can lose power in mid-winter due to reduced sunlight hours and snow, we also have a Starlink dish as a backup.
+    </p>
+        <p>
+        In common with wireless providers such as Verizon, Starlink's service is not a "proper internet connection". Specifically your router
+        isn't assigned a public IP address, making inbound connections impossible. Traffic is subject to NAT and various kinds of packet filtering.
+        These measures present some challenges when the goal is to provide backup connectivity for a "real" internet connection that does 
+        have public IP addresses and doesn't do any kind of middle-boxing.
+        </p>
+        <p>
+        For years we used a simple approach where a VPN session, using a 
+        VPN protocol acceptable to the carrier (usually meaning PPTP) was opened to one of our data center-hosted routers. Through that tunnel
+        the router at the office could be assigned an IP address from the dat center subnet and thereby appear on the public network as if
+        it were in the data center. Outgoing traffic was then routed through that tunneled interface.
+        </p>
+        <p>
+                    This basic scheme worked for years using Verizon as the backup provider and subsequently Starlink after their service launched in 2020.
+        However a major snowstorm event in early 2025 led to a lengthy outage on the primary connection that revealed a problem with the
+        simple tunnel scheme: when the connection failed over to the data center IP address, streaming providers such as Hulu saw that as a 
+        potential misuse of service and disabled our TV service. This and other issues with the layering of NAT over PPTP over NAT led to 
+        experimentation with other VPN protocols. It turned out that although Starlink's service is fairly VPN-unfriendly, it does allow    
+        Wireguard traffic through. Probabably because Wireguard uses UDP, so looks similar to some gaming services' traffic. The NAT regime
+        needed to support gaming also turned out to work for Wireguard.
+        </p>
+        <p>            So the network was re-architected with a Wiregard tunnel between the office router and a router at the location where
+        the microwave link interconnects with the public network. OSPF was configured to send traffic through that tunnel if the primary
+        connection is down. This gave "transparent" failover in that the office IP addresses don't change. It also avoids the various
+        issues with transport-layer IP tunneling.
+        </p>
+        <p>
+            However something about this setup didn't quite work. When the primary connetion went down last night we went dark.
+            Although the Starlink service was working, traffic wasn't being routed over it as planned. Some investigaton revealed that 
+            this was because the Wireguard tunnel was acting as a black hole. The tunnel was "up" but no traffic was passing down it.
+            Even more mysterious, when I manually disabled the Wireguard tunnel then re-enabled it, the network bagan working.
+            Something about the tunnel had gone "stale", fixed by forcing it to re-establish.
+            I had some ideas as to why this might be happening but wondered how useful the LLMs could be in a situation like this.
+            I asked both Claude and ChatGPT to help.
+        </p>
+    </p>
+    <h2>Claude session</h2>
+    <p>
+        In this <a href="./claude-session.html">session transcript</a> Claude AI using the Opus 4.5 model is asked to help with the problem outlined above.
+    </p>
+    <h2>ChatGPT session</h2>
+    <p>
+        In this <a href="./gpt-session.html">session transcript</a> ChatGPT 5.2 is asked exactly the same question, but with follow up that differs
+        from the Claude case since the LLM responses are different.
+    </p>
+    <h2>Bonus session</h2>
+    <p>
+        The LLM sessions above were made in the respective vendor's Web UI. Although both offer a "share chat" capability, that comes with a slice of 
+        surveillance capitalism. It turns out that extracting the chat text with formatting such that it can be hosted on a web page not an easy thing.
+        I ended up copying/pasting from the web pages into html files. That gave me files that contained the content but had lost most of the formatting.
+        Rather than embark on a tussle with CSS and HTML I opted to have Claude fix up the files. You can see that 
+        <a href="./index.html">session transcript</a> here, courtesy of <a href="https://simonwillison.net/2025/Dec/25/claude-code-transcripts/">this utility</a>. Claude even graciously agrees to fix up ChatGPT's output.
+    </p>
+
+</body>
+</html>
