@@ -1,0 +1,1009 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Claude Code transcript - page 1</title>
+    <style>
+:root { --bg-color: #f5f5f5; --card-bg: #ffffff; --user-bg: #e3f2fd; --user-border: #1976d2; --assistant-bg: #f5f5f5; --assistant-border: #9e9e9e; --thinking-bg: #fff8e1; --thinking-border: #ffc107; --thinking-text: #666; --tool-bg: #f3e5f5; --tool-border: #9c27b0; --tool-result-bg: #e8f5e9; --tool-error-bg: #ffebee; --text-color: #212121; --text-muted: #757575; --code-bg: #263238; --code-text: #aed581; }
+* { box-sizing: border-box; }
+body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: var(--bg-color); color: var(--text-color); margin: 0; padding: 16px; line-height: 1.6; }
+.container { max-width: 800px; margin: 0 auto; }
+h1 { font-size: 1.5rem; margin-bottom: 24px; padding-bottom: 8px; border-bottom: 2px solid var(--user-border); }
+.header-row { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; border-bottom: 2px solid var(--user-border); padding-bottom: 8px; margin-bottom: 24px; }
+.header-row h1 { border-bottom: none; padding-bottom: 0; margin-bottom: 0; flex: 1; min-width: 200px; }
+.message { margin-bottom: 16px; border-radius: 12px; overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+.message.user { background: var(--user-bg); border-left: 4px solid var(--user-border); }
+.message.assistant { background: var(--card-bg); border-left: 4px solid var(--assistant-border); }
+.message.tool-reply { background: #fff8e1; border-left: 4px solid #ff9800; }
+.tool-reply .role-label { color: #e65100; }
+.tool-reply .tool-result { background: transparent; padding: 0; margin: 0; }
+.tool-reply .tool-result .truncatable.truncated::after { background: linear-gradient(to bottom, transparent, #fff8e1); }
+.message-header { display: flex; justify-content: space-between; align-items: center; padding: 8px 16px; background: rgba(0,0,0,0.03); font-size: 0.85rem; }
+.role-label { font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; }
+.user .role-label { color: var(--user-border); }
+time { color: var(--text-muted); font-size: 0.8rem; }
+.timestamp-link { color: inherit; text-decoration: none; }
+.timestamp-link:hover { text-decoration: underline; }
+.message:target { animation: highlight 2s ease-out; }
+@keyframes highlight { 0% { background-color: rgba(25, 118, 210, 0.2); } 100% { background-color: transparent; } }
+.message-content { padding: 16px; }
+.message-content p { margin: 0 0 12px 0; }
+.message-content p:last-child { margin-bottom: 0; }
+.thinking { background: var(--thinking-bg); border: 1px solid var(--thinking-border); border-radius: 8px; padding: 12px; margin: 12px 0; font-size: 0.9rem; color: var(--thinking-text); }
+.thinking-label { font-size: 0.75rem; font-weight: 600; text-transform: uppercase; color: #f57c00; margin-bottom: 8px; }
+.thinking p { margin: 8px 0; }
+.assistant-text { margin: 8px 0; }
+.tool-use { background: var(--tool-bg); border: 1px solid var(--tool-border); border-radius: 8px; padding: 12px; margin: 12px 0; }
+.tool-header { font-weight: 600; color: var(--tool-border); margin-bottom: 8px; display: flex; align-items: center; gap: 8px; }
+.tool-icon { font-size: 1.1rem; }
+.tool-description { font-size: 0.9rem; color: var(--text-muted); margin-bottom: 8px; font-style: italic; }
+.tool-result { background: var(--tool-result-bg); border-radius: 8px; padding: 12px; margin: 12px 0; }
+.tool-result.tool-error { background: var(--tool-error-bg); }
+.file-tool { border-radius: 8px; padding: 12px; margin: 12px 0; }
+.write-tool { background: linear-gradient(135deg, #e3f2fd 0%, #e8f5e9 100%); border: 1px solid #4caf50; }
+.edit-tool { background: linear-gradient(135deg, #fff3e0 0%, #fce4ec 100%); border: 1px solid #ff9800; }
+.file-tool-header { font-weight: 600; margin-bottom: 4px; display: flex; align-items: center; gap: 8px; font-size: 0.95rem; }
+.write-header { color: #2e7d32; }
+.edit-header { color: #e65100; }
+.file-tool-icon { font-size: 1rem; }
+.file-tool-path { font-family: monospace; background: rgba(0,0,0,0.08); padding: 2px 8px; border-radius: 4px; }
+.file-tool-fullpath { font-family: monospace; font-size: 0.8rem; color: var(--text-muted); margin-bottom: 8px; word-break: break-all; }
+.file-content { margin: 0; }
+.edit-section { display: flex; margin: 4px 0; border-radius: 4px; overflow: hidden; }
+.edit-label { padding: 8px 12px; font-weight: bold; font-family: monospace; display: flex; align-items: flex-start; }
+.edit-old { background: #fce4ec; }
+.edit-old .edit-label { color: #b71c1c; background: #f8bbd9; }
+.edit-old .edit-content { color: #880e4f; }
+.edit-new { background: #e8f5e9; }
+.edit-new .edit-label { color: #1b5e20; background: #a5d6a7; }
+.edit-new .edit-content { color: #1b5e20; }
+.edit-content { margin: 0; flex: 1; background: transparent; font-size: 0.85rem; }
+.edit-replace-all { font-size: 0.75rem; font-weight: normal; color: var(--text-muted); }
+.write-tool .truncatable.truncated::after { background: linear-gradient(to bottom, transparent, #e6f4ea); }
+.edit-tool .truncatable.truncated::after { background: linear-gradient(to bottom, transparent, #fff0e5); }
+.todo-list { background: linear-gradient(135deg, #e8f5e9 0%, #f1f8e9 100%); border: 1px solid #81c784; border-radius: 8px; padding: 12px; margin: 12px 0; }
+.todo-header { font-weight: 600; color: #2e7d32; margin-bottom: 10px; display: flex; align-items: center; gap: 8px; font-size: 0.95rem; }
+.todo-items { list-style: none; margin: 0; padding: 0; }
+.todo-item { display: flex; align-items: flex-start; gap: 10px; padding: 6px 0; border-bottom: 1px solid rgba(0,0,0,0.06); font-size: 0.9rem; }
+.todo-item:last-child { border-bottom: none; }
+.todo-icon { flex-shrink: 0; width: 20px; height: 20px; display: flex; align-items: center; justify-content: center; font-weight: bold; border-radius: 50%; }
+.todo-completed .todo-icon { color: #2e7d32; background: rgba(46, 125, 50, 0.15); }
+.todo-completed .todo-content { color: #558b2f; text-decoration: line-through; }
+.todo-in-progress .todo-icon { color: #f57c00; background: rgba(245, 124, 0, 0.15); }
+.todo-in-progress .todo-content { color: #e65100; font-weight: 500; }
+.todo-pending .todo-icon { color: #757575; background: rgba(0,0,0,0.05); }
+.todo-pending .todo-content { color: #616161; }
+pre { background: var(--code-bg); color: var(--code-text); padding: 12px; border-radius: 6px; overflow-x: auto; font-size: 0.85rem; line-height: 1.5; margin: 8px 0; white-space: pre-wrap; word-wrap: break-word; }
+pre.json { color: #e0e0e0; }
+code { background: rgba(0,0,0,0.08); padding: 2px 6px; border-radius: 4px; font-size: 0.9em; }
+pre code { background: none; padding: 0; }
+.user-content { margin: 0; }
+.truncatable { position: relative; }
+.truncatable.truncated .truncatable-content { max-height: 200px; overflow: hidden; }
+.truncatable.truncated::after { content: ''; position: absolute; bottom: 32px; left: 0; right: 0; height: 60px; background: linear-gradient(to bottom, transparent, var(--card-bg)); pointer-events: none; }
+.message.user .truncatable.truncated::after { background: linear-gradient(to bottom, transparent, var(--user-bg)); }
+.message.tool-reply .truncatable.truncated::after { background: linear-gradient(to bottom, transparent, #fff8e1); }
+.tool-use .truncatable.truncated::after { background: linear-gradient(to bottom, transparent, var(--tool-bg)); }
+.tool-result .truncatable.truncated::after { background: linear-gradient(to bottom, transparent, var(--tool-result-bg)); }
+.expand-btn { display: none; width: 100%; padding: 8px 16px; margin-top: 4px; background: rgba(0,0,0,0.05); border: 1px solid rgba(0,0,0,0.1); border-radius: 6px; cursor: pointer; font-size: 0.85rem; color: var(--text-muted); }
+.expand-btn:hover { background: rgba(0,0,0,0.1); }
+.truncatable.truncated .expand-btn, .truncatable.expanded .expand-btn { display: block; }
+.pagination { display: flex; justify-content: center; gap: 8px; margin: 24px 0; flex-wrap: wrap; }
+.pagination a, .pagination span { padding: 5px 10px; border-radius: 6px; text-decoration: none; font-size: 0.85rem; }
+.pagination a { background: var(--card-bg); color: var(--user-border); border: 1px solid var(--user-border); }
+.pagination a:hover { background: var(--user-bg); }
+.pagination .current { background: var(--user-border); color: white; }
+.pagination .disabled { color: var(--text-muted); border: 1px solid #ddd; }
+.pagination .index-link { background: var(--user-border); color: white; }
+details.continuation { margin-bottom: 16px; }
+details.continuation summary { cursor: pointer; padding: 12px 16px; background: var(--user-bg); border-left: 4px solid var(--user-border); border-radius: 12px; font-weight: 500; color: var(--text-muted); }
+details.continuation summary:hover { background: rgba(25, 118, 210, 0.15); }
+details.continuation[open] summary { border-radius: 12px 12px 0 0; margin-bottom: 0; }
+.index-item { margin-bottom: 16px; border-radius: 12px; overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,0.1); background: var(--user-bg); border-left: 4px solid var(--user-border); }
+.index-item a { display: block; text-decoration: none; color: inherit; }
+.index-item a:hover { background: rgba(25, 118, 210, 0.1); }
+.index-item-header { display: flex; justify-content: space-between; align-items: center; padding: 8px 16px; background: rgba(0,0,0,0.03); font-size: 0.85rem; }
+.index-item-number { font-weight: 600; color: var(--user-border); }
+.index-item-content { padding: 16px; }
+.index-item-stats { padding: 8px 16px 12px 32px; font-size: 0.85rem; color: var(--text-muted); border-top: 1px solid rgba(0,0,0,0.06); }
+.index-item-commit { margin-top: 6px; padding: 4px 8px; background: #fff3e0; border-radius: 4px; font-size: 0.85rem; color: #e65100; }
+.index-item-commit code { background: rgba(0,0,0,0.08); padding: 1px 4px; border-radius: 3px; font-size: 0.8rem; margin-right: 6px; }
+.commit-card { margin: 8px 0; padding: 10px 14px; background: #fff3e0; border-left: 4px solid #ff9800; border-radius: 6px; }
+.commit-card a { text-decoration: none; color: #5d4037; display: block; }
+.commit-card a:hover { color: #e65100; }
+.commit-card-hash { font-family: monospace; color: #e65100; font-weight: 600; margin-right: 8px; }
+.index-commit { margin-bottom: 12px; padding: 10px 16px; background: #fff3e0; border-left: 4px solid #ff9800; border-radius: 8px; box-shadow: 0 1px 2px rgba(0,0,0,0.05); }
+.index-commit a { display: block; text-decoration: none; color: inherit; }
+.index-commit a:hover { background: rgba(255, 152, 0, 0.1); margin: -10px -16px; padding: 10px 16px; border-radius: 8px; }
+.index-commit-header { display: flex; justify-content: space-between; align-items: center; font-size: 0.85rem; margin-bottom: 4px; }
+.index-commit-hash { font-family: monospace; color: #e65100; font-weight: 600; }
+.index-commit-msg { color: #5d4037; }
+.index-item-long-text { margin-top: 8px; padding: 12px; background: var(--card-bg); border-radius: 8px; border-left: 3px solid var(--assistant-border); }
+.index-item-long-text .truncatable.truncated::after { background: linear-gradient(to bottom, transparent, var(--card-bg)); }
+.index-item-long-text-content { color: var(--text-color); }
+#search-box { display: none; align-items: center; gap: 8px; }
+#search-box input { padding: 6px 12px; border: 1px solid var(--assistant-border); border-radius: 6px; font-size: 16px; width: 180px; }
+#search-box button, #modal-search-btn, #modal-close-btn { background: var(--user-border); color: white; border: none; border-radius: 6px; padding: 6px 10px; cursor: pointer; display: flex; align-items: center; justify-content: center; }
+#search-box button:hover, #modal-search-btn:hover { background: #1565c0; }
+#modal-close-btn { background: var(--text-muted); margin-left: 8px; }
+#modal-close-btn:hover { background: #616161; }
+#search-modal[open] { border: none; border-radius: 12px; box-shadow: 0 4px 24px rgba(0,0,0,0.2); padding: 0; width: 90vw; max-width: 900px; height: 80vh; max-height: 80vh; display: flex; flex-direction: column; }
+#search-modal::backdrop { background: rgba(0,0,0,0.5); }
+.search-modal-header { display: flex; align-items: center; gap: 8px; padding: 16px; border-bottom: 1px solid var(--assistant-border); background: var(--bg-color); border-radius: 12px 12px 0 0; }
+.search-modal-header input { flex: 1; padding: 8px 12px; border: 1px solid var(--assistant-border); border-radius: 6px; font-size: 16px; }
+#search-status { padding: 8px 16px; font-size: 0.85rem; color: var(--text-muted); border-bottom: 1px solid rgba(0,0,0,0.06); }
+#search-results { flex: 1; overflow-y: auto; padding: 16px; }
+.search-result { margin-bottom: 16px; border-radius: 8px; overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+.search-result a { display: block; text-decoration: none; color: inherit; }
+.search-result a:hover { background: rgba(25, 118, 210, 0.05); }
+.search-result-page { padding: 6px 12px; background: rgba(0,0,0,0.03); font-size: 0.8rem; color: var(--text-muted); border-bottom: 1px solid rgba(0,0,0,0.06); }
+.search-result-content { padding: 12px; }
+.search-result mark { background: #fff59d; padding: 1px 2px; border-radius: 2px; }
+@media (max-width: 600px) { body { padding: 8px; } .message, .index-item { border-radius: 8px; } .message-content, .index-item-content { padding: 12px; } pre { font-size: 0.8rem; padding: 8px; } #search-box input { width: 120px; } #search-modal[open] { width: 95vw; height: 90vh; } }
+</style>
+</head>
+<body>
+    <div class="container">
+        <h1><a href="index.html" style="color: inherit; text-decoration: none;">Claude Code transcript</a> - page 1/1</h1>
+        
+
+<div class="pagination"><a href="index.html" class="index-link">Index</a></div>
+
+        
+<div class="message user" id="msg-2026-02-22T17-14-19-559Z"><div class="message-header"><span class="role-label">User</span><a href="#msg-2026-02-22T17-14-19-559Z" class="timestamp-link"><time datetime="2026-02-22T17:14:19.559Z" data-timestamp="2026-02-22T17:14:19.559Z">2026-02-22T17:14:19.559Z</time></a></div><div class="message-content">
+<div class="user-content"><p>Please look at issue #41</p></div></div></div>
+<div class="message assistant" id="msg-2026-02-22T17-14-22-714Z"><div class="message-header"><span class="role-label">Assistant</span><a href="#msg-2026-02-22T17-14-22-714Z" class="timestamp-link"><time datetime="2026-02-22T17:14:22.714Z" data-timestamp="2026-02-22T17:14:22.714Z">2026-02-22T17:14:22.714Z</time></a></div><div class="message-content">
+<div class="tool-use bash-tool" data-tool-id="toolu_01PsHTVRNLVpcUR66sLBfcmr">
+<div class="tool-header"><span class="tool-icon">$</span> Bash</div>
+<div class="tool-description">View GitHub issue #41</div><div class="truncatable"><div class="truncatable-content"><pre class="bash-command">gh issue view 41</pre></div><button class="expand-btn">Show more</button></div>
+</div></div></div>
+<div class="message tool-reply" id="msg-2026-02-22T17-14-24-672Z"><div class="message-header"><span class="role-label">Tool reply</span><a href="#msg-2026-02-22T17-14-24-672Z" class="timestamp-link"><time datetime="2026-02-22T17:14:24.672Z" data-timestamp="2026-02-22T17:14:24.672Z">2026-02-22T17:14:24.672Z</time></a></div><div class="message-content"><div class="tool-result"><div class="truncatable"><div class="truncatable-content"><pre>title:	Parser error messages don&#x27;t identify source file
+state:	OPEN
+author:	dboreham
+labels:	
+comments:	0
+assignees:	
+projects:	
+milestone:	
+number:	41
+--
+I noticed while testing which of the kroc course module example programs transpile and run ok that the parser&#x27;s error output is not very useful. For example:
+```
+$ ./occam2go -I kroc/modules/course/libsrc -D TARGET.BITS.PER.WORD=32 -o test.go kroc/modules/course/examples/test_utils.occ
+Parse errors:
+  line 4335: expected type after VAL, got [
+  line 4335: unexpected token: INT
+  line 4335: unexpected token: ]
+  line 4391: expected ), got STRING
+  line 4391: unexpected token: STRING
+  line 4391: unexpected token: *
+```
+
+Since the test_utils.occ program is quite short, these messages about line 4335 are presumably to do with the course library itself?
+Actually I&#x27;m a bit confused by this because the course library parses ok in other cases, when I try to transpile double_echo.occ for example it works ok.
+The same #include is used in both programs. Anyway it would be useful to get a better error message that identifies the source file. This would aid in diagnosis.</pre></div><button class="expand-btn">Show more</button></div></div></div></div>
+<div class="message assistant" id="msg-2026-02-22T17-14-27-674Z"><div class="message-header"><span class="role-label">Assistant</span><a href="#msg-2026-02-22T17-14-27-674Z" class="timestamp-link"><time datetime="2026-02-22T17:14:27.674Z" data-timestamp="2026-02-22T17:14:27.674Z">2026-02-22T17:14:27.674Z</time></a></div><div class="message-content">
+<div class="tool-use" data-tool-id="toolu_01Dg7kcMHKsnzze31yysa1p9"><div class="tool-header"><span class="tool-icon">⚙</span> EnterPlanMode</div><div class="truncatable"><div class="truncatable-content"><pre class="json">{}</pre></div><button class="expand-btn">Show more</button></div></div></div></div>
+<div class="message tool-reply" id="msg-2026-02-22T17-14-27-680Z"><div class="message-header"><span class="role-label">Tool reply</span><a href="#msg-2026-02-22T17-14-27-680Z" class="timestamp-link"><time datetime="2026-02-22T17:14:27.680Z" data-timestamp="2026-02-22T17:14:27.680Z">2026-02-22T17:14:27.680Z</time></a></div><div class="message-content"><div class="tool-result"><div class="truncatable"><div class="truncatable-content"><pre>Entered plan mode. You should now focus on exploring the codebase and designing an implementation approach.
+
+In plan mode, you should:
+1. Thoroughly explore the codebase to understand existing patterns
+2. Identify similar features and architectural approaches
+3. Consider multiple approaches and their trade-offs
+4. Use AskUserQuestion if you need to clarify the approach
+5. Design a concrete implementation strategy
+6. When ready, use ExitPlanMode to present your plan for approval
+
+Remember: DO NOT write or edit any files yet. This is a read-only exploration and planning phase.</pre></div><button class="expand-btn">Show more</button></div></div></div></div>
+<div class="message assistant" id="msg-2026-02-22T17-14-31-286Z"><div class="message-header"><span class="role-label">Assistant</span><a href="#msg-2026-02-22T17-14-31-286Z" class="timestamp-link"><time datetime="2026-02-22T17:14:31.286Z" data-timestamp="2026-02-22T17:14:31.286Z">2026-02-22T17:14:31.286Z</time></a></div><div class="message-content">
+<div class="thinking"><div class="thinking-label">Thinking</div><p>The issue is about parser error messages not identifying the source file. When using <code>#INCLUDE</code>, the line numbers refer to the expanded source (after preprocessing), not the original file. This makes it hard to diagnose errors.</p>
+<p>Let me explore how the preprocessor, lexer, and parser handle source locations.</p></div></div></div>
+<div class="message assistant" id="msg-2026-02-22T17-14-31-941Z"><div class="message-header"><span class="role-label">Assistant</span><a href="#msg-2026-02-22T17-14-31-941Z" class="timestamp-link"><time datetime="2026-02-22T17:14:31.941Z" data-timestamp="2026-02-22T17:14:31.941Z">2026-02-22T17:14:31.941Z</time></a></div><div class="message-content">
+<div class="assistant-text"><p>Let me explore how source locations are currently tracked through the pipeline.</p></div></div></div>
+<div class="message assistant" id="msg-2026-02-22T17-14-38-765Z"><div class="message-header"><span class="role-label">Assistant</span><a href="#msg-2026-02-22T17-14-38-765Z" class="timestamp-link"><time datetime="2026-02-22T17:14:38.765Z" data-timestamp="2026-02-22T17:14:38.765Z">2026-02-22T17:14:38.765Z</time></a></div><div class="message-content">
+<div class="tool-use" data-tool-id="toolu_01FKGFS7iPEomBe3PzvLvsvq"><div class="tool-header"><span class="tool-icon">⚙</span> Task</div><div class="tool-description">Explore source location tracking</div><div class="truncatable"><div class="truncatable-content"><pre class="json">{
+  &#34;subagent_type&#34;: &#34;Explore&#34;,
+  &#34;prompt&#34;: &#34;I need to understand how source file locations are tracked through the occam2go transpiler pipeline (preproc → lexer → parser → codegen). The issue is that parser error messages show line numbers from the preprocessed/expanded source, not from the original source files. When `#INCLUDE` pulls in a large library, errors say \&#34;line 4335\&#34; even though the original file is small.\n\nPlease investigate thoroughly:\n\n1. **preproc/preproc.go**: How does the preprocessor handle `#INCLUDE`? Does it track which file each line comes from? Does it produce any source mapping?\n\n2. **lexer/lexer.go** and **lexer/token.go**: How does the lexer track line numbers? Does Token have a file field? How is position tracked?\n\n3. **parser/parser.go**: How does the parser report errors? Search for all error formatting/reporting (look for \&#34;error\&#34;, \&#34;Errorf\&#34;, \&#34;errors\&#34;, \&#34;parseError\&#34;, etc.). How are line numbers included in error messages?\n\n4. **ast/ast.go**: Do AST nodes carry source location info?\n\n5. **main.go**: How are errors displayed to the user?\n\nFor each file, show the relevant code snippets with line numbers.&#34;
+}</pre></div><button class="expand-btn">Show more</button></div></div></div></div>
+<div class="message tool-reply" id="msg-2026-02-22T17-15-56-383Z"><div class="message-header"><span class="role-label">Tool reply</span><a href="#msg-2026-02-22T17-15-56-383Z" class="timestamp-link"><time datetime="2026-02-22T17:15:56.383Z" data-timestamp="2026-02-22T17:15:56.383Z">2026-02-22T17:15:56.383Z</time></a></div><div class="message-content"><div class="tool-result"><div class="truncatable"><div class="truncatable-content"><pre class="json">[
+  {
+    &quot;type&quot;: &quot;text&quot;,
+    &quot;text&quot;: &quot;Perfect! Now I have all the information I need. Let me provide a comprehensive investigation report.\n\n## Investigation Report: Source File Location Tracking in occam2go\n\nI&#x27;ve thoroughly analyzed how source file locations are tracked through the transpiler pipeline. Here are my findings:\n\n---\n\n### **1. PREPROCESSOR (preproc/preproc.go) — NO SOURCE MAPPING**\n\n**Key Functions:**\n- **`ProcessFile()` (lines 64-82)**: Reads a file and calls `processSource()`\n- **`processSource()` (lines 92-180)**: Line-by-line expansion that processes `#INCLUDE`, `#IF`/`#ELSE`/`#ENDIF`, `#DEFINE`, etc.\n\n**Critical Issue:**\n```\nLines 97-173: The preprocessor iterates through input lines with:\n  for i, line := range lines {\n    if i &gt; 0 {\n      out.WriteByte(&#x27;\\n&#x27;)  // Line 99\n    }\n    ...\n  }\n```\n\n**The preprocessor produces a single flattened string with NO source mapping information:**\n- It expands `#INCLUDE` directives inline (lines 144-154)\n- When including a file: `included, err := pp.resolveAndInclude(rest, baseDir)` (line 146) and `out.WriteString(included)` (line 150)\n- **No tracking of which file each line came from**\n- **No comment markers or metadata** to indicate include boundaries\n- Output is just expanded text with blank lines preserving line numbers\n\n**Result:** When course.module includes float_io.occ (a large library), the expanded output combines all lines. Line numbers reflect the expanded output only, not the original sources.\n\n---\n\n### **2. LEXER (lexer/token.go, lexer/lexer.go) — ONLY LINE &amp; COLUMN, NO FILE**\n\n**Token Structure (token.go, lines 249-254):**\n```go\ntype Token struct {\n\tType    TokenType\n\tLiteral string\n\tLine    int       // ← LINE ONLY\n\tColumn  int       // ← COLUMN ONLY\n\t// NO FILE FIELD\n}\n```\n\n**Lexer Tracking (lexer.go):**\n- **Line tracking** (lines 12, 106, 225-226, 244):\n  ```go\n  type Lexer struct {\n    ...\n    line         int    // ← Incremented on &#x27;\\n&#x27; (line 225)\n    column       int    // ← Reset on &#x27;\\n&#x27; (line 226)\n    ...\n  }\n  ```\n\n- **Token creation** (line 88, 106-107, 244):\n  ```go\n  tok := Token{Type: INDENT, Literal: \&quot;\&quot;, Line: l.line, Column: 1}\n  tok.Line = l.line\n  tok.Column = l.column\n  tok = Token{Type: NEWLINE, Literal: \&quot;\\\\n\&quot;, Line: l.line, Column: l.column}\n  ```\n\n**Critical Issue:**\n- Tokens only capture `Line` and `Column`, no `Filename` field\n- Lexer has no concept of which source file it&#x27;s processing\n- **Line numbers are absolute in the expanded source**, not relative to original files\n\n---\n\n### **3. PARSER (parser/parser.go) — ERROR REPORTING USES TOKEN LINE ONLY**\n\n**Error Collection (lines 52-96):**\n```go\ntype Parser struct {\n\tl      *lexer.Lexer\n\terrors []string  // Stores error messages\n\t...\n\tcurToken  lexer.Token  // Contains only Line/Column\n\tpeekToken lexer.Token  // Contains only Line/Column\n}\n\nfunc (p *Parser) Errors() []string {\n\treturn p.errors\n}\n\nfunc (p *Parser) addError(msg string) {\n\tp.errors = append(p.errors, fmt.Sprintf(\&quot;line %d: %s\&quot;, p.curToken.Line, msg))\n\t//                                                       ^^^^^^^^^^^^^^^^\n\t//                                    Uses token&#x27;s Line field directly\n}\n```\n\n**Error Reporting Pattern:**\n- **Line 95** — `fmt.Sprintf(\&quot;line %d: %s\&quot;, p.curToken.Line, msg)`\n- **Line 123** — `p.addError(fmt.Sprintf(\&quot;expected %s, got %s\&quot;, t, p.peekToken.Type))`\n- Used throughout parser (40+ locations) for all syntax errors\n\n**All Parser Errors Include Only:**\n1. **Line number** (from `p.curToken.Line`)\n2. **Error message** (describing what went wrong)\n\n**No File Information** — Even if available, parser has no way to include it.\n\n---\n\n### **4. AST (ast/ast.go) — NODES CARRY TOKENS WITH LIMITED INFO**\n\n**AST Node Structure (examples):**\n```go\n// Lines 36-44: VarDecl\ntype VarDecl struct {\n\tToken lexer.Token  // ← Stores the type token (INT, BYTE, etc.)\n\tType  string       // ← Type name as string\n\tNames []string\n}\n\n// Lines 86-95: SeqBlock\ntype SeqBlock struct {\n\tToken      lexer.Token  // ← The SEQ token\n\tStatements []Statement\n\tReplicator *Replicator\n}\n```\n\n**AST carries the original Token from the lexer, but:**\n- That Token only has `Type`, `Literal`, `Line`, and `Column`\n- **No file information**\n- When codegen accesses AST nodes, it can only use token position info\n\n---\n\n### **5. MAIN.GO — ERROR DISPLAY TO USER**\n\n**Pipeline (lines 74-104):**\n```go\n// Line 79: Preprocess\nexpanded, err := pp.ProcessFile(inputFile)\nif err != nil {\n\tfmt.Fprintf(os.Stderr, \&quot;Preprocessor error: %s\\n\&quot;, err)\n\tos.Exit(1)\n}\n\n// Line 92: Lex (no filename passed)\nl := lexer.New(expanded)\n\n// Line 95: Parse\np := parser.New(l)\nprogram := p.ParseProgram()\n\n// Lines 98-104: Print parser errors\nif len(p.Errors()) &gt; 0 {\n\tfmt.Fprintf(os.Stderr, \&quot;Parse errors:\\n\&quot;)\n\tfor _, err := range p.Errors() {\n\t\tfmt.Fprintf(os.Stderr, \&quot;  %s\\n\&quot;, err)  // Just prints the error string\n\t}\n\tos.Exit(1)\n}\n```\n\n**Error output format:**\n```\nParse errors:\n  line 4335: expected :=, !, or ? after x[...], got NEWLINE\n```\n\n**Problem:** User sees \&quot;line 4335\&quot; in the expanded source, not \&quot;float_io.occ, line 42\&quot; in the original file.\n\n---\n\n## Summary: The Root Cause\n\n| Component | Information Available | Information Missing |\n|-----------|----------------------|----------------------|\n| **Preprocessor** | Input filenames, line-by-line expansion | **Source mapping** (which file each output line came from) |\n| **Lexer** | Line and column numbers (in expanded source) | **Filename field in Token struct** |\n| **Parser** | Line numbers from tokens | **File information** to pair with line numbers |\n| **AST** | Token with line/column | **File information in AST nodes** |\n| **Main.go** | Preprocessed/lexed/parsed data | **Context to map expanded lines back to original files** |\n\n## The Problem in Action\n\nWhen transpiling `course.module` which `#INCLUDE`s `float_io.occ`:\n\n1. **Preprocessor** expands both files into one string: `course_expanded.txt`\n2. **Lexer** numbers lines 1, 2, 3, ... in this expanded string\n3. **Parser** reports error: `\&quot;line 4335: ...\&quot;`\n4. **User sees** line 4335, which is actually in `float_io.occ` line 42\n5. **User confused** — the main file is small, but error reports huge line numbers\n\n---\n\n## What Would Be Needed to Fix This\n\n1. **Add filename field to Token**: `Filename string` in `lexer/token.go` line 249\n2. **Preprocess with source mapping**: Track `#INCLUDE` boundaries in preprocessor output (e.g., with markers or a separate mapping)\n3. **Pass filename through lexer**: Lexer needs to know which file it&#x27;s currently processing\n4. **Update AST**: Optionally add filename to AST nodes\n5. **Format errors with filename**: `fmt.Sprintf(\&quot;%s:%d: %s\&quot;, filename, line, msg)` in parser error reporting\n6. **Update main.go**: Resolve the filename mapping when displaying errors to users&quot;
+  },
+  {
+    &quot;type&quot;: &quot;text&quot;,
+    &quot;text&quot;: &quot;agentId: aab9a7debfb9b09eb (for resuming to continue this agent&#x27;s work if needed)\n&lt;usage&gt;total_tokens: 50088\ntool_uses: 13\nduration_ms: 77616&lt;/usage&gt;&quot;
+  }
+]</pre></div><button class="expand-btn">Show more</button></div></div></div></div>
+<div class="message assistant" id="msg-2026-02-22T17-17-12-049Z"><div class="message-header"><span class="role-label">Assistant</span><a href="#msg-2026-02-22T17-17-12-049Z" class="timestamp-link"><time datetime="2026-02-22T17:17:12.049Z" data-timestamp="2026-02-22T17:17:12.049Z">2026-02-22T17:17:12.049Z</time></a></div><div class="message-content">
+<div class="thinking"><div class="thinking-label">Thinking</div><p>Now I have a comprehensive understanding of the problem. Let me plan the approach.</p>
+<p>The key challenge is that the preprocessor flattens all included files into one big string, and the lexer/parser only track line numbers in that flattened string.</p>
+<p>There are a few approaches:</p>
+<p><strong>Approach A: Source map in preprocessor</strong>
+- The preprocessor emits a source map (array of <code>{filename, originalLine}</code> indexed by expanded line number)
+- Pass this to the lexer, which stamps each token with the original filename and line
+- Parser errors then show file:line</p>
+<p><strong>Approach B: Line markers in expanded source</strong>
+- Insert special marker comments/lines like <code>#line 1 "filename"</code> (C-style) in the preprocessor output</p>
+<ul>
+<li>Lexer recognizes these and adjusts its filename/line tracking</li>
+<li>Similar to how C preprocessors work</li>
+</ul>
+<p><strong>Approach C: Post-hoc mapping</strong>
+- Keep a source map from the preprocessor
+- When displaying errors in main.go, map the expanded line numbers back to original file:line
+- Doesn't require lexer/parser/AST changes</p>
+<p>Approach C seems cleanest since the preprocessor already processes lines sequentially, so building a mapping is straightforward, and main.go can just translate line numbers when displaying errors without touching the lexer or parser. The preprocessor could return both the expanded string and a source map that tracks which original file each line came from.</p>
+<p>For the implementation, I'd define a struct to hold the original filename and line number, then build a slice indexed by output line number during preprocessing. In main.go, I'd retrieve this map and use it to translate error locations back to their source before displaying them to the user.</p>
+<p>I'm realizing that modifying <code>ProcessFile()</code>'s return signature would break existing callers, so storing the source map as a field on the Preprocessor struct with a getter method is cleaner. I could also add a Filename field to the Token struct for a more comprehensive solution, but that's more invasive than needed right now.</p>
+<p>Adding the source map to the Preprocessor struct...</p>
+<p>Now I need to think through how the recursive include processing works. Since <code>processSource()</code> calls itself recursively through <code>resolveAndInclude()</code>, the source map needs to accumulate across all those nested calls. Each line of output needs to track which file it originated from and what the original line number was. I see the key insight now—each newline or string written to the output represents a line that needs a corresponding source location entry. The simplest approach is to have <code>processSource</code> accept a filename parameter and append a SourceLoc entry to the map for each line it outputs, whether that's actual source code or a blank placeholder for skipped directives, with included files building their own map entries through recursive calls.</p>
+<p>The challenge is that <code>processSource</code> currently only receives the content and base directory, not the filename itself. I need to trace through the call chain: <code>ProcessFile</code> reads the file and calls <code>processSource</code> with just the content and directory, then <code>processSource</code> handles includes by calling <code>resolveAndInclude</code>, which calls back to <code>ProcessFile</code> for the resolved path. So I need to thread the filename through <code>processSource</code> as an additional parameter, then add a <code>SourceLoc</code> struct to track file and line number, and maintain a <code>sourceMap</code> slice on the Preprocessor to build up the mapping as we process each line.</p>
+<p>For included content that spans multiple lines, the recursive <code>ProcessFile</code> call will already populate the map entries for those lines, so I just need to track which output line corresponds to which source location as we write content to the output buffer.</p>
+<p>The tricky part is handling the <code>#IF</code>/<code>#ELSE</code>/<code>#ENDIF</code> blocks—when lines are skipped, blank lines get emitted to preserve output line numbers, but I need to figure out whether those blank lines should map back to the skipped source lines or somewhere else.</p>
+<p>Actually, let me step back. The core mechanism is straightforward: for each line of output, I record which source file and line number it came from. The map is indexed by output line number, and when processing includes, the recursive calls fill in their portions. Then given any expanded line number, I can trace it back to the original source.</p>
+<p>The newline handling works by not prefixing the first line with a newline, then adding one before each subsequent line. the included content brings its own newlines, so when I insert it at a particular line, those internal newlines get preserved in the output. The leading newline before the include acts as a separator between the previous line and the included content, which means the source map entries line up correctly with the actual output lines.</p>
+<p>Now I'm thinking through how to track source locations during preprocessing. I could maintain a counter that increments as we write content, but that feels fragile. Or I could return source location metadata alongside the expanded string and let the caller assemble the map afterward. The marker comment approach would work but it's inelegant. I think the cleanest solution is to have processSource return both the expanded source and a list of source location entries, then build the final map from those entries once preprocessing completes. I'm going with the struct-based approach where the Preprocessor holds a sourceMap slice that gets populated as we process each line. I need to modify processSource to accept a filename parameter and append SourceLoc entries whenever we produce output, being careful to track which source file each output line came from, especially when handling recursive #INCLUDE directives.</p>
+<p>Still writing the preprocessor logic... Writing the preprocessor logic...</p>
+<p>Actually, I'm noticing a potential issue with how newlines are being handled in the skipped blocks—the code might be writing duplicate newlines since it adds one as a separator and then another for the blank line itself.</p>
+<p>Let me read through the actual preprocessor file to understand the exact logic and verify whether this is really a problem.</p></div></div></div>
+<div class="message assistant" id="msg-2026-02-22T17-17-12-121Z"><div class="message-header"><span class="role-label">Assistant</span><a href="#msg-2026-02-22T17-17-12-121Z" class="timestamp-link"><time datetime="2026-02-22T17:17:12.121Z" data-timestamp="2026-02-22T17:17:12.121Z">2026-02-22T17:17:12.121Z</time></a></div><div class="message-content">
+<div class="assistant-text"><p>Good, I have a thorough understanding of the problem. Let me read the key files to understand the exact implementation details.</p></div></div></div>
+<div class="message assistant" id="msg-2026-02-22T17-17-12-749Z"><div class="message-header"><span class="role-label">Assistant</span><a href="#msg-2026-02-22T17-17-12-749Z" class="timestamp-link"><time datetime="2026-02-22T17:17:12.749Z" data-timestamp="2026-02-22T17:17:12.749Z">2026-02-22T17:17:12.749Z</time></a></div><div class="message-content">
+<div class="tool-use" data-tool-id="toolu_01K5jDy3CnwAuDNZ88azWQoT"><div class="tool-header"><span class="tool-icon">⚙</span> Read</div><div class="truncatable"><div class="truncatable-content"><pre class="json">{
+  &#34;file_path&#34;: &#34;/home/david/projects/code-associates/occam2go/preproc/preproc.go&#34;
+}</pre></div><button class="expand-btn">Show more</button></div></div></div></div>
+<div class="message tool-reply" id="msg-2026-02-22T17-17-12-761Z"><div class="message-header"><span class="role-label">Tool reply</span><a href="#msg-2026-02-22T17-17-12-761Z" class="timestamp-link"><time datetime="2026-02-22T17:17:12.761Z" data-timestamp="2026-02-22T17:17:12.761Z">2026-02-22T17:17:12.761Z</time></a></div><div class="message-content"><div class="tool-result"><div class="truncatable"><div class="truncatable-content"><pre>     1→// Package preproc implements a textual preprocessor for occam source files.
+     2→// It handles #IF/#ELSE/#ENDIF conditional compilation, #DEFINE symbols,
+     3→// #INCLUDE file inclusion, and ignores #COMMENT/#PRAGMA/#USE directives.
+     4→// The output is a single expanded string suitable for feeding into the lexer.
+     5→package preproc
+     6→
+     7→import (
+     8→	&quot;fmt&quot;
+     9→	&quot;os&quot;
+    10→	&quot;path/filepath&quot;
+    11→	&quot;strings&quot;
+    12→)
+    13→
+    14→// Option configures a Preprocessor.
+    15→type Option func(*Preprocessor)
+    16→
+    17→// WithIncludePaths sets the search paths for #INCLUDE resolution.
+    18→func WithIncludePaths(paths []string) Option {
+    19→	return func(pp *Preprocessor) {
+    20→		pp.includePaths = paths
+    21→	}
+    22→}
+    23→
+    24→// WithDefines sets predefined symbols.
+    25→func WithDefines(defs map[string]string) Option {
+    26→	return func(pp *Preprocessor) {
+    27→		for k, v := range defs {
+    28→			pp.defines[k] = v
+    29→		}
+    30→	}
+    31→}
+    32→
+    33→// Preprocessor performs textual preprocessing of occam source.
+    34→type Preprocessor struct {
+    35→	defines      map[string]string
+    36→	includePaths []string
+    37→	errors       []string
+    38→	processing   map[string]bool // absolute paths currently being processed (circular include detection)
+    39→	included     map[string]bool // absolute paths already included (prevent duplicate inclusion)
+    40→}
+    41→
+    42→// New creates a new Preprocessor with the given options.
+    43→func New(opts ...Option) *Preprocessor {
+    44→	pp := &amp;Preprocessor{
+    45→		defines:    map[string]string{},
+    46→		processing: map[string]bool{},
+    47→		included:   map[string]bool{},
+    48→	}
+    49→	// Predefined symbols
+    50→	pp.defines[&quot;TARGET.BITS.PER.WORD&quot;] = &quot;64&quot;
+    51→
+    52→	for _, opt := range opts {
+    53→		opt(pp)
+    54→	}
+    55→	return pp
+    56→}
+    57→
+    58→// Errors returns any errors accumulated during processing.
+    59→func (pp *Preprocessor) Errors() []string {
+    60→	return pp.errors
+    61→}
+    62→
+    63→// ProcessFile reads and processes a file, resolving #INCLUDE directives.
+    64→func (pp *Preprocessor) ProcessFile(filename string) (string, error) {
+    65→	absPath, err := filepath.Abs(filename)
+    66→	if err != nil {
+    67→		return &quot;&quot;, fmt.Errorf(&quot;cannot resolve path %q: %w&quot;, filename, err)
+    68→	}
+    69→
+    70→	if pp.processing[absPath] {
+    71→		return &quot;&quot;, fmt.Errorf(&quot;circular include detected: %s&quot;, filename)
+    72→	}
+    73→	pp.processing[absPath] = true
+    74→	defer delete(pp.processing, absPath)
+    75→
+    76→	data, err := os.ReadFile(absPath)
+    77→	if err != nil {
+    78→		return &quot;&quot;, fmt.Errorf(&quot;cannot read %q: %w&quot;, filename, err)
+    79→	}
+    80→
+    81→	return pp.processSource(string(data), filepath.Dir(absPath))
+    82→}
+    83→
+    84→// ProcessSource processes occam source text with no file context.
+    85→// #INCLUDE directives will only resolve against includePaths.
+    86→func (pp *Preprocessor) ProcessSource(source string) (string, error) {
+    87→	return pp.processSource(source, &quot;&quot;)
+    88→}
+    89→
+    90→// processSource performs line-by-line preprocessing.
+    91→// baseDir is the directory of the current file (for relative #INCLUDE resolution).
+    92→func (pp *Preprocessor) processSource(source string, baseDir string) (string, error) {
+    93→	lines := strings.Split(source, &quot;\n&quot;)
+    94→	var out strings.Builder
+    95→	var condStack []condState
+    96→
+    97→	for i, line := range lines {
+    98→		if i &gt; 0 {
+    99→			out.WriteByte(&#x27;\n&#x27;)
+   100→		}
+   101→
+   102→		trimmed := strings.TrimSpace(line)
+   103→
+   104→		if strings.HasPrefix(trimmed, &quot;#&quot;) {
+   105→			directive, rest := parseDirectiveLine(trimmed)
+   106→
+   107→			switch directive {
+   108→			case &quot;DEFINE&quot;:
+   109→				if isActive(condStack) {
+   110→					sym := strings.TrimSpace(rest)
+   111→					if sym != &quot;&quot; {
+   112→						pp.defines[sym] = &quot;&quot;
+   113→					}
+   114→				}
+   115→				out.WriteString(&quot;&quot;) // blank line preserves line numbers
+   116→
+   117→			case &quot;IF&quot;:
+   118→				val := pp.evalExpr(rest)
+   119→				condStack = append(condStack, condState{active: val, seenTrue: val})
+   120→				out.WriteString(&quot;&quot;)
+   121→
+   122→			case &quot;ELSE&quot;:
+   123→				if len(condStack) == 0 {
+   124→					pp.errors = append(pp.errors, fmt.Sprintf(&quot;line %d: #ELSE without matching #IF&quot;, i+1))
+   125→				} else {
+   126→					top := &amp;condStack[len(condStack)-1]
+   127→					if top.seenTrue {
+   128→						top.active = false
+   129→					} else {
+   130→						top.active = true
+   131→						top.seenTrue = true
+   132→					}
+   133→				}
+   134→				out.WriteString(&quot;&quot;)
+   135→
+   136→			case &quot;ENDIF&quot;:
+   137→				if len(condStack) == 0 {
+   138→					pp.errors = append(pp.errors, fmt.Sprintf(&quot;line %d: #ENDIF without matching #IF&quot;, i+1))
+   139→				} else {
+   140→					condStack = condStack[:len(condStack)-1]
+   141→				}
+   142→				out.WriteString(&quot;&quot;)
+   143→
+   144→			case &quot;INCLUDE&quot;:
+   145→				if isActive(condStack) {
+   146→					included, err := pp.resolveAndInclude(rest, baseDir)
+   147→					if err != nil {
+   148→						return &quot;&quot;, fmt.Errorf(&quot;line %d: %w&quot;, i+1, err)
+   149→					}
+   150→					out.WriteString(included)
+   151→				} else {
+   152→					out.WriteString(&quot;&quot;)
+   153→				}
+   154→
+   155→			case &quot;COMMENT&quot;, &quot;PRAGMA&quot;, &quot;USE&quot;:
+   156→				out.WriteString(&quot;&quot;) // no-op, blank line
+   157→
+   158→			default:
+   159→				// Unknown directive — pass through if active
+   160→				if isActive(condStack) {
+   161→					out.WriteString(line)
+   162→				} else {
+   163→					out.WriteString(&quot;&quot;)
+   164→				}
+   165→			}
+   166→		} else {
+   167→			if isActive(condStack) {
+   168→				out.WriteString(line)
+   169→			} else {
+   170→				out.WriteString(&quot;&quot;) // blank line preserves line numbers
+   171→			}
+   172→		}
+   173→	}
+   174→
+   175→	if len(condStack) &gt; 0 {
+   176→		pp.errors = append(pp.errors, fmt.Sprintf(&quot;unterminated #IF (missing %d #ENDIF)&quot;, len(condStack)))
+   177→	}
+   178→
+   179→	return out.String(), nil
+   180→}
+   181→
+   182→// condState tracks one level of #IF/#ELSE nesting.
+   183→type condState struct {
+   184→	active   bool // currently emitting lines?
+   185→	seenTrue bool // has any branch been true?
+   186→}
+   187→
+   188→// isActive returns true if all condition stack levels are active.
+   189→func isActive(stack []condState) bool {
+   190→	for _, s := range stack {
+   191→		if !s.active {
+   192→			return false
+   193→		}
+   194→	}
+   195→	return true
+   196→}
+   197→
+   198→// parseDirectiveLine splits &quot;#DIRECTIVE rest&quot; into (directive, rest).
+   199→func parseDirectiveLine(trimmed string) (string, string) {
+   200→	// trimmed starts with &quot;#&quot;
+   201→	s := trimmed[1:] // skip &#x27;#&#x27;
+   202→	s = strings.TrimSpace(s)
+   203→
+   204→	idx := strings.IndexAny(s, &quot; \t&quot;)
+   205→	if idx == -1 {
+   206→		return strings.ToUpper(s), &quot;&quot;
+   207→	}
+   208→	return strings.ToUpper(s[:idx]), strings.TrimSpace(s[idx+1:])
+   209→}
+   210→
+   211→// resolveAndInclude resolves an #INCLUDE filename and processes the included file.
+   212→func (pp *Preprocessor) resolveAndInclude(rest string, baseDir string) (string, error) {
+   213→	filename := stripQuotes(rest)
+   214→	if filename == &quot;&quot; {
+   215→		return &quot;&quot;, fmt.Errorf(&quot;#INCLUDE with empty filename&quot;)
+   216→	}
+   217→
+   218→	// Try to find the file
+   219→	resolved := pp.resolveIncludePath(filename, baseDir)
+   220→	if resolved == &quot;&quot; {
+   221→		return &quot;&quot;, fmt.Errorf(&quot;cannot find included file %q&quot;, filename)
+   222→	}
+   223→
+   224→	// Skip files that have already been included (prevent duplicate definitions)
+   225→	absPath, err := filepath.Abs(resolved)
+   226→	if err == nil &amp;&amp; pp.included[absPath] {
+   227→		return &quot;&quot;, nil
+   228→	}
+   229→	if err == nil {
+   230→		pp.included[absPath] = true
+   231→	}
+   232→
+   233→	return pp.ProcessFile(resolved)
+   234→}
+   235→
+   236→// resolveIncludePath searches for a file: first relative to baseDir, then in includePaths.
+   237→func (pp *Preprocessor) resolveIncludePath(filename string, baseDir string) string {
+   238→	// First: relative to current file&#x27;s directory
+   239→	if baseDir != &quot;&quot; {
+   240→		candidate := filepath.Join(baseDir, filename)
+   241→		if _, err := os.Stat(candidate); err == nil {
+   242→			return candidate
+   243→		}
+   244→	}
+   245→
+   246→	// Then: each include path
+   247→	for _, dir := range pp.includePaths {
+   248→		candidate := filepath.Join(dir, filename)
+   249→		if _, err := os.Stat(candidate); err == nil {
+   250→			return candidate
+   251→		}
+   252→	}
+   253→
+   254→	return &quot;&quot;
+   255→}
+   256→
+   257→// stripQuotes removes surrounding double quotes from a string.
+   258→func stripQuotes(s string) string {
+   259→	s = strings.TrimSpace(s)
+   260→	if len(s) &gt;= 2 &amp;&amp; s[0] == &#x27;&quot;&#x27; &amp;&amp; s[len(s)-1] == &#x27;&quot;&#x27; {
+   261→		return s[1 : len(s)-1]
+   262→	}
+   263→	return s
+   264→}
+   265→
+   266→// evalExpr evaluates a preprocessor conditional expression.
+   267→// Supports: TRUE, FALSE, DEFINED (SYMBOL), NOT (expr), (SYMBOL = value)
+   268→func (pp *Preprocessor) evalExpr(expr string) bool {
+   269→	expr = strings.TrimSpace(expr)
+   270→	if expr == &quot;&quot; {
+   271→		return false
+   272→	}
+   273→
+   274→	// TRUE / FALSE
+   275→	if expr == &quot;TRUE&quot; {
+   276→		return true
+   277→	}
+   278→	if expr == &quot;FALSE&quot; {
+   279→		return false
+   280→	}
+   281→
+   282→	// NOT (expr) or NOT DEFINED (...)
+   283→	if strings.HasPrefix(expr, &quot;NOT &quot;) || strings.HasPrefix(expr, &quot;NOT(&quot;) {
+   284→		inner := strings.TrimPrefix(expr, &quot;NOT&quot;)
+   285→		inner = strings.TrimSpace(inner)
+   286→		return !pp.evalExpr(inner)
+   287→	}
+   288→
+   289→	// DEFINED (SYMBOL)
+   290→	if strings.HasPrefix(expr, &quot;DEFINED&quot;) {
+   291→		inner := strings.TrimPrefix(expr, &quot;DEFINED&quot;)
+   292→		inner = strings.TrimSpace(inner)
+   293→		sym := stripParens(inner)
+   294→		_, ok := pp.defines[sym]
+   295→		return ok
+   296→	}
+   297→
+   298→	// Parenthesized expression
+   299→	if strings.HasPrefix(expr, &quot;(&quot;) &amp;&amp; strings.HasSuffix(expr, &quot;)&quot;) {
+   300→		inner := expr[1 : len(expr)-1]
+   301→		inner = strings.TrimSpace(inner)
+   302→
+   303→		// Check for equality: SYMBOL = value
+   304→		if eqIdx := strings.Index(inner, &quot;=&quot;); eqIdx &gt;= 0 {
+   305→			lhs := strings.TrimSpace(inner[:eqIdx])
+   306→			rhs := strings.TrimSpace(inner[eqIdx+1:])
+   307→			lhsVal, ok := pp.defines[lhs]
+   308→			if !ok {
+   309→				return false
+   310→			}
+   311→			return lhsVal == rhs
+   312→		}
+   313→
+   314→		// Otherwise recurse
+   315→		return pp.evalExpr(inner)
+   316→	}
+   317→
+   318→	// Bare symbol — treat as DEFINED
+   319→	_, ok := pp.defines[expr]
+   320→	return ok
+   321→}
+   322→
+   323→// stripParens removes surrounding parentheses and whitespace.
+   324→func stripParens(s string) string {
+   325→	s = strings.TrimSpace(s)
+   326→	if len(s) &gt;= 2 &amp;&amp; s[0] == &#x27;(&#x27; &amp;&amp; s[len(s)-1] == &#x27;)&#x27; {
+   327→		return strings.TrimSpace(s[1 : len(s)-1])
+   328→	}
+   329→	return s
+   330→}
+   331→</pre></div><button class="expand-btn">Show more</button></div></div></div></div>
+<div class="message assistant" id="msg-2026-02-22T17-17-13-110Z"><div class="message-header"><span class="role-label">Assistant</span><a href="#msg-2026-02-22T17-17-13-110Z" class="timestamp-link"><time datetime="2026-02-22T17:17:13.110Z" data-timestamp="2026-02-22T17:17:13.110Z">2026-02-22T17:17:13.110Z</time></a></div><div class="message-content">
+<div class="tool-use" data-tool-id="toolu_01LVdRd4k48Em5uey56mcgCX"><div class="tool-header"><span class="tool-icon">⚙</span> Read</div><div class="truncatable"><div class="truncatable-content"><pre class="json">{
+  &#34;file_path&#34;: &#34;/home/david/projects/code-associates/occam2go/main.go&#34;
+}</pre></div><button class="expand-btn">Show more</button></div></div></div></div>
+<div class="message tool-reply" id="msg-2026-02-22T17-17-13-124Z"><div class="message-header"><span class="role-label">Tool reply</span><a href="#msg-2026-02-22T17-17-13-124Z" class="timestamp-link"><time datetime="2026-02-22T17:17:13.124Z" data-timestamp="2026-02-22T17:17:13.124Z">2026-02-22T17:17:13.124Z</time></a></div><div class="message-content"><div class="tool-result"><div class="truncatable"><div class="truncatable-content"><pre>     1→package main
+     2→
+     3→import (
+     4→	&quot;flag&quot;
+     5→	&quot;fmt&quot;
+     6→	&quot;os&quot;
+     7→	&quot;strings&quot;
+     8→
+     9→	&quot;github.com/codeassociates/occam2go/codegen&quot;
+    10→	&quot;github.com/codeassociates/occam2go/lexer&quot;
+    11→	&quot;github.com/codeassociates/occam2go/modgen&quot;
+    12→	&quot;github.com/codeassociates/occam2go/parser&quot;
+    13→	&quot;github.com/codeassociates/occam2go/preproc&quot;
+    14→)
+    15→
+    16→const version = &quot;0.1.0&quot;
+    17→
+    18→// multiFlag allows a flag to be specified multiple times (e.g. -I path1 -I path2).
+    19→type multiFlag []string
+    20→
+    21→func (f *multiFlag) String() string { return strings.Join(*f, &quot;, &quot;) }
+    22→func (f *multiFlag) Set(value string) error {
+    23→	*f = append(*f, value)
+    24→	return nil
+    25→}
+    26→
+    27→func main() {
+    28→	// Check for subcommand before parsing flags
+    29→	if len(os.Args) &gt;= 2 &amp;&amp; os.Args[1] == &quot;gen-module&quot; {
+    30→		genModuleCmd(os.Args[2:])
+    31→		return
+    32→	}
+    33→
+    34→	showVersion := flag.Bool(&quot;version&quot;, false, &quot;Print version and exit&quot;)
+    35→	outputFile := flag.String(&quot;o&quot;, &quot;&quot;, &quot;Output file (default: stdout)&quot;)
+    36→	var includePaths multiFlag
+    37→	flag.Var(&amp;includePaths, &quot;I&quot;, &quot;Include search path (repeatable)&quot;)
+    38→	var defines multiFlag
+    39→	flag.Var(&amp;defines, &quot;D&quot;, &quot;Predefined symbol (repeatable)&quot;)
+    40→
+    41→	flag.Usage = func() {
+    42→		fmt.Fprintf(os.Stderr, &quot;occam2go - An Occam to Go transpiler\n\n&quot;)
+    43→		fmt.Fprintf(os.Stderr, &quot;Usage: %s [options] &lt;input.occ&gt;\n&quot;, os.Args[0])
+    44→		fmt.Fprintf(os.Stderr, &quot;       %s gen-module [-o output] &lt;SConscript&gt;\n\n&quot;, os.Args[0])
+    45→		fmt.Fprintf(os.Stderr, &quot;Options:\n&quot;)
+    46→		flag.PrintDefaults()
+    47→	}
+    48→
+    49→	flag.Parse()
+    50→
+    51→	if *showVersion {
+    52→		fmt.Printf(&quot;occam2go version %s\n&quot;, version)
+    53→		os.Exit(0)
+    54→	}
+    55→
+    56→	args := flag.Args()
+    57→	if len(args) &lt; 1 {
+    58→		flag.Usage()
+    59→		os.Exit(1)
+    60→	}
+    61→
+    62→	inputFile := args[0]
+    63→
+    64→	// Build defines map
+    65→	defs := map[string]string{}
+    66→	for _, d := range defines {
+    67→		if idx := strings.Index(d, &quot;=&quot;); idx &gt;= 0 {
+    68→			defs[d[:idx]] = d[idx+1:]
+    69→		} else {
+    70→			defs[d] = &quot;&quot;
+    71→		}
+    72→	}
+    73→
+    74→	// Preprocess
+    75→	pp := preproc.New(
+    76→		preproc.WithIncludePaths(includePaths),
+    77→		preproc.WithDefines(defs),
+    78→	)
+    79→	expanded, err := pp.ProcessFile(inputFile)
+    80→	if err != nil {
+    81→		fmt.Fprintf(os.Stderr, &quot;Preprocessor error: %s\n&quot;, err)
+    82→		os.Exit(1)
+    83→	}
+    84→	if len(pp.Errors()) &gt; 0 {
+    85→		fmt.Fprintf(os.Stderr, &quot;Preprocessor warnings:\n&quot;)
+    86→		for _, e := range pp.Errors() {
+    87→			fmt.Fprintf(os.Stderr, &quot;  %s\n&quot;, e)
+    88→		}
+    89→	}
+    90→
+    91→	// Lex
+    92→	l := lexer.New(expanded)
+    93→
+    94→	// Parse
+    95→	p := parser.New(l)
+    96→	program := p.ParseProgram()
+    97→
+    98→	if len(p.Errors()) &gt; 0 {
+    99→		fmt.Fprintf(os.Stderr, &quot;Parse errors:\n&quot;)
+   100→		for _, err := range p.Errors() {
+   101→			fmt.Fprintf(os.Stderr, &quot;  %s\n&quot;, err)
+   102→		}
+   103→		os.Exit(1)
+   104→	}
+   105→
+   106→	// Generate Go code
+   107→	gen := codegen.New()
+   108→	output := gen.Generate(program)
+   109→
+   110→	// Write output
+   111→	if *outputFile != &quot;&quot; {
+   112→		err := os.WriteFile(*outputFile, []byte(output), 0644)
+   113→		if err != nil {
+   114→			fmt.Fprintf(os.Stderr, &quot;Error writing file: %s\n&quot;, err)
+   115→			os.Exit(1)
+   116→		}
+   117→	} else {
+   118→		fmt.Print(output)
+   119→	}
+   120→}
+   121→
+   122→func genModuleCmd(args []string) {
+   123→	fs := flag.NewFlagSet(&quot;gen-module&quot;, flag.ExitOnError)
+   124→	outputFile := fs.String(&quot;o&quot;, &quot;&quot;, &quot;Output file (default: stdout)&quot;)
+   125→	moduleName := fs.String(&quot;name&quot;, &quot;&quot;, &quot;Module guard name (default: derived from library name)&quot;)
+   126→	fs.Parse(args)
+   127→
+   128→	if fs.NArg() &lt; 1 {
+   129→		fmt.Fprintf(os.Stderr, &quot;Usage: occam2go gen-module [-o output] [-name GUARD] &lt;SConscript&gt;\n&quot;)
+   130→		os.Exit(1)
+   131→	}
+   132→
+   133→	sconscriptFile := fs.Arg(0)
+   134→	data, err := os.ReadFile(sconscriptFile)
+   135→	if err != nil {
+   136→		fmt.Fprintf(os.Stderr, &quot;Error reading SConscript: %s\n&quot;, err)
+   137→		os.Exit(1)
+   138→	}
+   139→
+   140→	libs := modgen.ParseSConscript(string(data))
+   141→	if len(libs) == 0 {
+   142→		fmt.Fprintf(os.Stderr, &quot;No OccamLibrary found in %s\n&quot;, sconscriptFile)
+   143→		os.Exit(1)
+   144→	}
+   145→
+   146→	// Use first library by default
+   147→	lib := libs[0]
+   148→
+   149→	// Derive module name from library name if not specified
+   150→	guard := *moduleName
+   151→	if guard == &quot;&quot; {
+   152→		// course.lib → COURSE.MODULE
+   153→		name := lib.Name
+   154→		if idx := strings.LastIndex(name, &quot;.&quot;); idx &gt;= 0 {
+   155→			name = name[:idx]
+   156→		}
+   157→		guard = strings.ToUpper(name) + &quot;.MODULE&quot;
+   158→	}
+   159→
+   160→	output := modgen.GenerateModule(lib, guard)
+   161→
+   162→	if *outputFile != &quot;&quot; {
+   163→		err := os.WriteFile(*outputFile, []byte(output), 0644)
+   164→		if err != nil {
+   165→			fmt.Fprintf(os.Stderr, &quot;Error writing file: %s\n&quot;, err)
+   166→			os.Exit(1)
+   167→		}
+   168→	} else {
+   169→		fmt.Print(output)
+   170→	}
+   171→}
+   172→</pre></div><button class="expand-btn">Show more</button></div></div></div></div>
+<div class="message assistant" id="msg-2026-02-22T17-17-13-888Z"><div class="message-header"><span class="role-label">Assistant</span><a href="#msg-2026-02-22T17-17-13-888Z" class="timestamp-link"><time datetime="2026-02-22T17:17:13.888Z" data-timestamp="2026-02-22T17:17:13.888Z">2026-02-22T17:17:13.888Z</time></a></div><div class="message-content">
+<div class="tool-use" data-tool-id="toolu_01CzegLM94wGjfx88ft8WSiC"><div class="tool-header"><span class="tool-icon">⚙</span> Read</div><div class="truncatable"><div class="truncatable-content"><pre class="json">{
+  &#34;file_path&#34;: &#34;/home/david/projects/code-associates/occam2go/lexer/token.go&#34;,
+  &#34;offset&#34;: 245,
+  &#34;limit&#34;: 15
+}</pre></div><button class="expand-btn">Show more</button></div></div></div></div>
+<div class="message tool-reply" id="msg-2026-02-22T17-17-13-901Z"><div class="message-header"><span class="role-label">Tool reply</span><a href="#msg-2026-02-22T17-17-13-901Z" class="timestamp-link"><time datetime="2026-02-22T17:17:13.901Z" data-timestamp="2026-02-22T17:17:13.901Z">2026-02-22T17:17:13.901Z</time></a></div><div class="message-content"><div class="tool-result"><div class="truncatable"><div class="truncatable-content"><pre>   245→	}
+   246→	return IDENT
+   247→}
+   248→
+   249→type Token struct {
+   250→	Type    TokenType
+   251→	Literal string
+   252→	Line    int
+   253→	Column  int
+   254→}
+   255→</pre></div><button class="expand-btn">Show more</button></div></div></div></div>
+<div class="message assistant" id="msg-2026-02-22T17-17-17-561Z"><div class="message-header"><span class="role-label">Assistant</span><a href="#msg-2026-02-22T17-17-17-561Z" class="timestamp-link"><time datetime="2026-02-22T17:17:17.561Z" data-timestamp="2026-02-22T17:17:17.561Z">2026-02-22T17:17:17.561Z</time></a></div><div class="message-content">
+<div class="thinking"><div class="thinking-label">Thinking</div><p>Now let me also check the parser's error handling to understand the format of error messages.</p></div></div></div>
+<div class="message assistant" id="msg-2026-02-22T17-17-18-027Z"><div class="message-header"><span class="role-label">Assistant</span><a href="#msg-2026-02-22T17-17-18-027Z" class="timestamp-link"><time datetime="2026-02-22T17:17:18.027Z" data-timestamp="2026-02-22T17:17:18.027Z">2026-02-22T17:17:18.027Z</time></a></div><div class="message-content">
+<div class="assistant-text"><p>Now let me check how the parser formats errors.</p></div></div></div>
+<div class="message assistant" id="msg-2026-02-22T17-17-19-650Z"><div class="message-header"><span class="role-label">Assistant</span><a href="#msg-2026-02-22T17-17-19-650Z" class="timestamp-link"><time datetime="2026-02-22T17:17:19.650Z" data-timestamp="2026-02-22T17:17:19.650Z">2026-02-22T17:17:19.650Z</time></a></div><div class="message-content">
+<div class="tool-use" data-tool-id="toolu_017jLPPvUc6ar5tRo7TzA4aH"><div class="tool-header"><span class="tool-icon">⚙</span> Grep</div><div class="truncatable"><div class="truncatable-content"><pre class="json">{
+  &#34;pattern&#34;: &#34;addError|p\\.errors = append&#34;,
+  &#34;path&#34;: &#34;/home/david/projects/code-associates/occam2go/parser/parser.go&#34;,
+  &#34;output_mode&#34;: &#34;content&#34;,
+  &#34;-n&#34;: true
+}</pre></div><button class="expand-btn">Show more</button></div></div></div></div>
+<div class="message tool-reply" id="msg-2026-02-22T17-17-19-763Z"><div class="message-header"><span class="role-label">Tool reply</span><a href="#msg-2026-02-22T17-17-19-763Z" class="timestamp-link"><time datetime="2026-02-22T17:17:19.763Z" data-timestamp="2026-02-22T17:17:19.763Z">2026-02-22T17:17:19.763Z</time></a></div><div class="message-content"><div class="tool-result"><div class="truncatable"><div class="truncatable-content"><pre>94:func (p *Parser) addError(msg string) {
+95:	p.errors = append(p.errors, fmt.Sprintf(&quot;line %d: %s&quot;, p.curToken.Line, msg))
+123:	p.addError(fmt.Sprintf(&quot;expected %s, got %s&quot;, t, p.peekToken.Type))
+229:		p.addError(fmt.Sprintf(&quot;unexpected token: %s&quot;, p.curToken.Type))
+370:		p.addError(fmt.Sprintf(&quot;expected type after VAL, got %s&quot;, p.curToken.Type))
+436:		p.addError(fmt.Sprintf(&quot;expected type after INITIAL, got %s&quot;, p.curToken.Type))
+570:			p.addError(fmt.Sprintf(&quot;expected type after CHAN, got %s&quot;, p.curToken.Type))
+603:		p.addError(fmt.Sprintf(&quot;expected type after array size, got %s&quot;, p.curToken.Type))
+781:	p.addError(fmt.Sprintf(&quot;expected :=, !, or ? after %s[...], got %s&quot;, name, p.peekToken.Type))
+818:		p.addError(fmt.Sprintf(&quot;expected type after CHAN, got %s&quot;, p.curToken.Type))
+874:		p.addError(&quot;expected IS or CASE in protocol declaration&quot;)
+930:		p.addError(fmt.Sprintf(&quot;expected type name in protocol, got %s&quot;, p.curToken.Type))
+945:		p.addError(&quot;expected indented block after CASE in protocol&quot;)
+981:			p.addError(fmt.Sprintf(&quot;expected variant tag name, got %s&quot;, p.curToken.Type))
+1027:		p.addError(&quot;expected indented block after RECORD declaration&quot;)
+1068:			p.addError(fmt.Sprintf(&quot;expected type in record field, got %s&quot;, p.curToken.Type))
+1281:		p.addError(&quot;expected indented block after ? CASE&quot;)
+1324:			p.addError(fmt.Sprintf(&quot;expected variant tag name, got %s&quot;, p.curToken.Type))
+1383:		p.addError(&quot;expected indented block after ? CASE&quot;)
+1421:			p.addError(fmt.Sprintf(&quot;expected variant tag name, got %s&quot;, p.curToken.Type))
+1476:			p.addError(&quot;unexpected identifier after SEQ&quot;)
+1488:		p.addError(&quot;expected indented block after SEQ&quot;)
+1511:			p.addError(&quot;unexpected identifier after PAR&quot;)
+1523:		p.addError(&quot;expected indented block after PAR&quot;)
+1578:		p.addError(&quot;expected indented block after ALT&quot;)
+1649:		p.addError(fmt.Sprintf(&quot;expected channel name or guard in ALT case, got %s&quot;, p.curToken.Type))
+1703:			p.addError(&quot;expected &amp; after guard in ALT case&quot;)
+1711:			p.addError(fmt.Sprintf(&quot;expected channel name after guard, got %s&quot;, p.curToken.Type))
+1742:		p.addError(&quot;expected indented body after ALT case&quot;)
+1888:		p.addError(&quot;expected indented body after PROC declaration&quot;)
+2027:						p.addError(fmt.Sprintf(&quot;expected type after []CHAN, got %s&quot;, p.curToken.Type))
+2040:					p.addError(fmt.Sprintf(&quot;expected type after [], got %s&quot;, p.curToken.Type))
+2047:					p.addError(fmt.Sprintf(&quot;expected array size, got %s&quot;, p.curToken.Type))
+2060:					p.addError(fmt.Sprintf(&quot;expected type after [%s], got %s&quot;, param.ArraySize, p.curToken.Type))
+2075:				p.addError(fmt.Sprintf(&quot;expected type after CHAN, got %s&quot;, p.curToken.Type))
+2086:				p.addError(fmt.Sprintf(&quot;expected type in parameter, got %s&quot;, p.curToken.Type))
+2095:			p.addError(fmt.Sprintf(&quot;expected parameter name, got %s&quot;, p.curToken.Type))
+2203:		p.addError(&quot;expected indented body after FUNCTION declaration&quot;)
+2248:		p.addError(fmt.Sprintf(&quot;expected VALOF or IS in function body, got %s&quot;, p.curToken.Type))
+2258:		p.addError(&quot;expected indented block after VALOF&quot;)
+2429:		p.addError(&quot;expected indented block after WHILE condition&quot;)
+2449:			p.addError(&quot;unexpected identifier after IF&quot;)
+2461:		p.addError(&quot;expected indented block after IF&quot;)
+2546:		p.addError(&quot;expected indented block after CASE&quot;)
+2637:			p.addError(fmt.Sprintf(&quot;could not parse %q as integer&quot;, p.curToken.Literal))
+2650:			p.addError(err.Error())
+2754:			p.addError(fmt.Sprintf(&quot;expected type after %s, got %s&quot;, token.Literal, p.peekToken.Type))
+2772:		p.addError(fmt.Sprintf(&quot;unexpected token in expression: %s&quot;, p.curToken.Type))</pre></div><button class="expand-btn">Show more</button></div></div></div></div>
+<div class="message assistant" id="msg-2026-02-22T17-17-22-702Z"><div class="message-header"><span class="role-label">Assistant</span><a href="#msg-2026-02-22T17-17-22-702Z" class="timestamp-link"><time datetime="2026-02-22T17:17:22.702Z" data-timestamp="2026-02-22T17:17:22.702Z">2026-02-22T17:17:22.702Z</time></a></div><div class="message-content">
+<div class="thinking"><div class="thinking-label">Thinking</div><p>Now I have a clear picture. Let me also look at how <code>preproc_test.go</code> looks to understand the testing patterns.</p></div></div></div>
+<div class="message assistant" id="msg-2026-02-22T17-17-23-185Z"><div class="message-header"><span class="role-label">Assistant</span><a href="#msg-2026-02-22T17-17-23-185Z" class="timestamp-link"><time datetime="2026-02-22T17:17:23.185Z" data-timestamp="2026-02-22T17:17:23.185Z">2026-02-22T17:17:23.185Z</time></a></div><div class="message-content">
+<div class="assistant-text"><p>Now let me check existing preprocessor tests.</p></div></div></div>
+<div class="message assistant" id="msg-2026-02-22T17-17-23-558Z"><div class="message-header"><span class="role-label">Assistant</span><a href="#msg-2026-02-22T17-17-23-558Z" class="timestamp-link"><time datetime="2026-02-22T17:17:23.558Z" data-timestamp="2026-02-22T17:17:23.558Z">2026-02-22T17:17:23.558Z</time></a></div><div class="message-content">
+<div class="tool-use" data-tool-id="toolu_013gER6iEeDU4PpbUAWLGrif"><div class="tool-header"><span class="tool-icon">⚙</span> Glob</div><div class="truncatable"><div class="truncatable-content"><pre class="json">{
+  &#34;pattern&#34;: &#34;preproc/*_test.go&#34;
+}</pre></div><button class="expand-btn">Show more</button></div></div></div></div>
+<div class="message tool-reply" id="msg-2026-02-22T17-17-23-677Z"><div class="message-header"><span class="role-label">Tool reply</span><a href="#msg-2026-02-22T17-17-23-677Z" class="timestamp-link"><time datetime="2026-02-22T17:17:23.677Z" data-timestamp="2026-02-22T17:17:23.677Z">2026-02-22T17:17:23.677Z</time></a></div><div class="message-content"><div class="tool-result"><div class="truncatable"><div class="truncatable-content"><pre>/home/david/projects/code-associates/occam2go/preproc/preproc_test.go</pre></div><button class="expand-btn">Show more</button></div></div></div></div>
+<div class="message assistant" id="msg-2026-02-22T17-17-26-360Z"><div class="message-header"><span class="role-label">Assistant</span><a href="#msg-2026-02-22T17-17-26-360Z" class="timestamp-link"><time datetime="2026-02-22T17:17:26.360Z" data-timestamp="2026-02-22T17:17:26.360Z">2026-02-22T17:17:26.360Z</time></a></div><div class="message-content">
+<div class="tool-use" data-tool-id="toolu_01NJW71dVfYNCAZJByHrFydV"><div class="tool-header"><span class="tool-icon">⚙</span> Read</div><div class="truncatable"><div class="truncatable-content"><pre class="json">{
+  &#34;file_path&#34;: &#34;/home/david/projects/code-associates/occam2go/preproc/preproc_test.go&#34;,
+  &#34;limit&#34;: 50
+}</pre></div><button class="expand-btn">Show more</button></div></div></div></div>
+<div class="message tool-reply" id="msg-2026-02-22T17-17-26-373Z"><div class="message-header"><span class="role-label">Tool reply</span><a href="#msg-2026-02-22T17-17-26-373Z" class="timestamp-link"><time datetime="2026-02-22T17:17:26.373Z" data-timestamp="2026-02-22T17:17:26.373Z">2026-02-22T17:17:26.373Z</time></a></div><div class="message-content"><div class="tool-result"><div class="truncatable"><div class="truncatable-content"><pre>     1→package preproc
+     2→
+     3→import (
+     4→	&quot;os&quot;
+     5→	&quot;path/filepath&quot;
+     6→	&quot;strings&quot;
+     7→	&quot;testing&quot;
+     8→)
+     9→
+    10→func TestDefineAndIfDefined(t *testing.T) {
+    11→	pp := New()
+    12→	src := `#DEFINE FOO
+    13→#IF DEFINED (FOO)
+    14→hello
+    15→#ENDIF
+    16→`
+    17→	out, err := pp.ProcessSource(src)
+    18→	if err != nil {
+    19→		t.Fatal(err)
+    20→	}
+    21→	lines := strings.Split(out, &quot;\n&quot;)
+    22→	if strings.TrimSpace(lines[2]) != &quot;hello&quot; {
+    23→		t.Errorf(&quot;expected &#x27;hello&#x27; on line 3, got %q&quot;, lines[2])
+    24→	}
+    25→}
+    26→
+    27→func TestIfFalseExcludes(t *testing.T) {
+    28→	pp := New()
+    29→	src := `#IF FALSE
+    30→visible
+    31→#ENDIF
+    32→`
+    33→	out, err := pp.ProcessSource(src)
+    34→	if err != nil {
+    35→		t.Fatal(err)
+    36→	}
+    37→	if strings.Contains(out, &quot;visible&quot;) {
+    38→		t.Error(&quot;expected #IF FALSE to exclude content&quot;)
+    39→	}
+    40→}
+    41→
+    42→func TestIfTrue(t *testing.T) {
+    43→	pp := New()
+    44→	src := `#IF TRUE
+    45→visible
+    46→#ENDIF
+    47→`
+    48→	out, err := pp.ProcessSource(src)
+    49→	if err != nil {
+    50→		t.Fatal(err)</pre></div><button class="expand-btn">Show more</button></div></div></div></div>
+<div class="message assistant" id="msg-2026-02-22T17-17-29-236Z"><div class="message-header"><span class="role-label">Assistant</span><a href="#msg-2026-02-22T17-17-29-236Z" class="timestamp-link"><time datetime="2026-02-22T17:17:29.236Z" data-timestamp="2026-02-22T17:17:29.236Z">2026-02-22T17:17:29.236Z</time></a></div><div class="message-content">
+<div class="assistant-text"><p>Good, I have all the information I need. Let me design the plan.</p></div></div></div>
+<div class="message assistant" id="msg-2026-02-22T17-17-49-325Z"><div class="message-header"><span class="role-label">Assistant</span><a href="#msg-2026-02-22T17-17-49-325Z" class="timestamp-link"><time datetime="2026-02-22T17:17:49.325Z" data-timestamp="2026-02-22T17:17:49.325Z">2026-02-22T17:17:49.325Z</time></a></div><div class="message-content"><div class="file-tool write-tool" data-tool-id="toolu_01SLtYsZSPRGrW3tzyArNTXC">
+<div class="file-tool-header write-header"><span class="file-tool-icon">📝</span> Write <span class="file-tool-path">parsed-swimming-treehouse.md</span></div>
+<div class="file-tool-fullpath">/home/david/.claude/plans/parsed-swimming-treehouse.md</div>
+<div class="truncatable"><div class="truncatable-content"><pre class="file-content"># Plan: Add source file tracking to parser error messages (Issue #41)
+
+## Context
+
+Parser error messages currently show line numbers relative to the preprocessed (expanded) source. When `#INCLUDE` pulls in a large library like course.module, errors say &#34;line 4335&#34; even though the user&#39;s source file is small. This makes errors very hard to diagnose. We need to map expanded line numbers back to original file:line pairs.
+
+## Approach
+
+Build a **source map** in the preprocessor during expansion, then use it in `main.go` to translate error line numbers before display. This is the least invasive approach — no changes to lexer, parser, or AST.
+
+## Changes
+
+### 1. `preproc/preproc.go` — Build source map during expansion
+
+- Add `SourceLoc` struct: `{File string, Line int}`
+- Add `sourceMap []SourceLoc` field to `Preprocessor`
+- Add `SourceMap() []SourceLoc` getter method
+- Pass filename through `processSource` (new parameter) and `ProcessFile`
+- `ProcessSource` passes `&#34;&lt;input&gt;&#34;` as the filename (no file context)
+- For each output line produced, append a `SourceLoc{filename, originalLine}` entry
+- For `#INCLUDE` lines: the recursive `ProcessFile` → `processSource` call populates entries for included content; the current line does NOT get an entry
+- For directives that emit blank lines (`#DEFINE`, `#IF`, `#ELSE`, `#ENDIF`, `#COMMENT`, etc.): append `{filename, lineNum}`
+- For skipped lines (inactive condStack): append `{filename, lineNum}`
+- For regular source lines: append `{filename, lineNum}`
+- Source map is 0-indexed (entry 0 = expanded line 1)
+
+### 2. `main.go` — Translate error line numbers using source map
+
+- After parsing, if there are errors, get `pp.SourceMap()`
+- For each error string matching `&#34;line NNN: ...&#34;`, look up NNN in the source map
+- Replace with `&#34;filename:line: ...&#34;` format (standard compiler error format)
+- If the file is the top-level input file, can show just `&#34;filename:line:&#34;` or the full path
+- If lookup fails (out of bounds), fall through to original message
+
+### 3. `preproc/preproc_test.go` — Test source map
+
+- Test that `ProcessFile` with `#INCLUDE` produces correct source map entries
+- Test that non-included file maps lines 1:1
+- Test that `ProcessSource` uses `&#34;&lt;input&gt;&#34;` as filename
+
+## Files to modify
+
+- `preproc/preproc.go` — add SourceLoc, sourceMap field, pass filename, build map
+- `main.go` — translate error messages using source map
+- `preproc/preproc_test.go` — add source map tests
+
+## Verification
+
+```bash
+go test ./...                    # all tests pass
+# Manual test with course module:
+./occam2go -I kroc/modules/course/libsrc -D TARGET.BITS.PER.WORD=32 -o test.go kroc/modules/course/examples/test_utils.occ
+# Error messages should now show filename:line instead of just line NNN
+```
+</pre></div><button class="expand-btn">Show more</button></div>
+</div></div></div>
+<div class="message tool-reply" id="msg-2026-02-22T17-17-49-465Z"><div class="message-header"><span class="role-label">Tool reply</span><a href="#msg-2026-02-22T17-17-49-465Z" class="timestamp-link"><time datetime="2026-02-22T17:17:49.465Z" data-timestamp="2026-02-22T17:17:49.465Z">2026-02-22T17:17:49.465Z</time></a></div><div class="message-content"><div class="tool-result"><div class="truncatable"><div class="truncatable-content"><pre>File created successfully at: /home/david/.claude/plans/parsed-swimming-treehouse.md</pre></div><button class="expand-btn">Show more</button></div></div></div></div>
+<div class="message assistant" id="msg-2026-02-22T17-17-51-676Z"><div class="message-header"><span class="role-label">Assistant</span><a href="#msg-2026-02-22T17-17-51-676Z" class="timestamp-link"><time datetime="2026-02-22T17:17:51.676Z" data-timestamp="2026-02-22T17:17:51.676Z">2026-02-22T17:17:51.676Z</time></a></div><div class="message-content">
+<div class="tool-use" data-tool-id="toolu_01PPomS2FNfqFPZY6ugnBQie"><div class="tool-header"><span class="tool-icon">⚙</span> ExitPlanMode</div><div class="truncatable"><div class="truncatable-content"><pre class="json">{
+  &#34;plan&#34;: &#34;# Plan: Add source file tracking to parser error messages (Issue #41)\n\n## Context\n\nParser error messages currently show line numbers relative to the preprocessed (expanded) source. When `#INCLUDE` pulls in a large library like course.module, errors say \&#34;line 4335\&#34; even though the user&#39;s source file is small. This makes errors very hard to diagnose. We need to map expanded line numbers back to original file:line pairs.\n\n## Approach\n\nBuild a **source map** in the preprocessor during expansion, then use it in `main.go` to translate error line numbers before display. This is the least invasive approach — no changes to lexer, parser, or AST.\n\n## Changes\n\n### 1. `preproc/preproc.go` — Build source map during expansion\n\n- Add `SourceLoc` struct: `{File string, Line int}`\n- Add `sourceMap []SourceLoc` field to `Preprocessor`\n- Add `SourceMap() []SourceLoc` getter method\n- Pass filename through `processSource` (new parameter) and `ProcessFile`\n- `ProcessSource` passes `\&#34;&lt;input&gt;\&#34;` as the filename (no file context)\n- For each output line produced, append a `SourceLoc{filename, originalLine}` entry\n- For `#INCLUDE` lines: the recursive `ProcessFile` → `processSource` call populates entries for included content; the current line does NOT get an entry\n- For directives that emit blank lines (`#DEFINE`, `#IF`, `#ELSE`, `#ENDIF`, `#COMMENT`, etc.): append `{filename, lineNum}`\n- For skipped lines (inactive condStack): append `{filename, lineNum}`\n- For regular source lines: append `{filename, lineNum}`\n- Source map is 0-indexed (entry 0 = expanded line 1)\n\n### 2. `main.go` — Translate error line numbers using source map\n\n- After parsing, if there are errors, get `pp.SourceMap()`\n- For each error string matching `\&#34;line NNN: ...\&#34;`, look up NNN in the source map\n- Replace with `\&#34;filename:line: ...\&#34;` format (standard compiler error format)\n- If the file is the top-level input file, can show just `\&#34;filename:line:\&#34;` or the full path\n- If lookup fails (out of bounds), fall through to original message\n\n### 3. `preproc/preproc_test.go` — Test source map\n\n- Test that `ProcessFile` with `#INCLUDE` produces correct source map entries\n- Test that non-included file maps lines 1:1\n- Test that `ProcessSource` uses `\&#34;&lt;input&gt;\&#34;` as filename\n\n## Files to modify\n\n- `preproc/preproc.go` — add SourceLoc, sourceMap field, pass filename, build map\n- `main.go` — translate error messages using source map\n- `preproc/preproc_test.go` — add source map tests\n\n## Verification\n\n```bash\ngo test ./...                    # all tests pass\n# Manual test with course module:\n./occam2go -I kroc/modules/course/libsrc -D TARGET.BITS.PER.WORD=32 -o test.go kroc/modules/course/examples/test_utils.occ\n# Error messages should now show filename:line instead of just line NNN\n```\n&#34;
+}</pre></div><button class="expand-btn">Show more</button></div></div></div></div>
+<div class="message tool-reply" id="msg-2026-02-22T17-21-24-145Z"><div class="message-header"><span class="role-label">Tool reply</span><a href="#msg-2026-02-22T17-21-24-145Z" class="timestamp-link"><time datetime="2026-02-22T17:21:24.145Z" data-timestamp="2026-02-22T17:21:24.145Z">2026-02-22T17:21:24.145Z</time></a></div><div class="message-content"><div class="tool-result tool-error"><div class="truncatable"><div class="truncatable-content"><pre>The user doesn&#x27;t want to proceed with this tool use. The tool use was rejected (eg. if it was a file edit, the new_string was NOT written to the file). STOP what you are doing and wait for the user to tell you how to proceed.</pre></div><button class="expand-btn">Show more</button></div></div></div></div>
+<div class="message user" id="msg-2026-02-22T17-21-24-146Z"><div class="message-header"><span class="role-label">User</span><a href="#msg-2026-02-22T17-21-24-146Z" class="timestamp-link"><time datetime="2026-02-22T17:21:24.146Z" data-timestamp="2026-02-22T17:21:24.146Z">2026-02-22T17:21:24.146Z</time></a></div><div class="message-content">
+<div class="assistant-text"><p>[Request interrupted by user for tool use]</p></div></div></div>
+        
+
+<div class="pagination"><a href="index.html" class="index-link">Index</a></div>
+
+    </div>
+    <script>
+document.querySelectorAll('time[data-timestamp]').forEach(function(el) {
+    const timestamp = el.getAttribute('data-timestamp');
+    const date = new Date(timestamp);
+    const now = new Date();
+    const isToday = date.toDateString() === now.toDateString();
+    const timeStr = date.toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' });
+    if (isToday) { el.textContent = timeStr; }
+    else { el.textContent = date.toLocaleDateString(undefined, { month: 'short', day: 'numeric' }) + ' ' + timeStr; }
+});
+document.querySelectorAll('pre.json').forEach(function(el) {
+    let text = el.textContent;
+    text = text.replace(/"([^"]+)":/g, '<span style="color: #ce93d8">"$1"</span>:');
+    text = text.replace(/: "([^"]*)"/g, ': <span style="color: #81d4fa">"$1"</span>');
+    text = text.replace(/: (\d+)/g, ': <span style="color: #ffcc80">$1</span>');
+    text = text.replace(/: (true|false|null)/g, ': <span style="color: #f48fb1">$1</span>');
+    el.innerHTML = text;
+});
+document.querySelectorAll('.truncatable').forEach(function(wrapper) {
+    const content = wrapper.querySelector('.truncatable-content');
+    const btn = wrapper.querySelector('.expand-btn');
+    if (content.scrollHeight > 250) {
+        wrapper.classList.add('truncated');
+        btn.addEventListener('click', function() {
+            if (wrapper.classList.contains('truncated')) { wrapper.classList.remove('truncated'); wrapper.classList.add('expanded'); btn.textContent = 'Show less'; }
+            else { wrapper.classList.remove('expanded'); wrapper.classList.add('truncated'); btn.textContent = 'Show more'; }
+        });
+    }
+});
+</script>
+</body>
+</html>
