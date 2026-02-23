@@ -1,0 +1,934 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Claude Code transcript - page 1</title>
+    <style>
+:root { --bg-color: #f5f5f5; --card-bg: #ffffff; --user-bg: #e3f2fd; --user-border: #1976d2; --assistant-bg: #f5f5f5; --assistant-border: #9e9e9e; --thinking-bg: #fff8e1; --thinking-border: #ffc107; --thinking-text: #666; --tool-bg: #f3e5f5; --tool-border: #9c27b0; --tool-result-bg: #e8f5e9; --tool-error-bg: #ffebee; --text-color: #212121; --text-muted: #757575; --code-bg: #263238; --code-text: #aed581; }
+* { box-sizing: border-box; }
+body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: var(--bg-color); color: var(--text-color); margin: 0; padding: 16px; line-height: 1.6; }
+.container { max-width: 800px; margin: 0 auto; }
+h1 { font-size: 1.5rem; margin-bottom: 24px; padding-bottom: 8px; border-bottom: 2px solid var(--user-border); }
+.header-row { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; border-bottom: 2px solid var(--user-border); padding-bottom: 8px; margin-bottom: 24px; }
+.header-row h1 { border-bottom: none; padding-bottom: 0; margin-bottom: 0; flex: 1; min-width: 200px; }
+.message { margin-bottom: 16px; border-radius: 12px; overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+.message.user { background: var(--user-bg); border-left: 4px solid var(--user-border); }
+.message.assistant { background: var(--card-bg); border-left: 4px solid var(--assistant-border); }
+.message.tool-reply { background: #fff8e1; border-left: 4px solid #ff9800; }
+.tool-reply .role-label { color: #e65100; }
+.tool-reply .tool-result { background: transparent; padding: 0; margin: 0; }
+.tool-reply .tool-result .truncatable.truncated::after { background: linear-gradient(to bottom, transparent, #fff8e1); }
+.message-header { display: flex; justify-content: space-between; align-items: center; padding: 8px 16px; background: rgba(0,0,0,0.03); font-size: 0.85rem; }
+.role-label { font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; }
+.user .role-label { color: var(--user-border); }
+time { color: var(--text-muted); font-size: 0.8rem; }
+.timestamp-link { color: inherit; text-decoration: none; }
+.timestamp-link:hover { text-decoration: underline; }
+.message:target { animation: highlight 2s ease-out; }
+@keyframes highlight { 0% { background-color: rgba(25, 118, 210, 0.2); } 100% { background-color: transparent; } }
+.message-content { padding: 16px; }
+.message-content p { margin: 0 0 12px 0; }
+.message-content p:last-child { margin-bottom: 0; }
+.thinking { background: var(--thinking-bg); border: 1px solid var(--thinking-border); border-radius: 8px; padding: 12px; margin: 12px 0; font-size: 0.9rem; color: var(--thinking-text); }
+.thinking-label { font-size: 0.75rem; font-weight: 600; text-transform: uppercase; color: #f57c00; margin-bottom: 8px; }
+.thinking p { margin: 8px 0; }
+.assistant-text { margin: 8px 0; }
+.tool-use { background: var(--tool-bg); border: 1px solid var(--tool-border); border-radius: 8px; padding: 12px; margin: 12px 0; }
+.tool-header { font-weight: 600; color: var(--tool-border); margin-bottom: 8px; display: flex; align-items: center; gap: 8px; }
+.tool-icon { font-size: 1.1rem; }
+.tool-description { font-size: 0.9rem; color: var(--text-muted); margin-bottom: 8px; font-style: italic; }
+.tool-result { background: var(--tool-result-bg); border-radius: 8px; padding: 12px; margin: 12px 0; }
+.tool-result.tool-error { background: var(--tool-error-bg); }
+.file-tool { border-radius: 8px; padding: 12px; margin: 12px 0; }
+.write-tool { background: linear-gradient(135deg, #e3f2fd 0%, #e8f5e9 100%); border: 1px solid #4caf50; }
+.edit-tool { background: linear-gradient(135deg, #fff3e0 0%, #fce4ec 100%); border: 1px solid #ff9800; }
+.file-tool-header { font-weight: 600; margin-bottom: 4px; display: flex; align-items: center; gap: 8px; font-size: 0.95rem; }
+.write-header { color: #2e7d32; }
+.edit-header { color: #e65100; }
+.file-tool-icon { font-size: 1rem; }
+.file-tool-path { font-family: monospace; background: rgba(0,0,0,0.08); padding: 2px 8px; border-radius: 4px; }
+.file-tool-fullpath { font-family: monospace; font-size: 0.8rem; color: var(--text-muted); margin-bottom: 8px; word-break: break-all; }
+.file-content { margin: 0; }
+.edit-section { display: flex; margin: 4px 0; border-radius: 4px; overflow: hidden; }
+.edit-label { padding: 8px 12px; font-weight: bold; font-family: monospace; display: flex; align-items: flex-start; }
+.edit-old { background: #fce4ec; }
+.edit-old .edit-label { color: #b71c1c; background: #f8bbd9; }
+.edit-old .edit-content { color: #880e4f; }
+.edit-new { background: #e8f5e9; }
+.edit-new .edit-label { color: #1b5e20; background: #a5d6a7; }
+.edit-new .edit-content { color: #1b5e20; }
+.edit-content { margin: 0; flex: 1; background: transparent; font-size: 0.85rem; }
+.edit-replace-all { font-size: 0.75rem; font-weight: normal; color: var(--text-muted); }
+.write-tool .truncatable.truncated::after { background: linear-gradient(to bottom, transparent, #e6f4ea); }
+.edit-tool .truncatable.truncated::after { background: linear-gradient(to bottom, transparent, #fff0e5); }
+.todo-list { background: linear-gradient(135deg, #e8f5e9 0%, #f1f8e9 100%); border: 1px solid #81c784; border-radius: 8px; padding: 12px; margin: 12px 0; }
+.todo-header { font-weight: 600; color: #2e7d32; margin-bottom: 10px; display: flex; align-items: center; gap: 8px; font-size: 0.95rem; }
+.todo-items { list-style: none; margin: 0; padding: 0; }
+.todo-item { display: flex; align-items: flex-start; gap: 10px; padding: 6px 0; border-bottom: 1px solid rgba(0,0,0,0.06); font-size: 0.9rem; }
+.todo-item:last-child { border-bottom: none; }
+.todo-icon { flex-shrink: 0; width: 20px; height: 20px; display: flex; align-items: center; justify-content: center; font-weight: bold; border-radius: 50%; }
+.todo-completed .todo-icon { color: #2e7d32; background: rgba(46, 125, 50, 0.15); }
+.todo-completed .todo-content { color: #558b2f; text-decoration: line-through; }
+.todo-in-progress .todo-icon { color: #f57c00; background: rgba(245, 124, 0, 0.15); }
+.todo-in-progress .todo-content { color: #e65100; font-weight: 500; }
+.todo-pending .todo-icon { color: #757575; background: rgba(0,0,0,0.05); }
+.todo-pending .todo-content { color: #616161; }
+pre { background: var(--code-bg); color: var(--code-text); padding: 12px; border-radius: 6px; overflow-x: auto; font-size: 0.85rem; line-height: 1.5; margin: 8px 0; white-space: pre-wrap; word-wrap: break-word; }
+pre.json { color: #e0e0e0; }
+code { background: rgba(0,0,0,0.08); padding: 2px 6px; border-radius: 4px; font-size: 0.9em; }
+pre code { background: none; padding: 0; }
+.user-content { margin: 0; }
+.truncatable { position: relative; }
+.truncatable.truncated .truncatable-content { max-height: 200px; overflow: hidden; }
+.truncatable.truncated::after { content: ''; position: absolute; bottom: 32px; left: 0; right: 0; height: 60px; background: linear-gradient(to bottom, transparent, var(--card-bg)); pointer-events: none; }
+.message.user .truncatable.truncated::after { background: linear-gradient(to bottom, transparent, var(--user-bg)); }
+.message.tool-reply .truncatable.truncated::after { background: linear-gradient(to bottom, transparent, #fff8e1); }
+.tool-use .truncatable.truncated::after { background: linear-gradient(to bottom, transparent, var(--tool-bg)); }
+.tool-result .truncatable.truncated::after { background: linear-gradient(to bottom, transparent, var(--tool-result-bg)); }
+.expand-btn { display: none; width: 100%; padding: 8px 16px; margin-top: 4px; background: rgba(0,0,0,0.05); border: 1px solid rgba(0,0,0,0.1); border-radius: 6px; cursor: pointer; font-size: 0.85rem; color: var(--text-muted); }
+.expand-btn:hover { background: rgba(0,0,0,0.1); }
+.truncatable.truncated .expand-btn, .truncatable.expanded .expand-btn { display: block; }
+.pagination { display: flex; justify-content: center; gap: 8px; margin: 24px 0; flex-wrap: wrap; }
+.pagination a, .pagination span { padding: 5px 10px; border-radius: 6px; text-decoration: none; font-size: 0.85rem; }
+.pagination a { background: var(--card-bg); color: var(--user-border); border: 1px solid var(--user-border); }
+.pagination a:hover { background: var(--user-bg); }
+.pagination .current { background: var(--user-border); color: white; }
+.pagination .disabled { color: var(--text-muted); border: 1px solid #ddd; }
+.pagination .index-link { background: var(--user-border); color: white; }
+details.continuation { margin-bottom: 16px; }
+details.continuation summary { cursor: pointer; padding: 12px 16px; background: var(--user-bg); border-left: 4px solid var(--user-border); border-radius: 12px; font-weight: 500; color: var(--text-muted); }
+details.continuation summary:hover { background: rgba(25, 118, 210, 0.15); }
+details.continuation[open] summary { border-radius: 12px 12px 0 0; margin-bottom: 0; }
+.index-item { margin-bottom: 16px; border-radius: 12px; overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,0.1); background: var(--user-bg); border-left: 4px solid var(--user-border); }
+.index-item a { display: block; text-decoration: none; color: inherit; }
+.index-item a:hover { background: rgba(25, 118, 210, 0.1); }
+.index-item-header { display: flex; justify-content: space-between; align-items: center; padding: 8px 16px; background: rgba(0,0,0,0.03); font-size: 0.85rem; }
+.index-item-number { font-weight: 600; color: var(--user-border); }
+.index-item-content { padding: 16px; }
+.index-item-stats { padding: 8px 16px 12px 32px; font-size: 0.85rem; color: var(--text-muted); border-top: 1px solid rgba(0,0,0,0.06); }
+.index-item-commit { margin-top: 6px; padding: 4px 8px; background: #fff3e0; border-radius: 4px; font-size: 0.85rem; color: #e65100; }
+.index-item-commit code { background: rgba(0,0,0,0.08); padding: 1px 4px; border-radius: 3px; font-size: 0.8rem; margin-right: 6px; }
+.commit-card { margin: 8px 0; padding: 10px 14px; background: #fff3e0; border-left: 4px solid #ff9800; border-radius: 6px; }
+.commit-card a { text-decoration: none; color: #5d4037; display: block; }
+.commit-card a:hover { color: #e65100; }
+.commit-card-hash { font-family: monospace; color: #e65100; font-weight: 600; margin-right: 8px; }
+.index-commit { margin-bottom: 12px; padding: 10px 16px; background: #fff3e0; border-left: 4px solid #ff9800; border-radius: 8px; box-shadow: 0 1px 2px rgba(0,0,0,0.05); }
+.index-commit a { display: block; text-decoration: none; color: inherit; }
+.index-commit a:hover { background: rgba(255, 152, 0, 0.1); margin: -10px -16px; padding: 10px 16px; border-radius: 8px; }
+.index-commit-header { display: flex; justify-content: space-between; align-items: center; font-size: 0.85rem; margin-bottom: 4px; }
+.index-commit-hash { font-family: monospace; color: #e65100; font-weight: 600; }
+.index-commit-msg { color: #5d4037; }
+.index-item-long-text { margin-top: 8px; padding: 12px; background: var(--card-bg); border-radius: 8px; border-left: 3px solid var(--assistant-border); }
+.index-item-long-text .truncatable.truncated::after { background: linear-gradient(to bottom, transparent, var(--card-bg)); }
+.index-item-long-text-content { color: var(--text-color); }
+#search-box { display: none; align-items: center; gap: 8px; }
+#search-box input { padding: 6px 12px; border: 1px solid var(--assistant-border); border-radius: 6px; font-size: 16px; width: 180px; }
+#search-box button, #modal-search-btn, #modal-close-btn { background: var(--user-border); color: white; border: none; border-radius: 6px; padding: 6px 10px; cursor: pointer; display: flex; align-items: center; justify-content: center; }
+#search-box button:hover, #modal-search-btn:hover { background: #1565c0; }
+#modal-close-btn { background: var(--text-muted); margin-left: 8px; }
+#modal-close-btn:hover { background: #616161; }
+#search-modal[open] { border: none; border-radius: 12px; box-shadow: 0 4px 24px rgba(0,0,0,0.2); padding: 0; width: 90vw; max-width: 900px; height: 80vh; max-height: 80vh; display: flex; flex-direction: column; }
+#search-modal::backdrop { background: rgba(0,0,0,0.5); }
+.search-modal-header { display: flex; align-items: center; gap: 8px; padding: 16px; border-bottom: 1px solid var(--assistant-border); background: var(--bg-color); border-radius: 12px 12px 0 0; }
+.search-modal-header input { flex: 1; padding: 8px 12px; border: 1px solid var(--assistant-border); border-radius: 6px; font-size: 16px; }
+#search-status { padding: 8px 16px; font-size: 0.85rem; color: var(--text-muted); border-bottom: 1px solid rgba(0,0,0,0.06); }
+#search-results { flex: 1; overflow-y: auto; padding: 16px; }
+.search-result { margin-bottom: 16px; border-radius: 8px; overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+.search-result a { display: block; text-decoration: none; color: inherit; }
+.search-result a:hover { background: rgba(25, 118, 210, 0.05); }
+.search-result-page { padding: 6px 12px; background: rgba(0,0,0,0.03); font-size: 0.8rem; color: var(--text-muted); border-bottom: 1px solid rgba(0,0,0,0.06); }
+.search-result-content { padding: 12px; }
+.search-result mark { background: #fff59d; padding: 1px 2px; border-radius: 2px; }
+@media (max-width: 600px) { body { padding: 8px; } .message, .index-item { border-radius: 8px; } .message-content, .index-item-content { padding: 12px; } pre { font-size: 0.8rem; padding: 8px; } #search-box input { width: 120px; } #search-modal[open] { width: 95vw; height: 90vh; } }
+</style>
+</head>
+<body>
+    <div class="container">
+        <h1><a href="index.html" style="color: inherit; text-decoration: none;">Claude Code transcript</a> - page 1/1</h1>
+        
+
+<div class="pagination"><a href="index.html" class="index-link">Index</a></div>
+
+        
+<div class="message user" id="msg-2026-02-23T03-28-34-082Z"><div class="message-header"><span class="role-label">User</span><a href="#msg-2026-02-23T03-28-34-082Z" class="timestamp-link"><time datetime="2026-02-23T03:28:34.082Z" data-timestamp="2026-02-23T03:28:34.082Z">2026-02-23T03:28:34.082Z</time></a></div><div class="message-content">
+<div class="user-content"><p>Please look at issue #56.</p></div></div></div>
+<div class="message assistant" id="msg-2026-02-23T03-28-36-778Z"><div class="message-header"><span class="role-label">Assistant</span><a href="#msg-2026-02-23T03-28-36-778Z" class="timestamp-link"><time datetime="2026-02-23T03:28:36.778Z" data-timestamp="2026-02-23T03:28:36.778Z">2026-02-23T03:28:36.778Z</time></a></div><div class="message-content">
+<div class="tool-use bash-tool" data-tool-id="toolu_01YbHjqVmcJNSA8CGynwRDJm">
+<div class="tool-header"><span class="tool-icon">$</span> Bash</div>
+<div class="tool-description">View GitHub issue #56</div><div class="truncatable"><div class="truncatable-content"><pre class="bash-command">gh issue view 56</pre></div><button class="expand-btn">Show more</button></div>
+</div></div></div>
+<div class="message tool-reply" id="msg-2026-02-23T03-28-41-099Z"><div class="message-header"><span class="role-label">Tool reply</span><a href="#msg-2026-02-23T03-28-41-099Z" class="timestamp-link"><time datetime="2026-02-23T03:28:41.099Z" data-timestamp="2026-02-23T03:28:41.099Z">2026-02-23T03:28:41.099Z</time></a></div><div class="message-content"><div class="tool-result"><div class="truncatable"><div class="truncatable-content"><pre>title:	boolVars map is global: name collisions cause invalid Go code
+state:	OPEN
+author:	associate-1
+labels:	
+comments:	0
+assignees:	
+projects:	
+milestone:	
+number:	56
+--
+## Summary
+
+The `boolVars` map in `codegen.go` is a flat, unscoped map keyed by variable name. When multiple scopes declare variables with the same name but different types, the map produces incorrect codegen.
+
+## Reproduction
+
+Transpile `cast.occ` with the course module included:
+
+```bash
+./occam2go -I kroc/modules/course/libsrc -D TARGET.BITS.PER.WORD=32 -o /tmp/cast.go kroc/modules/course/examples/cast.occ
+go vet /tmp/cast.go
+```
+
+```
+vet: /tmp/cast.go:2702:25: cannot use b (variable of type byte) as bool value in argument to _boolToInt
+```
+
+## Root cause
+
+`string.occ` (included via `course.module`) declares `BOOL b:` inside a proc. This registers `&quot;b&quot;` in the global `boolVars` map. Later, `cast.occ` declares `BYTE b:` in a different scope. When `INT16 b` is encountered, `isBoolExpression()` checks `g.boolVars[&quot;b&quot;]` → `true`, so it emits `int16(_boolToInt(b))` instead of the correct `int16(b)`.
+
+The generated Go code:
+```go
+// wrong: b is byte, not bool
+i16 = int16(_boolToInt(b))
+
+// correct:
+i16 = int16(b)
+```
+
+## Affected files
+
+- `cast.occ`
+- `casting.occ`
+- Potentially any program that includes modules declaring BOOL variables with common names
+
+## Suggested fix
+
+Scope `boolVars` per proc/function body, or use a stack-based approach (push on proc entry, pop on proc exit), similar to how `procSigs` scoping works with `collectNestedProcSigsScoped()`.
+
+## Related
+
+Tracking issue: #43</pre></div><button class="expand-btn">Show more</button></div></div></div></div>
+<div class="message assistant" id="msg-2026-02-23T03-28-44-219Z"><div class="message-header"><span class="role-label">Assistant</span><a href="#msg-2026-02-23T03-28-44-219Z" class="timestamp-link"><time datetime="2026-02-23T03:28:44.219Z" data-timestamp="2026-02-23T03:28:44.219Z">2026-02-23T03:28:44.219Z</time></a></div><div class="message-content">
+<div class="tool-use" data-tool-id="toolu_01WbDz3WfueaGv4a5KCgSyy2"><div class="tool-header"><span class="tool-icon">⚙</span> EnterPlanMode</div><div class="truncatable"><div class="truncatable-content"><pre class="json">{}</pre></div><button class="expand-btn">Show more</button></div></div></div></div>
+<div class="message tool-reply" id="msg-2026-02-23T03-28-44-221Z"><div class="message-header"><span class="role-label">Tool reply</span><a href="#msg-2026-02-23T03-28-44-221Z" class="timestamp-link"><time datetime="2026-02-23T03:28:44.221Z" data-timestamp="2026-02-23T03:28:44.221Z">2026-02-23T03:28:44.221Z</time></a></div><div class="message-content"><div class="tool-result"><div class="truncatable"><div class="truncatable-content"><pre>Entered plan mode. You should now focus on exploring the codebase and designing an implementation approach.
+
+In plan mode, you should:
+1. Thoroughly explore the codebase to understand existing patterns
+2. Identify similar features and architectural approaches
+3. Consider multiple approaches and their trade-offs
+4. Use AskUserQuestion if you need to clarify the approach
+5. Design a concrete implementation strategy
+6. When ready, use ExitPlanMode to present your plan for approval
+
+Remember: DO NOT write or edit any files yet. This is a read-only exploration and planning phase.</pre></div><button class="expand-btn">Show more</button></div></div></div></div>
+<div class="message assistant" id="msg-2026-02-23T03-28-53-947Z"><div class="message-header"><span class="role-label">Assistant</span><a href="#msg-2026-02-23T03-28-53-947Z" class="timestamp-link"><time datetime="2026-02-23T03:28:53.947Z" data-timestamp="2026-02-23T03:28:53.947Z">2026-02-23T03:28:53.947Z</time></a></div><div class="message-content">
+<div class="tool-use" data-tool-id="toolu_01LqJQruAuU2adCufekDg8nN"><div class="tool-header"><span class="tool-icon">⚙</span> Task</div><div class="tool-description">Explore boolVars scoping</div><div class="truncatable"><div class="truncatable-content"><pre class="json">{
+  &#34;subagent_type&#34;: &#34;Explore&#34;,
+  &#34;prompt&#34;: &#34;I need to understand how `boolVars` is used in the codegen package and how similar scoping problems have been solved. Please explore:\n\n1. How `boolVars` is declared, populated, and used in `codegen/codegen.go`. Find all references to `boolVars` and `isBoolExpression`.\n2. How `procSigs` scoping works with `collectNestedProcSigsScoped()` - this is the pattern mentioned as a model for fixing boolVars.\n3. Are there any other maps/state in the Generator struct that might have similar scoping issues? Look at the Generator struct definition and note any variable-tracking maps.\n4. How proc/function bodies are generated - specifically the entry/exit points where scope push/pop could be added.\n\nBe very thorough - include line numbers and relevant code snippets.&#34;
+}</pre></div><button class="expand-btn">Show more</button></div></div></div></div>
+<div class="message tool-reply" id="msg-2026-02-23T03-30-09-229Z"><div class="message-header"><span class="role-label">Tool reply</span><a href="#msg-2026-02-23T03-30-09-229Z" class="timestamp-link"><time datetime="2026-02-23T03:30:09.229Z" data-timestamp="2026-02-23T03:30:09.229Z">2026-02-23T03:30:09.229Z</time></a></div><div class="message-content"><div class="tool-result"><div class="truncatable"><div class="truncatable-content"><pre class="json">[
+  {
+    &quot;type&quot;: &quot;text&quot;,
+    &quot;text&quot;: &quot;Perfect! Now I have all the information I need. Let me create a comprehensive report.\n\n## Comprehensive Exploration Report: `boolVars` Scoping Analysis\n\nI&#x27;ve thoroughly analyzed how `boolVars` is used, how scoping is handled in the codebase, and identified similar issues with other variable-tracking maps. Here&#x27;s my detailed report:\n\n---\n\n### 1. **How `boolVars` is Declared, Populated, and Used**\n\n#### Struct Definition (lines 38-39):\n```go\n// Bool variable tracking (for type conversion codegen)\nboolVars map[string]bool\n```\n\n#### Initialization (line 112):\nIn `Generate()` method:\n```go\ng.boolVars = make(map[string]bool)\n```\n\n#### Populated in Two Ways:\n\n**A. Package-level VarDecl (lines 1084-1088):**\n```go\nfunc (g *Generator) generateVarDecl(decl *ast.VarDecl) {\n    // ... \n    // Track BOOL variables for type conversion codegen\n    if decl.Type == \&quot;BOOL\&quot; {\n        for _, n := range decl.Names {\n            g.boolVars[n] = true\n        }\n    }\n}\n```\n\n**B. Pre-pass collection (lines 115-117):**\n```go\n// Pre-pass: collect BOOL variable names (needed before containsBoolConversion)\nfor _, stmt := range program.Statements {\n    g.collectBoolVars(stmt)\n}\n```\n\n#### `collectBoolVars()` Traversal (lines 1397-1441):\nRecursively traverses all statements to collect BOOL variable names:\n- **VarDecl case** (lines 1399-1404): Adds BOOL-typed variables\n- Recurses through: **SeqBlock, ParBlock, ProcDecl, FuncDecl, WhileLoop, IfStatement, CaseStatement**\n\n#### Usage (lines 2673-2688):\nIn `isBoolExpression()` method for type conversion codegen:\n```go\nfunc (g *Generator) isBoolExpression(expr ast.Expression) bool {\n    switch e := expr.(type) {\n    case *ast.BooleanLiteral:\n        return true\n    case *ast.Identifier:\n        return g.boolVars[e.Value]  // &lt;-- Lookup here (line 2675)\n    case *ast.UnaryExpr:\n        return e.Operator == \&quot;NOT\&quot;\n    case *ast.TypeConversion:\n        return e.TargetType == \&quot;BOOL\&quot;\n    case *ast.ParenExpr:\n        return g.isBoolExpression(e.Expr)\n    }\n    return false\n}\n```\n\nAlso used in line 2665:\n```go\nreturn tc.TargetType != \&quot;BOOL\&quot; &amp;&amp; g.isBoolExpression(tc.Expr)\n```\n\n---\n\n### 2. **How `procSigs` Scoping Works with `collectNestedProcSigsScoped()`**\n\nThis is the **model pattern for fixing `boolVars`**.\n\n#### Initial Collection (lines 149-155):\nPackage-level collection during pre-pass:\n```go\nif proc, ok := stmt.(*ast.ProcDecl); ok {\n    g.procSigs[proc.Name] = proc.Params\n    g.collectNestedProcSigs(proc.Body)  // Non-scoped, adds all nested procs globally\n}\n```\n\n#### Non-Scoped Traversal (lines 325-352):\n`collectNestedProcSigs()` adds ALL nested procs/funcs globally (problematic):\n```go\nfunc (g *Generator) collectNestedProcSigs(stmts []ast.Statement) {\n    for _, stmt := range stmts {\n        switch s := stmt.(type) {\n        case *ast.ProcDecl:\n            g.procSigs[s.Name] = s.Params  // Global, may conflict\n            g.collectNestedProcSigs(s.Body)\n        // ...\n        }\n    }\n}\n```\n\n#### Scoped Traversal (lines 354-389):\n`collectNestedProcSigsScoped()` saves old values to restore after scope:\n```go\nfunc (g *Generator) collectNestedProcSigsScoped(stmts []ast.Statement, oldSigs map[string][]ast.ProcParam) {\n    for _, stmt := range stmts {\n        switch s := stmt.(type) {\n        case *ast.ProcDecl:\n            if _, saved := oldSigs[s.Name]; !saved {\n                oldSigs[s.Name] = g.procSigs[s.Name] // Save old value (nil if not set)\n            }\n            g.procSigs[s.Name] = s.Params  // Override\n            g.collectNestedProcSigsScoped(s.Body, oldSigs)\n        // ...\n        }\n    }\n}\n```\n\n#### Scope Entry/Exit in `generateProcDecl()` (lines 1927-2018):\n\n**Entry** (lines 1994-1995):\n```go\n// Inside generateProcDecl() after writing func signature\noldSigs := make(map[string][]ast.ProcParam)\ng.collectNestedProcSigsScoped(proc.Body, oldSigs)\n\nfor _, stmt := range proc.Body {\n    g.generateStatement(stmt)\n}\n```\n\n**Exit/Restoration** (lines 2001-2008):\n```go\n// Restore overwritten signatures\nfor name, params := range oldSigs {\n    if params == nil {\n        delete(g.procSigs, name)\n    } else {\n        g.procSigs[name] = params\n    }\n}\n```\n\n---\n\n### 3. **Other Maps in Generator Struct with Similar Scoping Issues**\n\nI examined the struct definition (lines 11-48). Here are **ALL variable-tracking maps**:\n\n| Field | Type | Usage | Scoping |\n|-------|------|-------|---------|\n| `procSigs` | `map[string][]ast.ProcParam` | Proc/func signatures | **SCOPED** (via `collectNestedProcSigsScoped()`) |\n| `refParams` | `map[string]bool` | Reference parameters of current proc | **SCOPED** (saved/restored in `generateProcDecl()`, lines 1929, 2016) |\n| `protocolDefs` | `map[string]*ast.ProtocolDecl` | Protocol definitions | Global only (package-level) |\n| `chanProtocols` | `map[string]string` | Channel name → protocol mapping | **NOT SCOPED** ⚠️ |\n| `recordDefs` | `map[string]*ast.RecordDecl` | Record type definitions | Global only (package-level) |\n| `recordVars` | `map[string]string` | Variable name → record type | **NOT SCOPED** ⚠️ |\n| `boolVars` | `map[string]bool` | Variable name → is BOOL | **NOT SCOPED** ⚠️ |\n| `retypesRenames` | `map[string]string` | RETYPES param renames | **SCOPED** (saved/restored in `generateProcDecl()`, lines 1962, 2017) |\n\n**Three maps need scoping**: `boolVars`, `chanProtocols`, `recordVars`\n\n---\n\n### 4. **Proc/Function Body Generation Entry/Exit Points**\n\n#### In `generateProcDecl()` (lines 1927-2018):\n\n```\nEntry point (after line 1987, before line 1997):\n  L1987:  g.writeLine(fmt.Sprintf(\&quot;func %s(%s) {\&quot;, gName, params))\n  L1988:  g.indent++\n  L1989:  g.nestingLevel++\n  \n  L1991-1995: [SCOPE SETUP]\n               oldSigs := make(map[string][]ast.ProcParam)\n               g.collectNestedProcSigsScoped(proc.Body, oldSigs)\n  \n  L1997-1999: [BODY GENERATION]\n               for _, stmt := range proc.Body {\n                   g.generateStatement(stmt)\n               }\n  \n  L2001-2008: [SCOPE RESTORATION]\n               for name, params := range oldSigs {\n                   if params == nil {\n                       delete(g.procSigs, name)\n                   } else {\n                       g.procSigs[name] = params\n                   }\n               }\n  \n  L2010:  g.nestingLevel--\n  L2011:  g.indent--\n  L2012:  g.writeLine(\&quot;}\&quot;)\n```\n\n#### In `generateFuncDecl()` (lines 2103-2148):\n\n```\nEntry point (after line 2123, before line 2128):\n  L2123:  g.writeLine(fmt.Sprintf(\&quot;func %s(%s) %s {\&quot;, gName, params, returnTypeStr))\n  L2125:  g.indent++\n  L2126:  g.nestingLevel++\n  \n  L2128-2130: [BODY GENERATION - NO SCOPING!]\n               for _, stmt := range fn.Body {\n                   g.generateStatement(stmt)\n               }\n  \n  L2144:  g.nestingLevel--\n  L2145:  g.indent--\n  L2146:  g.writeLine(\&quot;}\&quot;)\n```\n\n**Important observation**: `generateFuncDecl()` has **no scoping logic** (no saved/restored maps), while `generateProcDecl()` has full scoping for `procSigs`, `refParams`, and `retypesRenames`.\n\n---\n\n### 5. **Detailed Reference Parameter Scoping Example** (lines 1927-2018)\n\nReference parameters are scoped similarly but with subtle differences:\n\n```go\nfunc (g *Generator) generateProcDecl(proc *ast.ProcDecl) {\n    // SAVE OLD CONTEXT\n    oldRefParams := g.refParams\n    newRefParams := make(map[string]bool)\n    \n    // INHERIT parent&#x27;s ref params for closure captures\n    if g.nestingLevel &gt; 0 {\n        for k, v := range oldRefParams {\n            newRefParams[k] = v\n        }\n    }\n    \n    // BUILD NEW CONTEXT from this proc&#x27;s params\n    for _, p := range proc.Params {\n        if !p.IsVal &amp;&amp; !p.IsChan &amp;&amp; ... {\n            newRefParams[p.Name] = true\n        } else {\n            delete(newRefParams, p.Name)  // Own param shadows inherited\n        }\n        // Register protocol/record mappings\n    }\n    g.refParams = newRefParams  // ACTIVATE NEW CONTEXT\n    \n    // ... proc body generation ...\n    \n    // RESTORE OLD CONTEXT\n    g.refParams = oldRefParams\n    g.retypesRenames = oldRenames\n}\n```\n\nKey difference from `procSigs`:\n- **`refParams`**: Completely replaced (new map) and restored (old map reinstated)\n- **`procSigs`**: Selectively overwritten and restored entry-by-entry\n\n---\n\n### 6. **How `collectBoolVars` is Called**\n\nOnly called **once** in the entire pipeline (line 116):\n```go\n// Pre-pass: collect BOOL variable names (needed before containsBoolConversion)\nfor _, stmt := range program.Statements {\n    g.collectBoolVars(stmt)\n}\n```\n\nThis is during the **package-level pre-pass** in `Generate()`, meaning:\n- All BOOL variables from the entire program are added to `g.boolVars`\n- **No scoping boundaries** → nested procs&#x27; BOOL variables pollute the global map\n- A BOOL variable in one nested proc can be seen as BOOL in a sibling nested proc\n\n---\n\n### Summary Table: State Scoping in Generator\n\n| Map | Scope | Entry | Exit | Model |\n|-----|-------|-------|------|-------|\n| `procSigs` | Per-proc | `collectNestedProcSigsScoped()` (L1995) | Restore loop (L2002-2008) | Selective restore |\n| `refParams` | Per-proc | Saved &amp; replaced (L1929, L1957) | Restored (L2016) | Full replacement |\n| `retypesRenames` | Per-proc | Saved &amp; cleared (L1962-1963) | Restored (L2017) | Full replacement |\n| `boolVars` | **GLOBAL** (broken) | Pre-pass only (L116) | Never | Needs scoping |\n| `chanProtocols` | **GLOBAL** (broken) | Pre-pass only (L162) | Never | Needs scoping |\n| `recordVars` | **GLOBAL** (broken) | Pre-pass only (L163) | Never | Needs scoping |\n\n---\n\nThis completes the thorough exploration. The scoping pattern is clear: **entry saves old state, body generation uses new state, exit restores old state**. Both `refParams` (full replacement) and `procSigs` (selective entry-by-entry) patterns are viable models for fixing `boolVars`, `chanProtocols`, and `recordVars`.&quot;
+  },
+  {
+    &quot;type&quot;: &quot;text&quot;,
+    &quot;text&quot;: &quot;agentId: aeff3118953ab822c (for resuming to continue this agent&#x27;s work if needed)\n&lt;usage&gt;total_tokens: 44747\ntool_uses: 37\nduration_ms: 75280&lt;/usage&gt;&quot;
+  }
+]</pre></div><button class="expand-btn">Show more</button></div></div></div></div>
+<div class="message assistant" id="msg-2026-02-23T03-30-44-843Z"><div class="message-header"><span class="role-label">Assistant</span><a href="#msg-2026-02-23T03-30-44-843Z" class="timestamp-link"><time datetime="2026-02-23T03:30:44.843Z" data-timestamp="2026-02-23T03:30:44.843Z">2026-02-23T03:30:44.843Z</time></a></div><div class="message-content">
+<div class="thinking"><div class="thinking-label">Thinking</div><p>The exploration agent did an excellent job. Let me now plan the implementation. The issue is clear:</p>
+<ol>
+<li><code>boolVars</code> is a flat global map - BOOL variables from any scope can pollute lookups in other scopes</li>
+<li>The fix should follow the existing <code>refParams</code> pattern (full replacement save/restore) since boolVars tracks variable names (not proc signatures)</li>
+<li>We also need to consider <code>chanProtocols</code> and <code>recordVars</code> which have the same issue, but the issue specifically asks about <code>boolVars</code></li>
+</ol>
+<p>Let me think about the approach:</p>
+<p>For <code>boolVars</code>:
+- At proc/func entry: save old <code>boolVars</code>, create new map inheriting parent scope entries, add this proc's own BOOL params/variables</p>
+<ul>
+<li>At proc/func exit: restore old <code>boolVars</code></li>
+</ul>
+<p>The tricky part is that <code>collectBoolVars</code> does a full AST traversal upfront, so I need to decide between scoping it per proc during generation versus removing the pre-pass and tracking dynamically as I generate code.</p>
+<p>Option B feels right—similar to how <code>refParams</code> works—where I add variables to <code>boolVars</code> when I encounter a BOOL VarDecl during generation, then save/restore the map on proc entry/exit. But the pre-pass serves a different purpose: it determines whether we need the <code>_boolToInt</code> helper at all. So I should keep the pre-pass for that, but make the runtime <code>boolVars</code> tracking scoped per procedure. the pre-pass collects all BOOL variables globally for the <code>containsBoolConversion</code> check, but during code generation I need to scope <code>boolVars</code> per procedure/function by saving and restoring the map at entry and exit, while letting <code>generateVarDecl</code> dynamically add local BOOL variables during body generation. for <code>generateFuncDecl</code>. The real issue is that the pre-pass collects everything globally, but during generation I need to scope variables per-procedure without inheriting from unrelated procedures. I think the cleanest approach is to clear <code>boolVars</code> before generation starts and rebuild it dynamically as I traverse each scope, so top-level procs stay isolated while nested procs can still inherit from their parent.</p>
+<p>Now I'm looking at how <code>collectBoolVars</code> feeds into <code>containsBoolConversion()</code>, and once that check completes I can reset the map. Then during code generation, each level manages its own scope: top-level declarations add to <code>boolVars</code>, procedure declarations save and restore the map while adding their BOOL parameters, and nested declarations within a procedure body add to the current scope's <code>boolVars</code>. Let me trace through the actual codegen.go to verify this works.</p></div></div></div>
+<div class="message assistant" id="msg-2026-02-23T03-30-44-850Z"><div class="message-header"><span class="role-label">Assistant</span><a href="#msg-2026-02-23T03-30-44-850Z" class="timestamp-link"><time datetime="2026-02-23T03:30:44.850Z" data-timestamp="2026-02-23T03:30:44.850Z">2026-02-23T03:30:44.850Z</time></a></div><div class="message-content">
+<div class="assistant-text"><p>Excellent exploration. Let me read the critical sections of the code to design the plan.</p></div></div></div>
+<div class="message assistant" id="msg-2026-02-23T03-30-45-185Z"><div class="message-header"><span class="role-label">Assistant</span><a href="#msg-2026-02-23T03-30-45-185Z" class="timestamp-link"><time datetime="2026-02-23T03:30:45.185Z" data-timestamp="2026-02-23T03:30:45.185Z">2026-02-23T03:30:45.185Z</time></a></div><div class="message-content">
+<div class="tool-use" data-tool-id="toolu_01QFYswmBiD1s1bv87497RbR"><div class="tool-header"><span class="tool-icon">⚙</span> Read</div><div class="truncatable"><div class="truncatable-content"><pre class="json">{
+  &#34;file_path&#34;: &#34;/home/david/projects/code-associates/occam2go/codegen/codegen.go&#34;,
+  &#34;offset&#34;: 105,
+  &#34;limit&#34;: 65
+}</pre></div><button class="expand-btn">Show more</button></div></div></div></div>
+<div class="message tool-reply" id="msg-2026-02-23T03-30-45-195Z"><div class="message-header"><span class="role-label">Tool reply</span><a href="#msg-2026-02-23T03-30-45-195Z" class="timestamp-link"><time datetime="2026-02-23T03:30:45.195Z" data-timestamp="2026-02-23T03:30:45.195Z">2026-02-23T03:30:45.195Z</time></a></div><div class="message-content"><div class="tool-result"><div class="truncatable"><div class="truncatable-content"><pre>   105→	g.procSigs = make(map[string][]ast.ProcParam)
+   106→	g.refParams = make(map[string]bool)
+   107→	g.protocolDefs = make(map[string]*ast.ProtocolDecl)
+   108→	g.chanProtocols = make(map[string]string)
+   109→	g.tmpCounter = 0
+   110→	g.recordDefs = make(map[string]*ast.RecordDecl)
+   111→	g.recordVars = make(map[string]string)
+   112→	g.boolVars = make(map[string]bool)
+   113→
+   114→	// Pre-pass: collect BOOL variable names (needed before containsBoolConversion)
+   115→	for _, stmt := range program.Statements {
+   116→		g.collectBoolVars(stmt)
+   117→	}
+   118→
+   119→	// First pass: collect procedure signatures, protocols, and check for PAR/print
+   120→	for _, stmt := range program.Statements {
+   121→		if g.containsPar(stmt) {
+   122→			g.needSync = true
+   123→		}
+   124→		if g.containsPrint(stmt) {
+   125→			g.needFmt = true
+   126→		}
+   127→		if g.containsTimer(stmt) {
+   128→			g.needTime = true
+   129→		}
+   130→		if g.containsStop(stmt) {
+   131→			g.needOs = true
+   132→			g.needFmt = true
+   133→		}
+   134→		if g.containsMostExpr(stmt) {
+   135→			g.needMath = true
+   136→		}
+   137→		if g.containsIntrinsics(stmt) {
+   138→			g.needMathBits = true
+   139→		}
+   140→		if g.containsRetypes(stmt) {
+   141→			g.needMath = true
+   142→		}
+   143→		if g.containsAltReplicator(stmt) {
+   144→			g.needReflect = true
+   145→		}
+   146→		if g.containsBoolConversion(stmt) {
+   147→			g.needBoolHelper = true
+   148→		}
+   149→		if proc, ok := stmt.(*ast.ProcDecl); ok {
+   150→			g.procSigs[proc.Name] = proc.Params
+   151→			g.collectNestedProcSigs(proc.Body)
+   152→		}
+   153→		if fn, ok := stmt.(*ast.FuncDecl); ok {
+   154→			g.procSigs[fn.Name] = fn.Params
+   155→		}
+   156→		if proto, ok := stmt.(*ast.ProtocolDecl); ok {
+   157→			g.protocolDefs[proto.Name] = proto
+   158→		}
+   159→		if rec, ok := stmt.(*ast.RecordDecl); ok {
+   160→			g.recordDefs[rec.Name] = rec
+   161→		}
+   162→		g.collectChanProtocols(stmt)
+   163→		g.collectRecordVars(stmt)
+   164→	}
+   165→
+   166→	// Separate protocol, record, procedure declarations from other statements
+   167→	var typeDecls []ast.Statement
+   168→	var procDecls []ast.Statement
+   169→	var mainStatements []ast.Statement</pre></div><button class="expand-btn">Show more</button></div></div></div></div>
+<div class="message assistant" id="msg-2026-02-23T03-30-45-891Z"><div class="message-header"><span class="role-label">Assistant</span><a href="#msg-2026-02-23T03-30-45-891Z" class="timestamp-link"><time datetime="2026-02-23T03:30:45.891Z" data-timestamp="2026-02-23T03:30:45.891Z">2026-02-23T03:30:45.891Z</time></a></div><div class="message-content">
+<div class="tool-use" data-tool-id="toolu_013AWUf4firiWwdKiMqqL2eW"><div class="tool-header"><span class="tool-icon">⚙</span> Read</div><div class="truncatable"><div class="truncatable-content"><pre class="json">{
+  &#34;file_path&#34;: &#34;/home/david/projects/code-associates/occam2go/codegen/codegen.go&#34;,
+  &#34;offset&#34;: 1920,
+  &#34;limit&#34;: 110
+}</pre></div><button class="expand-btn">Show more</button></div></div></div></div>
+<div class="message tool-reply" id="msg-2026-02-23T03-30-45-897Z"><div class="message-header"><span class="role-label">Tool reply</span><a href="#msg-2026-02-23T03-30-45-897Z" class="timestamp-link"><time datetime="2026-02-23T03:30:45.897Z" data-timestamp="2026-02-23T03:30:45.897Z">2026-02-23T03:30:45.897Z</time></a></div><div class="message-content"><div class="tool-result"><div class="truncatable"><div class="truncatable-content"><pre>  1920→		g.generateStatement(s)
+  1921→	}
+  1922→
+  1923→	g.indent--
+  1924→	g.writeLine(&quot;}&quot;)
+  1925→}
+  1926→
+  1927→func (g *Generator) generateProcDecl(proc *ast.ProcDecl) {
+  1928→	// Track reference parameters for this procedure
+  1929→	oldRefParams := g.refParams
+  1930→	newRefParams := make(map[string]bool)
+  1931→	// Inherit parent&#x27;s ref params for closure captures when nested
+  1932→	if g.nestingLevel &gt; 0 {
+  1933→		for k, v := range oldRefParams {
+  1934→			newRefParams[k] = v
+  1935→		}
+  1936→	}
+  1937→	for _, p := range proc.Params {
+  1938→		if !p.IsVal &amp;&amp; !p.IsChan &amp;&amp; !p.IsChanArray &amp;&amp; !p.IsOpenArray &amp;&amp; p.ArraySize == &quot;&quot; {
+  1939→			newRefParams[p.Name] = true
+  1940→		} else {
+  1941→			// Own param shadows any inherited ref param with same name
+  1942→			delete(newRefParams, p.Name)
+  1943→		}
+  1944→		// Register chan params with protocol mappings
+  1945→		if p.IsChan || p.IsChanArray {
+  1946→			if _, ok := g.protocolDefs[p.ChanElemType]; ok {
+  1947→				g.chanProtocols[p.Name] = p.ChanElemType
+  1948→			}
+  1949→		}
+  1950→		// Register record-typed params
+  1951→		if !p.IsChan {
+  1952→			if _, ok := g.recordDefs[p.Type]; ok {
+  1953→				g.recordVars[p.Name] = p.Type
+  1954→			}
+  1955→		}
+  1956→	}
+  1957→	g.refParams = newRefParams
+  1958→
+  1959→	// Scan proc body for RETYPES declarations that shadow parameters.
+  1960→	// When VAL INT X RETYPES X :, Go can&#x27;t redeclare X in the same scope,
+  1961→	// so we rename the parameter (e.g. X → _rp_X) and let RETYPES declare the original name.
+  1962→	oldRenames := g.retypesRenames
+  1963→	g.retypesRenames = nil
+  1964→	paramNames := make(map[string]bool)
+  1965→	for _, p := range proc.Params {
+  1966→		paramNames[p.Name] = true
+  1967→	}
+  1968→	for _, stmt := range proc.Body {
+  1969→		if rd, ok := stmt.(*ast.RetypesDecl); ok {
+  1970→			if paramNames[rd.Source] &amp;&amp; rd.Name == rd.Source {
+  1971→				if g.retypesRenames == nil {
+  1972→					g.retypesRenames = make(map[string]string)
+  1973→				}
+  1974→				g.retypesRenames[rd.Name] = &quot;_rp_&quot; + goIdent(rd.Name)
+  1975→			}
+  1976→		}
+  1977→	}
+  1978→
+  1979→	// Generate function signature
+  1980→	params := g.generateProcParams(proc.Params)
+  1981→	gName := goIdent(proc.Name)
+  1982→	if g.nestingLevel &gt; 0 {
+  1983→		// Nested PROC: generate as Go closure
+  1984→		g.writeLine(fmt.Sprintf(&quot;%s := func(%s) {&quot;, gName, params))
+  1985→	} else {
+  1986→		g.writeLine(fmt.Sprintf(&quot;func %s(%s) {&quot;, gName, params))
+  1987→	}
+  1988→	g.indent++
+  1989→	g.nestingLevel++
+  1990→
+  1991→	// Register nested proc/func signatures for this scope so that calls
+  1992→	// within this proc resolve to the correct (local) signature rather than
+  1993→	// a same-named proc from a different scope.
+  1994→	oldSigs := make(map[string][]ast.ProcParam)
+  1995→	g.collectNestedProcSigsScoped(proc.Body, oldSigs)
+  1996→
+  1997→	for _, stmt := range proc.Body {
+  1998→		g.generateStatement(stmt)
+  1999→	}
+  2000→
+  2001→	// Restore overwritten signatures
+  2002→	for name, params := range oldSigs {
+  2003→		if params == nil {
+  2004→			delete(g.procSigs, name)
+  2005→		} else {
+  2006→			g.procSigs[name] = params
+  2007→		}
+  2008→	}
+  2009→
+  2010→	g.nestingLevel--
+  2011→	g.indent--
+  2012→	g.writeLine(&quot;}&quot;)
+  2013→	g.writeLine(&quot;&quot;)
+  2014→
+  2015→	// Restore previous context
+  2016→	g.refParams = oldRefParams
+  2017→	g.retypesRenames = oldRenames
+  2018→}
+  2019→
+  2020→func (g *Generator) generateProcParams(params []ast.ProcParam) string {
+  2021→	var parts []string
+  2022→	for _, p := range params {
+  2023→		var goType string
+  2024→		if p.IsChanArray {
+  2025→			goType = &quot;[]&quot; + chanDirPrefix(p.ChanDir) + g.occamTypeToGo(p.ChanElemType)
+  2026→		} else if p.IsChan {
+  2027→			goType = chanDirPrefix(p.ChanDir) + g.occamTypeToGo(p.ChanElemType)
+  2028→		} else if p.IsOpenArray {
+  2029→			goType = &quot;[]&quot; + g.occamTypeToGo(p.Type)</pre></div><button class="expand-btn">Show more</button></div></div></div></div>
+<div class="message assistant" id="msg-2026-02-23T03-30-46-583Z"><div class="message-header"><span class="role-label">Assistant</span><a href="#msg-2026-02-23T03-30-46-583Z" class="timestamp-link"><time datetime="2026-02-23T03:30:46.583Z" data-timestamp="2026-02-23T03:30:46.583Z">2026-02-23T03:30:46.583Z</time></a></div><div class="message-content">
+<div class="tool-use" data-tool-id="toolu_01J1Gn4AxfL2xCfEG8mn5rw3"><div class="tool-header"><span class="tool-icon">⚙</span> Read</div><div class="truncatable"><div class="truncatable-content"><pre class="json">{
+  &#34;file_path&#34;: &#34;/home/david/projects/code-associates/occam2go/codegen/codegen.go&#34;,
+  &#34;offset&#34;: 2095,
+  &#34;limit&#34;: 70
+}</pre></div><button class="expand-btn">Show more</button></div></div></div></div>
+<div class="message tool-reply" id="msg-2026-02-23T03-30-46-596Z"><div class="message-header"><span class="role-label">Tool reply</span><a href="#msg-2026-02-23T03-30-46-596Z" class="timestamp-link"><time datetime="2026-02-23T03:30:46.596Z" data-timestamp="2026-02-23T03:30:46.596Z">2026-02-23T03:30:46.596Z</time></a></div><div class="message-content"><div class="tool-result"><div class="truncatable"><div class="truncatable-content"><pre>  2095→		} else {
+  2096→			g.generateExpression(arg)
+  2097→		}
+  2098→	}
+  2099→	g.write(&quot;)&quot;)
+  2100→	g.write(&quot;\n&quot;)
+  2101→}
+  2102→
+  2103→func (g *Generator) generateFuncDecl(fn *ast.FuncDecl) {
+  2104→	params := g.generateProcParams(fn.Params)
+  2105→
+  2106→	// Build return type string
+  2107→	var returnTypeStr string
+  2108→	if len(fn.ReturnTypes) == 1 {
+  2109→		returnTypeStr = g.occamTypeToGo(fn.ReturnTypes[0])
+  2110→	} else {
+  2111→		goTypes := make([]string, len(fn.ReturnTypes))
+  2112→		for i, rt := range fn.ReturnTypes {
+  2113→			goTypes[i] = g.occamTypeToGo(rt)
+  2114→		}
+  2115→		returnTypeStr = &quot;(&quot; + strings.Join(goTypes, &quot;, &quot;) + &quot;)&quot;
+  2116→	}
+  2117→
+  2118→	gName := goIdent(fn.Name)
+  2119→	if g.nestingLevel &gt; 0 {
+  2120→		// Nested FUNCTION: generate as Go closure
+  2121→		g.writeLine(fmt.Sprintf(&quot;%s := func(%s) %s {&quot;, gName, params, returnTypeStr))
+  2122→	} else {
+  2123→		g.writeLine(fmt.Sprintf(&quot;func %s(%s) %s {&quot;, gName, params, returnTypeStr))
+  2124→	}
+  2125→	g.indent++
+  2126→	g.nestingLevel++
+  2127→
+  2128→	for _, stmt := range fn.Body {
+  2129→		g.generateStatement(stmt)
+  2130→	}
+  2131→
+  2132→	if len(fn.ResultExprs) &gt; 0 {
+  2133→		g.builder.WriteString(strings.Repeat(&quot;\t&quot;, g.indent))
+  2134→		g.write(&quot;return &quot;)
+  2135→		for i, expr := range fn.ResultExprs {
+  2136→			if i &gt; 0 {
+  2137→				g.write(&quot;, &quot;)
+  2138→			}
+  2139→			g.generateExpression(expr)
+  2140→		}
+  2141→		g.write(&quot;\n&quot;)
+  2142→	}
+  2143→
+  2144→	g.nestingLevel--
+  2145→	g.indent--
+  2146→	g.writeLine(&quot;}&quot;)
+  2147→	g.writeLine(&quot;&quot;)
+  2148→}
+  2149→
+  2150→func (g *Generator) generateFuncCallExpr(call *ast.FuncCall) {
+  2151→	if transpIntrinsics[call.Name] {
+  2152→		g.write(&quot;_&quot; + call.Name)
+  2153→	} else {
+  2154→		g.write(goIdent(call.Name))
+  2155→	}
+  2156→	g.write(&quot;(&quot;)
+  2157→	params := g.procSigs[call.Name]
+  2158→	for i, arg := range call.Args {
+  2159→		if i &gt; 0 {
+  2160→			g.write(&quot;, &quot;)
+  2161→		}
+  2162→		// Wrap string literals with []byte() when passed to []BYTE parameters
+  2163→		if _, isStr := arg.(*ast.StringLiteral); isStr &amp;&amp; i &lt; len(params) &amp;&amp; params[i].IsOpenArray &amp;&amp; params[i].Type == &quot;BYTE&quot; {
+  2164→			g.write(&quot;[]byte(&quot;)</pre></div><button class="expand-btn">Show more</button></div></div></div></div>
+<div class="message assistant" id="msg-2026-02-23T03-30-49-416Z"><div class="message-header"><span class="role-label">Assistant</span><a href="#msg-2026-02-23T03-30-49-416Z" class="timestamp-link"><time datetime="2026-02-23T03:30:49.416Z" data-timestamp="2026-02-23T03:30:49.416Z">2026-02-23T03:30:49.416Z</time></a></div><div class="message-content">
+<div class="thinking"><div class="thinking-label">Thinking</div><p>Now let me also check the <code>generateVarDecl</code> to see where boolVars is populated during generation, and the <code>collectBoolVars</code> function.</p></div></div></div>
+<div class="message assistant" id="msg-2026-02-23T03-30-50-199Z"><div class="message-header"><span class="role-label">Assistant</span><a href="#msg-2026-02-23T03-30-50-199Z" class="timestamp-link"><time datetime="2026-02-23T03:30:50.199Z" data-timestamp="2026-02-23T03:30:50.199Z">2026-02-23T03:30:50.199Z</time></a></div><div class="message-content">
+<div class="assistant-text"><p>Now let me check how <code>generateVarDecl</code> populates <code>boolVars</code> and the <code>collectBoolVars</code> function.</p></div></div></div>
+<div class="message assistant" id="msg-2026-02-23T03-30-51-348Z"><div class="message-header"><span class="role-label">Assistant</span><a href="#msg-2026-02-23T03-30-51-348Z" class="timestamp-link"><time datetime="2026-02-23T03:30:51.348Z" data-timestamp="2026-02-23T03:30:51.348Z">2026-02-23T03:30:51.348Z</time></a></div><div class="message-content">
+<div class="tool-use" data-tool-id="toolu_01YLMAovShp62ihdXaXFRgUb"><div class="tool-header"><span class="tool-icon">⚙</span> Read</div><div class="truncatable"><div class="truncatable-content"><pre class="json">{
+  &#34;file_path&#34;: &#34;/home/david/projects/code-associates/occam2go/codegen/codegen.go&#34;,
+  &#34;offset&#34;: 1075,
+  &#34;limit&#34;: 25
+}</pre></div><button class="expand-btn">Show more</button></div></div></div></div>
+<div class="message tool-reply" id="msg-2026-02-23T03-30-51-360Z"><div class="message-header"><span class="role-label">Tool reply</span><a href="#msg-2026-02-23T03-30-51-360Z" class="timestamp-link"><time datetime="2026-02-23T03:30:51.360Z" data-timestamp="2026-02-23T03:30:51.360Z">2026-02-23T03:30:51.360Z</time></a></div><div class="message-content"><div class="tool-result"><div class="truncatable"><div class="truncatable-content"><pre>  1075→	for i, n := range decl.Names {
+  1076→		goNames[i] = goIdent(n)
+  1077→	}
+  1078→	g.writeLine(fmt.Sprintf(&quot;var %s %s&quot;, strings.Join(goNames, &quot;, &quot;), goType))
+  1079→	// Suppress &quot;declared and not used&quot; for each variable
+  1080→	for _, n := range goNames {
+  1081→		g.writeLine(fmt.Sprintf(&quot;_ = %s&quot;, n))
+  1082→	}
+  1083→	// Track BOOL variables for type conversion codegen
+  1084→	if decl.Type == &quot;BOOL&quot; {
+  1085→		for _, n := range decl.Names {
+  1086→			g.boolVars[n] = true
+  1087→		}
+  1088→	}
+  1089→}
+  1090→
+  1091→func (g *Generator) generateAbbreviation(abbr *ast.Abbreviation) {
+  1092→	g.builder.WriteString(strings.Repeat(&quot;\t&quot;, g.indent))
+  1093→	if abbr.Type != &quot;&quot; {
+  1094→		goType := g.occamTypeToGo(abbr.Type)
+  1095→		if abbr.IsOpenArray {
+  1096→			goType = &quot;[]&quot; + goType
+  1097→		}
+  1098→		g.write(fmt.Sprintf(&quot;var %s %s = &quot;, goIdent(abbr.Name), goType))
+  1099→	} else {</pre></div><button class="expand-btn">Show more</button></div></div></div></div>
+<div class="message assistant" id="msg-2026-02-23T03-30-52-055Z"><div class="message-header"><span class="role-label">Assistant</span><a href="#msg-2026-02-23T03-30-52-055Z" class="timestamp-link"><time datetime="2026-02-23T03:30:52.055Z" data-timestamp="2026-02-23T03:30:52.055Z">2026-02-23T03:30:52.055Z</time></a></div><div class="message-content">
+<div class="tool-use" data-tool-id="toolu_013FGRN2z4PwBe78EotoL4ZU"><div class="tool-header"><span class="tool-icon">⚙</span> Read</div><div class="truncatable"><div class="truncatable-content"><pre class="json">{
+  &#34;file_path&#34;: &#34;/home/david/projects/code-associates/occam2go/codegen/codegen.go&#34;,
+  &#34;offset&#34;: 1395,
+  &#34;limit&#34;: 50
+}</pre></div><button class="expand-btn">Show more</button></div></div></div></div>
+<div class="message tool-reply" id="msg-2026-02-23T03-30-52-060Z"><div class="message-header"><span class="role-label">Tool reply</span><a href="#msg-2026-02-23T03-30-52-060Z" class="timestamp-link"><time datetime="2026-02-23T03:30:52.060Z" data-timestamp="2026-02-23T03:30:52.060Z">2026-02-23T03:30:52.060Z</time></a></div><div class="message-content"><div class="tool-result"><div class="truncatable"><div class="truncatable-content"><pre>  1395→}
+  1396→
+  1397→func (g *Generator) collectBoolVars(stmt ast.Statement) {
+  1398→	switch s := stmt.(type) {
+  1399→	case *ast.VarDecl:
+  1400→		if s.Type == &quot;BOOL&quot; {
+  1401→			for _, name := range s.Names {
+  1402→				g.boolVars[name] = true
+  1403→			}
+  1404→		}
+  1405→	case *ast.SeqBlock:
+  1406→		for _, inner := range s.Statements {
+  1407→			g.collectBoolVars(inner)
+  1408→		}
+  1409→	case *ast.ParBlock:
+  1410→		for _, inner := range s.Statements {
+  1411→			g.collectBoolVars(inner)
+  1412→		}
+  1413→	case *ast.ProcDecl:
+  1414→		for _, inner := range s.Body {
+  1415→			g.collectBoolVars(inner)
+  1416→		}
+  1417→	case *ast.FuncDecl:
+  1418→		for _, inner := range s.Body {
+  1419→			g.collectBoolVars(inner)
+  1420→		}
+  1421→	case *ast.WhileLoop:
+  1422→		for _, inner := range s.Body {
+  1423→			g.collectBoolVars(inner)
+  1424→		}
+  1425→	case *ast.IfStatement:
+  1426→		for _, choice := range s.Choices {
+  1427→			if choice.NestedIf != nil {
+  1428→				g.collectBoolVars(choice.NestedIf)
+  1429→			}
+  1430→			for _, inner := range choice.Body {
+  1431→				g.collectBoolVars(inner)
+  1432→			}
+  1433→		}
+  1434→	case *ast.CaseStatement:
+  1435→		for _, choice := range s.Choices {
+  1436→			for _, inner := range choice.Body {
+  1437→				g.collectBoolVars(inner)
+  1438→			}
+  1439→		}
+  1440→	}
+  1441→}
+  1442→
+  1443→func (g *Generator) collectRecordVars(stmt ast.Statement) {
+  1444→	switch s := stmt.(type) {</pre></div><button class="expand-btn">Show more</button></div></div></div></div>
+<div class="message assistant" id="msg-2026-02-23T03-31-31-064Z"><div class="message-header"><span class="role-label">Assistant</span><a href="#msg-2026-02-23T03-31-31-064Z" class="timestamp-link"><time datetime="2026-02-23T03:31:31.064Z" data-timestamp="2026-02-23T03:31:31.064Z">2026-02-23T03:31:31.064Z</time></a></div><div class="message-content">
+<div class="thinking"><div class="thinking-label">Thinking</div><p>Now I have a clear picture. Let me also check if BOOL params need to be tracked. Let me check if proc parameters of type BOOL need to be registered in boolVars.</p>
+<p>Looking at the <code>generateProcDecl</code> function, I see that it already registers chan params with protocols and record-typed params. But it doesn't register BOOL-typed params in boolVars.</p>
+<p>So the fix needs to:
+1. Keep the pre-pass <code>collectBoolVars</code> for <code>containsBoolConversion</code> (to know whether to emit <code>_boolToInt</code> helper)
+2. Reset <code>boolVars</code> before code generation starts (after all pre-pass checks)</p>
+<ol>
+<li>In <code>generateProcDecl</code> and <code>generateFuncDecl</code>: save/restore boolVars like refParams, and register BOOL params from proc/func parameters</li>
+<li><code>generateVarDecl</code> already adds BOOL vars dynamically during generation, which handles the rest</li>
+</ol>
+<p>The key insight is that resetting <code>boolVars</code> after the pre-pass means we only track BOOL variables during actual code generation, which is when <code>generateVarDecl</code> populates it anyway.</p>
+<p>So the approach is: clear <code>boolVars</code> after the pre-pass, then let each scope (top-level, proc-level, func-level) build its own BOOL variable map as it generates code, with proper save/restore to prevent cross-contamination between scopes.</p>
+<p>For nested procs, I need to inherit the parent's <code>boolVars</code> when entering a nested scope, similar to how reference parameters are handled, so that inner procs can see BOOL variables declared in outer scopes.</p>
+<p>Setting up the save/restore pattern... I'm realizing the nestingLevel check at line 1932 happens before the increment at line 1989, so it correctly identifies whether we're already inside a parent procedure for scope inheritance. The same scoping pattern applies to chanProtocols and recordVars, though the issue specifically focuses on boolVars—though I should probably handle all three while I'm at it.</p>
+<p>Looking at the actual requirement, I need to scope boolVars per procedure and function body, which means checking if BOOL-typed parameters exist in both PROC and FUNC declarations. The param structure has a Type field for non-channel params, so I can check <code>p.Type == "BOOL"</code> to identify them.</p>
+<p>Let me finalize the implementation plan now.</p>
+<p>Actually, I should verify the timing: after the pre-pass populates boolVars globally, I can reset it before the second pass since top-level variables get processed during code generation. When entering a top-level proc, I'll save the current boolVars state and restore it on exit, which handles the scoping correctly even if declarations appear in different orders.</p>
+<p>Now let me check if I can actually reproduce the issue to confirm my understanding, though the problem itself is clear enough to fix.</p></div></div></div>
+<div class="message assistant" id="msg-2026-02-23T03-31-31-132Z"><div class="message-header"><span class="role-label">Assistant</span><a href="#msg-2026-02-23T03-31-31-132Z" class="timestamp-link"><time datetime="2026-02-23T03:31:31.132Z" data-timestamp="2026-02-23T03:31:31.132Z">2026-02-23T03:31:31.132Z</time></a></div><div class="message-content">
+<div class="assistant-text"><p>Now I have a clear picture. Let me also quickly check if BOOL params are a concern.</p></div></div></div>
+<div class="message assistant" id="msg-2026-02-23T03-31-32-634Z"><div class="message-header"><span class="role-label">Assistant</span><a href="#msg-2026-02-23T03-31-32-634Z" class="timestamp-link"><time datetime="2026-02-23T03:31:32.634Z" data-timestamp="2026-02-23T03:31:32.634Z">2026-02-23T03:31:32.634Z</time></a></div><div class="message-content">
+<div class="tool-use" data-tool-id="toolu_01U3jecXgkamC4fix8MwrZ2b"><div class="tool-header"><span class="tool-icon">⚙</span> Grep</div><div class="truncatable"><div class="truncatable-content"><pre class="json">{
+  &#34;pattern&#34;: &#34;BOOL.*param|param.*BOOL|p\\.Type.*BOOL&#34;,
+  &#34;path&#34;: &#34;/home/david/projects/code-associates/occam2go/codegen/codegen.go&#34;,
+  &#34;output_mode&#34;: &#34;content&#34;
+}</pre></div><button class="expand-btn">Show more</button></div></div></div></div>
+<div class="message tool-reply" id="msg-2026-02-23T03-31-32-759Z"><div class="message-header"><span class="role-label">Tool reply</span><a href="#msg-2026-02-23T03-31-32-759Z" class="timestamp-link"><time datetime="2026-02-23T03:31:32.759Z" data-timestamp="2026-02-23T03:31:32.759Z">2026-02-23T03:31:32.759Z</time></a></div><div class="message-content"><div class="tool-result"><div class="truncatable"><div class="truncatable-content"><pre>No matches found</pre></div><button class="expand-btn">Show more</button></div></div></div></div>
+<div class="message assistant" id="msg-2026-02-23T03-31-35-198Z"><div class="message-header"><span class="role-label">Assistant</span><a href="#msg-2026-02-23T03-31-35-198Z" class="timestamp-link"><time datetime="2026-02-23T03:31:35.198Z" data-timestamp="2026-02-23T03:31:35.198Z">2026-02-23T03:31:35.198Z</time></a></div><div class="message-content">
+<div class="tool-use" data-tool-id="toolu_01M7qXELvc5BnwJjyotCPEt9"><div class="tool-header"><span class="tool-icon">⚙</span> Read</div><div class="truncatable"><div class="truncatable-content"><pre class="json">{
+  &#34;file_path&#34;: &#34;/home/david/projects/code-associates/occam2go/codegen/codegen.go&#34;,
+  &#34;offset&#34;: 1937,
+  &#34;limit&#34;: 20
+}</pre></div><button class="expand-btn">Show more</button></div></div></div></div>
+<div class="message tool-reply" id="msg-2026-02-23T03-31-35-215Z"><div class="message-header"><span class="role-label">Tool reply</span><a href="#msg-2026-02-23T03-31-35-215Z" class="timestamp-link"><time datetime="2026-02-23T03:31:35.215Z" data-timestamp="2026-02-23T03:31:35.215Z">2026-02-23T03:31:35.215Z</time></a></div><div class="message-content"><div class="tool-result"><div class="truncatable"><div class="truncatable-content"><pre>  1937→	for _, p := range proc.Params {
+  1938→		if !p.IsVal &amp;&amp; !p.IsChan &amp;&amp; !p.IsChanArray &amp;&amp; !p.IsOpenArray &amp;&amp; p.ArraySize == &quot;&quot; {
+  1939→			newRefParams[p.Name] = true
+  1940→		} else {
+  1941→			// Own param shadows any inherited ref param with same name
+  1942→			delete(newRefParams, p.Name)
+  1943→		}
+  1944→		// Register chan params with protocol mappings
+  1945→		if p.IsChan || p.IsChanArray {
+  1946→			if _, ok := g.protocolDefs[p.ChanElemType]; ok {
+  1947→				g.chanProtocols[p.Name] = p.ChanElemType
+  1948→			}
+  1949→		}
+  1950→		// Register record-typed params
+  1951→		if !p.IsChan {
+  1952→			if _, ok := g.recordDefs[p.Type]; ok {
+  1953→				g.recordVars[p.Name] = p.Type
+  1954→			}
+  1955→		}
+  1956→	}</pre></div><button class="expand-btn">Show more</button></div></div></div></div>
+<div class="message assistant" id="msg-2026-02-23T03-31-39-116Z"><div class="message-header"><span class="role-label">Assistant</span><a href="#msg-2026-02-23T03-31-39-116Z" class="timestamp-link"><time datetime="2026-02-23T03:31:39.116Z" data-timestamp="2026-02-23T03:31:39.116Z">2026-02-23T03:31:39.116Z</time></a></div><div class="message-content">
+<div class="thinking"><div class="thinking-label">Thinking</div><p>Good - I can see that proc params register chan protocols and record vars but not BOOL params. I need to also register BOOL params in the scoped boolVars.</p>
+<p>Let me check if there's an <code>INITIAL</code> declaration that also needs tracking.</p></div></div></div>
+<div class="message assistant" id="msg-2026-02-23T03-31-39-766Z"><div class="message-header"><span class="role-label">Assistant</span><a href="#msg-2026-02-23T03-31-39-766Z" class="timestamp-link"><time datetime="2026-02-23T03:31:39.766Z" data-timestamp="2026-02-23T03:31:39.766Z">2026-02-23T03:31:39.766Z</time></a></div><div class="message-content">
+<div class="assistant-text"><p>Let me check if INITIAL declarations with BOOL type need tracking too.</p></div></div></div>
+<div class="message assistant" id="msg-2026-02-23T03-31-40-932Z"><div class="message-header"><span class="role-label">Assistant</span><a href="#msg-2026-02-23T03-31-40-932Z" class="timestamp-link"><time datetime="2026-02-23T03:31:40.932Z" data-timestamp="2026-02-23T03:31:40.932Z">2026-02-23T03:31:40.932Z</time></a></div><div class="message-content">
+<div class="tool-use" data-tool-id="toolu_01EifrophyGAQ13JVfQMZSdJ"><div class="tool-header"><span class="tool-icon">⚙</span> Grep</div><div class="truncatable"><div class="truncatable-content"><pre class="json">{
+  &#34;pattern&#34;: &#34;generateInitialDecl|INITIAL.*BOOL|boolVars&#34;,
+  &#34;path&#34;: &#34;/home/david/projects/code-associates/occam2go/codegen/codegen.go&#34;,
+  &#34;output_mode&#34;: &#34;content&#34;,
+  &#34;-n&#34;: true
+}</pre></div><button class="expand-btn">Show more</button></div></div></div></div>
+<div class="message tool-reply" id="msg-2026-02-23T03-31-41-054Z"><div class="message-header"><span class="role-label">Tool reply</span><a href="#msg-2026-02-23T03-31-41-054Z" class="timestamp-link"><time datetime="2026-02-23T03:31:41.054Z" data-timestamp="2026-02-23T03:31:41.054Z">2026-02-23T03:31:41.054Z</time></a></div><div class="message-content"><div class="tool-result"><div class="truncatable"><div class="truncatable-content"><pre>39:	boolVars map[string]bool
+112:	g.boolVars = make(map[string]bool)
+1086:			g.boolVars[n] = true
+1402:				g.boolVars[name] = true
+2675:		return g.boolVars[e.Value]</pre></div><button class="expand-btn">Show more</button></div></div></div></div>
+<div class="message assistant" id="msg-2026-02-23T03-31-44-046Z"><div class="message-header"><span class="role-label">Assistant</span><a href="#msg-2026-02-23T03-31-44-046Z" class="timestamp-link"><time datetime="2026-02-23T03:31:44.046Z" data-timestamp="2026-02-23T03:31:44.046Z">2026-02-23T03:31:44.046Z</time></a></div><div class="message-content">
+<div class="tool-use" data-tool-id="toolu_017XuBCcmffhAAoWsXKBrYW8"><div class="tool-header"><span class="tool-icon">⚙</span> Grep</div><div class="truncatable"><div class="truncatable-content"><pre class="json">{
+  &#34;pattern&#34;: &#34;generateInitialDecl\&#34;&#34;,
+  &#34;path&#34;: &#34;/home/david/projects/code-associates/occam2go/codegen/codegen.go&#34;,
+  &#34;output_mode&#34;: &#34;content&#34;
+}</pre></div><button class="expand-btn">Show more</button></div></div></div></div>
+<div class="message tool-reply" id="msg-2026-02-23T03-31-44-157Z"><div class="message-header"><span class="role-label">Tool reply</span><a href="#msg-2026-02-23T03-31-44-157Z" class="timestamp-link"><time datetime="2026-02-23T03:31:44.157Z" data-timestamp="2026-02-23T03:31:44.157Z">2026-02-23T03:31:44.157Z</time></a></div><div class="message-content"><div class="tool-result"><div class="truncatable"><div class="truncatable-content"><pre>No matches found</pre></div><button class="expand-btn">Show more</button></div></div></div></div>
+<div class="message assistant" id="msg-2026-02-23T03-31-45-199Z"><div class="message-header"><span class="role-label">Assistant</span><a href="#msg-2026-02-23T03-31-45-199Z" class="timestamp-link"><time datetime="2026-02-23T03:31:45.199Z" data-timestamp="2026-02-23T03:31:45.199Z">2026-02-23T03:31:45.199Z</time></a></div><div class="message-content">
+<div class="tool-use" data-tool-id="toolu_01KPZjHvvvenexuLX4VKs7kz"><div class="tool-header"><span class="tool-icon">⚙</span> Grep</div><div class="truncatable"><div class="truncatable-content"><pre class="json">{
+  &#34;pattern&#34;: &#34;InitialDecl\&#34;&#34;,
+  &#34;path&#34;: &#34;/home/david/projects/code-associates/occam2go/codegen/codegen.go&#34;,
+  &#34;output_mode&#34;: &#34;content&#34;,
+  &#34;-n&#34;: true
+}</pre></div><button class="expand-btn">Show more</button></div></div></div></div>
+<div class="message tool-reply" id="msg-2026-02-23T03-31-45-310Z"><div class="message-header"><span class="role-label">Tool reply</span><a href="#msg-2026-02-23T03-31-45-310Z" class="timestamp-link"><time datetime="2026-02-23T03:31:45.310Z" data-timestamp="2026-02-23T03:31:45.310Z">2026-02-23T03:31:45.310Z</time></a></div><div class="message-content"><div class="tool-result"><div class="truncatable"><div class="truncatable-content"><pre>No matches found</pre></div><button class="expand-btn">Show more</button></div></div></div></div>
+<div class="message assistant" id="msg-2026-02-23T03-31-48-407Z"><div class="message-header"><span class="role-label">Assistant</span><a href="#msg-2026-02-23T03-31-48-407Z" class="timestamp-link"><time datetime="2026-02-23T03:31:48.407Z" data-timestamp="2026-02-23T03:31:48.407Z">2026-02-23T03:31:48.407Z</time></a></div><div class="message-content">
+<div class="tool-use" data-tool-id="toolu_01Ce8s53vV4PyqVQgEEQSL5A"><div class="tool-header"><span class="tool-icon">⚙</span> Grep</div><div class="truncatable"><div class="truncatable-content"><pre class="json">{
+  &#34;pattern&#34;: &#34;InitialDecl&#34;,
+  &#34;path&#34;: &#34;/home/david/projects/code-associates/occam2go/codegen/codegen.go&#34;,
+  &#34;output_mode&#34;: &#34;content&#34;,
+  &#34;-n&#34;: true
+}</pre></div><button class="expand-btn">Show more</button></div></div></div></div>
+<div class="message tool-reply" id="msg-2026-02-23T03-31-48-516Z"><div class="message-header"><span class="role-label">Tool reply</span><a href="#msg-2026-02-23T03-31-48-516Z" class="timestamp-link"><time datetime="2026-02-23T03:31:48.516Z" data-timestamp="2026-02-23T03:31:48.516Z">2026-02-23T03:31:48.516Z</time></a></div><div class="message-content"><div class="tool-result"><div class="truncatable"><div class="truncatable-content"><pre>No matches found</pre></div><button class="expand-btn">Show more</button></div></div></div></div>
+<div class="message assistant" id="msg-2026-02-23T03-31-51-306Z"><div class="message-header"><span class="role-label">Assistant</span><a href="#msg-2026-02-23T03-31-51-306Z" class="timestamp-link"><time datetime="2026-02-23T03:31:51.306Z" data-timestamp="2026-02-23T03:31:51.306Z">2026-02-23T03:31:51.306Z</time></a></div><div class="message-content">
+<div class="tool-use" data-tool-id="toolu_014rDmDebz4A75gMf7bjKf19"><div class="tool-header"><span class="tool-icon">⚙</span> Grep</div><div class="truncatable"><div class="truncatable-content"><pre class="json">{
+  &#34;pattern&#34;: &#34;INITIAL|Initial&#34;,
+  &#34;path&#34;: &#34;/home/david/projects/code-associates/occam2go/codegen/codegen.go&#34;,
+  &#34;output_mode&#34;: &#34;content&#34;,
+  &#34;-n&#34;: true
+}</pre></div><button class="expand-btn">Show more</button></div></div></div></div>
+<div class="message tool-reply" id="msg-2026-02-23T03-31-51-424Z"><div class="message-header"><span class="role-label">Tool reply</span><a href="#msg-2026-02-23T03-31-51-424Z" class="timestamp-link"><time datetime="2026-02-23T03:31:51.424Z" data-timestamp="2026-02-23T03:31:51.424Z">2026-02-23T03:31:51.424Z</time></a></div><div class="message-content"><div class="tool-result"><div class="truncatable"><div class="truncatable-content"><pre>No matches found</pre></div><button class="expand-btn">Show more</button></div></div></div></div>
+<div class="message assistant" id="msg-2026-02-23T03-31-54-447Z"><div class="message-header"><span class="role-label">Assistant</span><a href="#msg-2026-02-23T03-31-54-447Z" class="timestamp-link"><time datetime="2026-02-23T03:31:54.447Z" data-timestamp="2026-02-23T03:31:54.447Z">2026-02-23T03:31:54.447Z</time></a></div><div class="message-content">
+<div class="tool-use" data-tool-id="toolu_012MeVYPi2CWrzpJ9eApFEpa"><div class="tool-header"><span class="tool-icon">⚙</span> Grep</div><div class="truncatable"><div class="truncatable-content"><pre class="json">{
+  &#34;pattern&#34;: &#34;Initial&#34;,
+  &#34;path&#34;: &#34;/home/david/projects/code-associates/occam2go/codegen&#34;,
+  &#34;output_mode&#34;: &#34;content&#34;,
+  &#34;-n&#34;: true
+}</pre></div><button class="expand-btn">Show more</button></div></div></div></div>
+<div class="message tool-reply" id="msg-2026-02-23T03-31-54-565Z"><div class="message-header"><span class="role-label">Tool reply</span><a href="#msg-2026-02-23T03-31-54-565Z" class="timestamp-link"><time datetime="2026-02-23T03:31:54.565Z" data-timestamp="2026-02-23T03:31:54.565Z">2026-02-23T03:31:54.565Z</time></a></div><div class="message-content"><div class="tool-result"><div class="truncatable"><div class="truncatable-content"><pre>codegen/e2e_basic_test.go:136:func TestE2E_InitialDecl(t *testing.T) {</pre></div><button class="expand-btn">Show more</button></div></div></div></div>
+<div class="message assistant" id="msg-2026-02-23T03-32-00-698Z"><div class="message-header"><span class="role-label">Assistant</span><a href="#msg-2026-02-23T03-32-00-698Z" class="timestamp-link"><time datetime="2026-02-23T03:32:00.698Z" data-timestamp="2026-02-23T03:32:00.698Z">2026-02-23T03:32:00.698Z</time></a></div><div class="message-content">
+<div class="tool-use" data-tool-id="toolu_01KLfJ7wDyphzdWhMkTxipMC"><div class="tool-header"><span class="tool-icon">⚙</span> Grep</div><div class="truncatable"><div class="truncatable-content"><pre class="json">{
+  &#34;pattern&#34;: &#34;IsInitial|initialDecl|initial.decl&#34;,
+  &#34;path&#34;: &#34;/home/david/projects/code-associates/occam2go/codegen/codegen.go&#34;,
+  &#34;output_mode&#34;: &#34;content&#34;,
+  &#34;-n&#34;: true
+}</pre></div><button class="expand-btn">Show more</button></div></div></div></div>
+<div class="message tool-reply" id="msg-2026-02-23T03-32-00-817Z"><div class="message-header"><span class="role-label">Tool reply</span><a href="#msg-2026-02-23T03-32-00-817Z" class="timestamp-link"><time datetime="2026-02-23T03:32:00.817Z" data-timestamp="2026-02-23T03:32:00.817Z">2026-02-23T03:32:00.817Z</time></a></div><div class="message-content"><div class="tool-result"><div class="truncatable"><div class="truncatable-content"><pre>No matches found</pre></div><button class="expand-btn">Show more</button></div></div></div></div>
+<div class="message assistant" id="msg-2026-02-23T03-32-05-519Z"><div class="message-header"><span class="role-label">Assistant</span><a href="#msg-2026-02-23T03-32-05-519Z" class="timestamp-link"><time datetime="2026-02-23T03:32:05.519Z" data-timestamp="2026-02-23T03:32:05.519Z">2026-02-23T03:32:05.519Z</time></a></div><div class="message-content">
+<div class="tool-use" data-tool-id="toolu_01CuZqat77YVwgPacvQvJh55"><div class="tool-header"><span class="tool-icon">⚙</span> Grep</div><div class="truncatable"><div class="truncatable-content"><pre class="json">{
+  &#34;pattern&#34;: &#34;INITIAL&#34;,
+  &#34;path&#34;: &#34;/home/david/projects/code-associates/occam2go/ast/ast.go&#34;,
+  &#34;output_mode&#34;: &#34;content&#34;,
+  &#34;-n&#34;: true
+}</pre></div><button class="expand-btn">Show more</button></div></div></div></div>
+<div class="message tool-reply" id="msg-2026-02-23T03-32-05-632Z"><div class="message-header"><span class="role-label">Tool reply</span><a href="#msg-2026-02-23T03-32-05-632Z" class="timestamp-link"><time datetime="2026-02-23T03:32:05.632Z" data-timestamp="2026-02-23T03:32:05.632Z">2026-02-23T03:32:05.632Z</time></a></div><div class="message-content"><div class="tool-result"><div class="truncatable"><div class="truncatable-content"><pre>488:// Abbreviation represents an abbreviation: VAL INT x IS 42:, INT y IS z:, or INITIAL INT x IS 42:
+490:	Token       lexer.Token // VAL, INITIAL, or type token
+492:	IsInitial   bool        // true for INITIAL declarations</pre></div><button class="expand-btn">Show more</button></div></div></div></div>
+<div class="message assistant" id="msg-2026-02-23T03-32-08-335Z"><div class="message-header"><span class="role-label">Assistant</span><a href="#msg-2026-02-23T03-32-08-335Z" class="timestamp-link"><time datetime="2026-02-23T03:32:08.335Z" data-timestamp="2026-02-23T03:32:08.335Z">2026-02-23T03:32:08.335Z</time></a></div><div class="message-content">
+<div class="thinking"><div class="thinking-label">Thinking</div><p>So INITIAL declarations use the Abbreviation AST node. Let me check if <code>generateAbbreviation</code> tracks BOOL vars.</p></div></div></div>
+<div class="message assistant" id="msg-2026-02-23T03-32-09-179Z"><div class="message-header"><span class="role-label">Assistant</span><a href="#msg-2026-02-23T03-32-09-179Z" class="timestamp-link"><time datetime="2026-02-23T03:32:09.179Z" data-timestamp="2026-02-23T03:32:09.179Z">2026-02-23T03:32:09.179Z</time></a></div><div class="message-content">
+<div class="tool-use" data-tool-id="toolu_01KGDJwkh5zRrxXy8xPrcGh7"><div class="tool-header"><span class="tool-icon">⚙</span> Read</div><div class="truncatable"><div class="truncatable-content"><pre class="json">{
+  &#34;file_path&#34;: &#34;/home/david/projects/code-associates/occam2go/codegen/codegen.go&#34;,
+  &#34;offset&#34;: 1091,
+  &#34;limit&#34;: 55
+}</pre></div><button class="expand-btn">Show more</button></div></div></div></div>
+<div class="message tool-reply" id="msg-2026-02-23T03-32-09-185Z"><div class="message-header"><span class="role-label">Tool reply</span><a href="#msg-2026-02-23T03-32-09-185Z" class="timestamp-link"><time datetime="2026-02-23T03:32:09.185Z" data-timestamp="2026-02-23T03:32:09.185Z">2026-02-23T03:32:09.185Z</time></a></div><div class="message-content"><div class="tool-result"><div class="truncatable"><div class="truncatable-content"><pre>  1091→func (g *Generator) generateAbbreviation(abbr *ast.Abbreviation) {
+  1092→	g.builder.WriteString(strings.Repeat(&quot;\t&quot;, g.indent))
+  1093→	if abbr.Type != &quot;&quot; {
+  1094→		goType := g.occamTypeToGo(abbr.Type)
+  1095→		if abbr.IsOpenArray {
+  1096→			goType = &quot;[]&quot; + goType
+  1097→		}
+  1098→		g.write(fmt.Sprintf(&quot;var %s %s = &quot;, goIdent(abbr.Name), goType))
+  1099→	} else {
+  1100→		g.write(fmt.Sprintf(&quot;%s := &quot;, goIdent(abbr.Name)))
+  1101→	}
+  1102→	// Wrap string literals with []byte() when assigned to []byte variables
+  1103→	if _, isStr := abbr.Value.(*ast.StringLiteral); isStr &amp;&amp; abbr.IsOpenArray &amp;&amp; abbr.Type == &quot;BYTE&quot; {
+  1104→		g.write(&quot;[]byte(&quot;)
+  1105→		g.generateExpression(abbr.Value)
+  1106→		g.write(&quot;)&quot;)
+  1107→	} else {
+  1108→		g.generateExpression(abbr.Value)
+  1109→	}
+  1110→	g.write(&quot;\n&quot;)
+  1111→	// Suppress &quot;declared and not used&quot; for abbreviations inside function bodies
+  1112→	if g.nestingLevel &gt; 0 {
+  1113→		g.writeLine(fmt.Sprintf(&quot;_ = %s&quot;, goIdent(abbr.Name)))
+  1114→	}
+  1115→}
+  1116→
+  1117→func (g *Generator) generateChanDecl(decl *ast.ChanDecl) {
+  1118→	goType := g.occamTypeToGo(decl.ElemType)
+  1119→	if decl.IsArray {
+  1120→		for _, name := range decl.Names {
+  1121→			n := goIdent(name)
+  1122→			g.builder.WriteString(strings.Repeat(&quot;\t&quot;, g.indent))
+  1123→			g.write(fmt.Sprintf(&quot;%s := make([]chan %s, &quot;, n, goType))
+  1124→			g.generateExpression(decl.Size)
+  1125→			g.write(&quot;)\n&quot;)
+  1126→			g.builder.WriteString(strings.Repeat(&quot;\t&quot;, g.indent))
+  1127→			g.write(fmt.Sprintf(&quot;for _i := range %s { %s[_i] = make(chan %s) }\n&quot;, n, n, goType))
+  1128→		}
+  1129→	} else {
+  1130→		for _, name := range decl.Names {
+  1131→			g.writeLine(fmt.Sprintf(&quot;%s := make(chan %s)&quot;, goIdent(name), goType))
+  1132→		}
+  1133→	}
+  1134→}
+  1135→
+  1136→func (g *Generator) generateTimerDecl(decl *ast.TimerDecl) {
+  1137→	for _, name := range decl.Names {
+  1138→		g.writeLine(fmt.Sprintf(&quot;// TIMER %s&quot;, name))
+  1139→	}
+  1140→}
+  1141→
+  1142→func (g *Generator) generateTimerRead(tr *ast.TimerRead) {
+  1143→	g.writeLine(fmt.Sprintf(&quot;%s = int(time.Now().UnixMicro())&quot;, goIdent(tr.Variable)))
+  1144→}
+  1145→</pre></div><button class="expand-btn">Show more</button></div></div></div></div>
+<div class="message assistant" id="msg-2026-02-23T03-32-59-160Z"><div class="message-header"><span class="role-label">Assistant</span><a href="#msg-2026-02-23T03-32-59-160Z" class="timestamp-link"><time datetime="2026-02-23T03:32:59.160Z" data-timestamp="2026-02-23T03:32:59.160Z">2026-02-23T03:32:59.160Z</time></a></div><div class="message-content">
+<div class="thinking"><div class="thinking-label">Thinking</div><p>I notice that <code>generateAbbreviation</code> does NOT track BOOL vars. So if someone writes <code>INITIAL BOOL x IS TRUE:</code> or <code>BOOL x IS expr:</code>, the variable <code>x</code> won't be tracked in <code>boolVars</code>. But the pre-pass <code>collectBoolVars</code> only looks at <code>VarDecl</code>, not <code>Abbreviation</code>. So abbreviations with BOOL type are already not tracked, and the scoping fix shouldn't make this worse.</p>
+<p>Now let me also check <code>collectBoolVars</code> - does it handle Abbreviations?</p>
+<p>Looking at lines 1397-1441, it only handles VarDecl, SeqBlock, ParBlock, ProcDecl, FuncDecl, WhileLoop, IfStatement, CaseStatement. So Abbreviation BOOL vars are already not tracked in boolVars. That's a pre-existing gap but not related to this issue.</p>
+<p>Now I'm ready to outline the fix. The plan is to clear <code>boolVars</code> after the pre-pass, then in both <code>generateProcDecl</code> and <code>generateFuncDecl</code> I'll save and restore the scope following the same pattern used for refParams, registering BOOL-typed parameters in the new scoped boolVars while letting <code>generateVarDecl</code> handle dynamic registration during body generation. But I need to think through the clearing logic more carefully first.</p>
+<p>The real issue is that the pre-pass flattens all BOOL vars from every scope into one map, so when generating code for a proc, we might incorrectly match a BOOL var from a completely different proc. The solution is to scope boolVars properly—clearing it at the start of code generation and rebuilding it scope-by-scope as we enter each function or procedure. So the real issue is that BOOL variables declared inside included files' procedures are leaking into the global scope. Since PROCs are top-level declarations that execute before the main code block, they shouldn't have access to variables outside their own scope—and when they declare their own BOOL variables, those shouldn't pollute the global map either.</p>
+<p>The solution is to save and restore the boolVars map when entering and exiting each procedure, so declarations inside one proc don't affect others. I also need to handle the pre-pass carefully: it should identify which BOOL conversions are needed, but then clear the map before actual code generation so each proc starts fresh. The main code block can still declare its own BOOL variables normally during generation.</p>
+<p>Now I'm weighing whether to reset boolVars after the pre-pass or just scope it per-proc. If I don't reset, top-level variables from the pre-pass would persist globally, which could cause issues when entering nested procedures.</p>
+<p>The cleaner approach is to clear boolVars after the pre-pass and then scope it within each proc/func, ensuring each scope gets its own fresh map and avoiding cross-contamination between procedures. about this even more simply. The pattern used by refParams is:</p>
+<ol>
+<li>Save old</li>
+<li>Create new (inheriting from parent if nested)</li>
+<li>Generate body</li>
+<li>Restore old</li>
+</ol>
+<p>This means:
+- At top level, boolVars has whatever the pre-pass put in
+- When we enter proc A, we save, create fresh map, generate body, restore
+- Inside proc A, only proc A's BOOL vars are visible
+- When we exit proc A, boolVars is restored to the pre-pass state
+- When we enter proc B, same thing: save, fresh map, generate, restore
+- Proc B never sees proc A's vars</p>
+<p>This is exactly what we want! And we DON'T need to clear after the pre-pass because the per-proc scoping already handles it. The pre-pass data is never consulted inside a proc because we always create a fresh map on proc entry.</p>
+<p>For nested procs, we'd inherit from the parent's scoped boolVars rather than the pre-pass global one. This approach is simpler and more correct.</p>
+<p>Now I'm thinking through the edge case where top-level variables are declared after procs. In occam, the main code typically comes after procedure definitions, so when we encounter a VarDecl in the main sequence, it gets added to boolVars through generateVarDecl, and then the INT conversion happens afterward. That works fine. But I need to consider what happens if there's a BOOL declaration before a proc...</p>
+<p>Actually, this can't be an issue in occam because top-level procs can't access variables from the enclosing scope unless they're passed as parameters. Nested procs can close over variables, but top-level ones are isolated. The fix is straightforward: create a fresh boolVars map on proc entry for top-level procs and inherit from the parent's scoped map for nested ones. This mirrors exactly how refParams works.</p>
+<p>I'm ready to implement this plan now.</p></div></div></div>
+<div class="message assistant" id="msg-2026-02-23T03-32-59-160Z"><div class="message-header"><span class="role-label">Assistant</span><a href="#msg-2026-02-23T03-32-59-160Z" class="timestamp-link"><time datetime="2026-02-23T03:32:59.160Z" data-timestamp="2026-02-23T03:32:59.160Z">2026-02-23T03:32:59.160Z</time></a></div><div class="message-content">
+<div class="assistant-text"><p>I have all the context I need. Let me write the plan.</p></div></div></div>
+<div class="message assistant" id="msg-2026-02-23T03-33-17-730Z"><div class="message-header"><span class="role-label">Assistant</span><a href="#msg-2026-02-23T03-33-17-730Z" class="timestamp-link"><time datetime="2026-02-23T03:33:17.730Z" data-timestamp="2026-02-23T03:33:17.730Z">2026-02-23T03:33:17.730Z</time></a></div><div class="message-content"><div class="file-tool write-tool" data-tool-id="toolu_016W2KQrKobvtkNuZoyCZ2iw">
+<div class="file-tool-header write-header"><span class="file-tool-icon">📝</span> Write <span class="file-tool-path">dreamy-snacking-scroll.md</span></div>
+<div class="file-tool-fullpath">/home/david/.claude/plans/dreamy-snacking-scroll.md</div>
+<div class="truncatable"><div class="truncatable-content"><pre class="file-content"># Fix: Scope `boolVars` per proc/function body (Issue #56)
+
+## Context
+
+The `boolVars` map in `codegen.go` is flat and global. A pre-pass (`collectBoolVars`) adds ALL `BOOL`-typed variables from the entire program (including `#INCLUDE`d modules) into a single map. When generating a type conversion like `INT16 b` where `b` is a `BYTE`, the codegen checks `g.boolVars[&#34;b&#34;]` and incorrectly finds `true` because a different proc in an included file declared `BOOL b:`. This produces invalid Go: `int16(_boolToInt(b))` instead of `int16(b)`.
+
+## Approach
+
+Follow the existing `refParams` scoping pattern (save/restore in `generateProcDecl`):
+
+### Changes in `codegen/codegen.go`
+
+**1. Scope `boolVars` in `generateProcDecl` (~line 1927)**
+
+After the existing `oldRefParams` save (line 1929), add save/restore for `boolVars`:
+
+- Save: `oldBoolVars := g.boolVars`
+- Create new map: fresh for top-level procs (`nestingLevel == 0`), inherited copy for nested procs (closures can reference parent BOOL vars)
+- Register BOOL-typed params from `proc.Params` (where `p.Type == &#34;BOOL&#34;` and not a chan/chanArray)
+- Also delete non-BOOL params that shadow inherited names
+- After body generation, restore: `g.boolVars = oldBoolVars` (next to existing `g.refParams = oldRefParams` at line 2016)
+
+`generateVarDecl` (line 1084-1088) already adds BOOL vars dynamically during body generation, so local `BOOL` declarations will correctly populate the scoped map.
+
+**2. Scope `boolVars` in `generateFuncDecl` (~line 2103)**
+
+Same pattern: save before body generation, create scoped map (inheriting if nested), register BOOL params, restore after body.
+
+### Files to modify
+
+- `codegen/codegen.go` — `generateProcDecl`, `generateFuncDecl`
+
+### What stays unchanged
+
+- The pre-pass `collectBoolVars` (lines 114-117) — still needed for `containsBoolConversion` to decide whether to emit the `_boolToInt` helper function
+- `generateVarDecl` BOOL tracking (lines 1084-1088) — already correct, adds to whatever the current scoped map is
+- `isBoolExpression` (line 2675) — no changes needed, it already checks `g.boolVars`
+
+## Verification
+
+```bash
+# Reproduce the bug (should fail with go vet error before fix)
+./occam2go -I kroc/modules/course/libsrc -D TARGET.BITS.PER.WORD=32 -o /tmp/cast.go kroc/modules/course/examples/cast.occ
+go vet /tmp/cast.go
+
+# Full course module still compiles
+./occam2go -I kroc/modules/course/libsrc -D TARGET.BITS.PER.WORD=32 -o /tmp/course_out.go kroc/modules/course/libsrc/course.module
+go vet /tmp/course_out.go
+
+# All existing tests pass
+go test ./...
+```
+</pre></div><button class="expand-btn">Show more</button></div>
+</div></div></div>
+<div class="message tool-reply" id="msg-2026-02-23T03-33-17-864Z"><div class="message-header"><span class="role-label">Tool reply</span><a href="#msg-2026-02-23T03-33-17-864Z" class="timestamp-link"><time datetime="2026-02-23T03:33:17.864Z" data-timestamp="2026-02-23T03:33:17.864Z">2026-02-23T03:33:17.864Z</time></a></div><div class="message-content"><div class="tool-result"><div class="truncatable"><div class="truncatable-content"><pre>File created successfully at: /home/david/.claude/plans/dreamy-snacking-scroll.md</pre></div><button class="expand-btn">Show more</button></div></div></div></div>
+<div class="message assistant" id="msg-2026-02-23T03-33-20-823Z"><div class="message-header"><span class="role-label">Assistant</span><a href="#msg-2026-02-23T03-33-20-823Z" class="timestamp-link"><time datetime="2026-02-23T03:33:20.823Z" data-timestamp="2026-02-23T03:33:20.823Z">2026-02-23T03:33:20.823Z</time></a></div><div class="message-content">
+<div class="tool-use" data-tool-id="toolu_01WwKUq61SBxcTn3CNUMQryp"><div class="tool-header"><span class="tool-icon">⚙</span> ExitPlanMode</div><div class="truncatable"><div class="truncatable-content"><pre class="json">{
+  &#34;plan&#34;: &#34;# Fix: Scope `boolVars` per proc/function body (Issue #56)\n\n## Context\n\nThe `boolVars` map in `codegen.go` is flat and global. A pre-pass (`collectBoolVars`) adds ALL `BOOL`-typed variables from the entire program (including `#INCLUDE`d modules) into a single map. When generating a type conversion like `INT16 b` where `b` is a `BYTE`, the codegen checks `g.boolVars[\&#34;b\&#34;]` and incorrectly finds `true` because a different proc in an included file declared `BOOL b:`. This produces invalid Go: `int16(_boolToInt(b))` instead of `int16(b)`.\n\n## Approach\n\nFollow the existing `refParams` scoping pattern (save/restore in `generateProcDecl`):\n\n### Changes in `codegen/codegen.go`\n\n**1. Scope `boolVars` in `generateProcDecl` (~line 1927)**\n\nAfter the existing `oldRefParams` save (line 1929), add save/restore for `boolVars`:\n\n- Save: `oldBoolVars := g.boolVars`\n- Create new map: fresh for top-level procs (`nestingLevel == 0`), inherited copy for nested procs (closures can reference parent BOOL vars)\n- Register BOOL-typed params from `proc.Params` (where `p.Type == \&#34;BOOL\&#34;` and not a chan/chanArray)\n- Also delete non-BOOL params that shadow inherited names\n- After body generation, restore: `g.boolVars = oldBoolVars` (next to existing `g.refParams = oldRefParams` at line 2016)\n\n`generateVarDecl` (line 1084-1088) already adds BOOL vars dynamically during body generation, so local `BOOL` declarations will correctly populate the scoped map.\n\n**2. Scope `boolVars` in `generateFuncDecl` (~line 2103)**\n\nSame pattern: save before body generation, create scoped map (inheriting if nested), register BOOL params, restore after body.\n\n### Files to modify\n\n- `codegen/codegen.go` — `generateProcDecl`, `generateFuncDecl`\n\n### What stays unchanged\n\n- The pre-pass `collectBoolVars` (lines 114-117) — still needed for `containsBoolConversion` to decide whether to emit the `_boolToInt` helper function\n- `generateVarDecl` BOOL tracking (lines 1084-1088) — already correct, adds to whatever the current scoped map is\n- `isBoolExpression` (line 2675) — no changes needed, it already checks `g.boolVars`\n\n## Verification\n\n```bash\n# Reproduce the bug (should fail with go vet error before fix)\n./occam2go -I kroc/modules/course/libsrc -D TARGET.BITS.PER.WORD=32 -o /tmp/cast.go kroc/modules/course/examples/cast.occ\ngo vet /tmp/cast.go\n\n# Full course module still compiles\n./occam2go -I kroc/modules/course/libsrc -D TARGET.BITS.PER.WORD=32 -o /tmp/course_out.go kroc/modules/course/libsrc/course.module\ngo vet /tmp/course_out.go\n\n# All existing tests pass\ngo test ./...\n```\n&#34;
+}</pre></div><button class="expand-btn">Show more</button></div></div></div></div>
+<div class="message tool-reply" id="msg-2026-02-23T03-33-23-496Z"><div class="message-header"><span class="role-label">Tool reply</span><a href="#msg-2026-02-23T03-33-23-496Z" class="timestamp-link"><time datetime="2026-02-23T03:33:23.496Z" data-timestamp="2026-02-23T03:33:23.496Z">2026-02-23T03:33:23.496Z</time></a></div><div class="message-content"><div class="tool-result tool-error"><div class="truncatable"><div class="truncatable-content"><pre>The user doesn&#x27;t want to proceed with this tool use. The tool use was rejected (eg. if it was a file edit, the new_string was NOT written to the file). STOP what you are doing and wait for the user to tell you how to proceed.</pre></div><button class="expand-btn">Show more</button></div></div></div></div>
+<div class="message user" id="msg-2026-02-23T03-33-23-497Z"><div class="message-header"><span class="role-label">User</span><a href="#msg-2026-02-23T03-33-23-497Z" class="timestamp-link"><time datetime="2026-02-23T03:33:23.497Z" data-timestamp="2026-02-23T03:33:23.497Z">2026-02-23T03:33:23.497Z</time></a></div><div class="message-content">
+<div class="assistant-text"><p>[Request interrupted by user for tool use]</p></div></div></div>
+        
+
+<div class="pagination"><a href="index.html" class="index-link">Index</a></div>
+
+    </div>
+    <script>
+document.querySelectorAll('time[data-timestamp]').forEach(function(el) {
+    const timestamp = el.getAttribute('data-timestamp');
+    const date = new Date(timestamp);
+    const now = new Date();
+    const isToday = date.toDateString() === now.toDateString();
+    const timeStr = date.toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' });
+    if (isToday) { el.textContent = timeStr; }
+    else { el.textContent = date.toLocaleDateString(undefined, { month: 'short', day: 'numeric' }) + ' ' + timeStr; }
+});
+document.querySelectorAll('pre.json').forEach(function(el) {
+    let text = el.textContent;
+    text = text.replace(/"([^"]+)":/g, '<span style="color: #ce93d8">"$1"</span>:');
+    text = text.replace(/: "([^"]*)"/g, ': <span style="color: #81d4fa">"$1"</span>');
+    text = text.replace(/: (\d+)/g, ': <span style="color: #ffcc80">$1</span>');
+    text = text.replace(/: (true|false|null)/g, ': <span style="color: #f48fb1">$1</span>');
+    el.innerHTML = text;
+});
+document.querySelectorAll('.truncatable').forEach(function(wrapper) {
+    const content = wrapper.querySelector('.truncatable-content');
+    const btn = wrapper.querySelector('.expand-btn');
+    if (content.scrollHeight > 250) {
+        wrapper.classList.add('truncated');
+        btn.addEventListener('click', function() {
+            if (wrapper.classList.contains('truncated')) { wrapper.classList.remove('truncated'); wrapper.classList.add('expanded'); btn.textContent = 'Show less'; }
+            else { wrapper.classList.remove('expanded'); wrapper.classList.add('truncated'); btn.textContent = 'Show more'; }
+        });
+    }
+});
+</script>
+</body>
+</html>
