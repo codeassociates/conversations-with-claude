@@ -1,0 +1,897 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Claude Code transcript - page 1</title>
+    <style>
+:root { --bg-color: #f5f5f5; --card-bg: #ffffff; --user-bg: #e3f2fd; --user-border: #1976d2; --assistant-bg: #f5f5f5; --assistant-border: #9e9e9e; --thinking-bg: #fff8e1; --thinking-border: #ffc107; --thinking-text: #666; --tool-bg: #f3e5f5; --tool-border: #9c27b0; --tool-result-bg: #e8f5e9; --tool-error-bg: #ffebee; --text-color: #212121; --text-muted: #757575; --code-bg: #263238; --code-text: #aed581; }
+* { box-sizing: border-box; }
+body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: var(--bg-color); color: var(--text-color); margin: 0; padding: 16px; line-height: 1.6; }
+.container { max-width: 800px; margin: 0 auto; }
+h1 { font-size: 1.5rem; margin-bottom: 24px; padding-bottom: 8px; border-bottom: 2px solid var(--user-border); }
+.header-row { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; border-bottom: 2px solid var(--user-border); padding-bottom: 8px; margin-bottom: 24px; }
+.header-row h1 { border-bottom: none; padding-bottom: 0; margin-bottom: 0; flex: 1; min-width: 200px; }
+.message { margin-bottom: 16px; border-radius: 12px; overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+.message.user { background: var(--user-bg); border-left: 4px solid var(--user-border); }
+.message.assistant { background: var(--card-bg); border-left: 4px solid var(--assistant-border); }
+.message.tool-reply { background: #fff8e1; border-left: 4px solid #ff9800; }
+.tool-reply .role-label { color: #e65100; }
+.tool-reply .tool-result { background: transparent; padding: 0; margin: 0; }
+.tool-reply .tool-result .truncatable.truncated::after { background: linear-gradient(to bottom, transparent, #fff8e1); }
+.message-header { display: flex; justify-content: space-between; align-items: center; padding: 8px 16px; background: rgba(0,0,0,0.03); font-size: 0.85rem; }
+.role-label { font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; }
+.user .role-label { color: var(--user-border); }
+time { color: var(--text-muted); font-size: 0.8rem; }
+.timestamp-link { color: inherit; text-decoration: none; }
+.timestamp-link:hover { text-decoration: underline; }
+.message:target { animation: highlight 2s ease-out; }
+@keyframes highlight { 0% { background-color: rgba(25, 118, 210, 0.2); } 100% { background-color: transparent; } }
+.message-content { padding: 16px; }
+.message-content p { margin: 0 0 12px 0; }
+.message-content p:last-child { margin-bottom: 0; }
+.thinking { background: var(--thinking-bg); border: 1px solid var(--thinking-border); border-radius: 8px; padding: 12px; margin: 12px 0; font-size: 0.9rem; color: var(--thinking-text); }
+.thinking-label { font-size: 0.75rem; font-weight: 600; text-transform: uppercase; color: #f57c00; margin-bottom: 8px; }
+.thinking p { margin: 8px 0; }
+.assistant-text { margin: 8px 0; }
+.tool-use { background: var(--tool-bg); border: 1px solid var(--tool-border); border-radius: 8px; padding: 12px; margin: 12px 0; }
+.tool-header { font-weight: 600; color: var(--tool-border); margin-bottom: 8px; display: flex; align-items: center; gap: 8px; }
+.tool-icon { font-size: 1.1rem; }
+.tool-description { font-size: 0.9rem; color: var(--text-muted); margin-bottom: 8px; font-style: italic; }
+.tool-result { background: var(--tool-result-bg); border-radius: 8px; padding: 12px; margin: 12px 0; }
+.tool-result.tool-error { background: var(--tool-error-bg); }
+.file-tool { border-radius: 8px; padding: 12px; margin: 12px 0; }
+.write-tool { background: linear-gradient(135deg, #e3f2fd 0%, #e8f5e9 100%); border: 1px solid #4caf50; }
+.edit-tool { background: linear-gradient(135deg, #fff3e0 0%, #fce4ec 100%); border: 1px solid #ff9800; }
+.file-tool-header { font-weight: 600; margin-bottom: 4px; display: flex; align-items: center; gap: 8px; font-size: 0.95rem; }
+.write-header { color: #2e7d32; }
+.edit-header { color: #e65100; }
+.file-tool-icon { font-size: 1rem; }
+.file-tool-path { font-family: monospace; background: rgba(0,0,0,0.08); padding: 2px 8px; border-radius: 4px; }
+.file-tool-fullpath { font-family: monospace; font-size: 0.8rem; color: var(--text-muted); margin-bottom: 8px; word-break: break-all; }
+.file-content { margin: 0; }
+.edit-section { display: flex; margin: 4px 0; border-radius: 4px; overflow: hidden; }
+.edit-label { padding: 8px 12px; font-weight: bold; font-family: monospace; display: flex; align-items: flex-start; }
+.edit-old { background: #fce4ec; }
+.edit-old .edit-label { color: #b71c1c; background: #f8bbd9; }
+.edit-old .edit-content { color: #880e4f; }
+.edit-new { background: #e8f5e9; }
+.edit-new .edit-label { color: #1b5e20; background: #a5d6a7; }
+.edit-new .edit-content { color: #1b5e20; }
+.edit-content { margin: 0; flex: 1; background: transparent; font-size: 0.85rem; }
+.edit-replace-all { font-size: 0.75rem; font-weight: normal; color: var(--text-muted); }
+.write-tool .truncatable.truncated::after { background: linear-gradient(to bottom, transparent, #e6f4ea); }
+.edit-tool .truncatable.truncated::after { background: linear-gradient(to bottom, transparent, #fff0e5); }
+.todo-list { background: linear-gradient(135deg, #e8f5e9 0%, #f1f8e9 100%); border: 1px solid #81c784; border-radius: 8px; padding: 12px; margin: 12px 0; }
+.todo-header { font-weight: 600; color: #2e7d32; margin-bottom: 10px; display: flex; align-items: center; gap: 8px; font-size: 0.95rem; }
+.todo-items { list-style: none; margin: 0; padding: 0; }
+.todo-item { display: flex; align-items: flex-start; gap: 10px; padding: 6px 0; border-bottom: 1px solid rgba(0,0,0,0.06); font-size: 0.9rem; }
+.todo-item:last-child { border-bottom: none; }
+.todo-icon { flex-shrink: 0; width: 20px; height: 20px; display: flex; align-items: center; justify-content: center; font-weight: bold; border-radius: 50%; }
+.todo-completed .todo-icon { color: #2e7d32; background: rgba(46, 125, 50, 0.15); }
+.todo-completed .todo-content { color: #558b2f; text-decoration: line-through; }
+.todo-in-progress .todo-icon { color: #f57c00; background: rgba(245, 124, 0, 0.15); }
+.todo-in-progress .todo-content { color: #e65100; font-weight: 500; }
+.todo-pending .todo-icon { color: #757575; background: rgba(0,0,0,0.05); }
+.todo-pending .todo-content { color: #616161; }
+pre { background: var(--code-bg); color: var(--code-text); padding: 12px; border-radius: 6px; overflow-x: auto; font-size: 0.85rem; line-height: 1.5; margin: 8px 0; white-space: pre-wrap; word-wrap: break-word; }
+pre.json { color: #e0e0e0; }
+code { background: rgba(0,0,0,0.08); padding: 2px 6px; border-radius: 4px; font-size: 0.9em; }
+pre code { background: none; padding: 0; }
+.user-content { margin: 0; }
+.truncatable { position: relative; }
+.truncatable.truncated .truncatable-content { max-height: 200px; overflow: hidden; }
+.truncatable.truncated::after { content: ''; position: absolute; bottom: 32px; left: 0; right: 0; height: 60px; background: linear-gradient(to bottom, transparent, var(--card-bg)); pointer-events: none; }
+.message.user .truncatable.truncated::after { background: linear-gradient(to bottom, transparent, var(--user-bg)); }
+.message.tool-reply .truncatable.truncated::after { background: linear-gradient(to bottom, transparent, #fff8e1); }
+.tool-use .truncatable.truncated::after { background: linear-gradient(to bottom, transparent, var(--tool-bg)); }
+.tool-result .truncatable.truncated::after { background: linear-gradient(to bottom, transparent, var(--tool-result-bg)); }
+.expand-btn { display: none; width: 100%; padding: 8px 16px; margin-top: 4px; background: rgba(0,0,0,0.05); border: 1px solid rgba(0,0,0,0.1); border-radius: 6px; cursor: pointer; font-size: 0.85rem; color: var(--text-muted); }
+.expand-btn:hover { background: rgba(0,0,0,0.1); }
+.truncatable.truncated .expand-btn, .truncatable.expanded .expand-btn { display: block; }
+.pagination { display: flex; justify-content: center; gap: 8px; margin: 24px 0; flex-wrap: wrap; }
+.pagination a, .pagination span { padding: 5px 10px; border-radius: 6px; text-decoration: none; font-size: 0.85rem; }
+.pagination a { background: var(--card-bg); color: var(--user-border); border: 1px solid var(--user-border); }
+.pagination a:hover { background: var(--user-bg); }
+.pagination .current { background: var(--user-border); color: white; }
+.pagination .disabled { color: var(--text-muted); border: 1px solid #ddd; }
+.pagination .index-link { background: var(--user-border); color: white; }
+details.continuation { margin-bottom: 16px; }
+details.continuation summary { cursor: pointer; padding: 12px 16px; background: var(--user-bg); border-left: 4px solid var(--user-border); border-radius: 12px; font-weight: 500; color: var(--text-muted); }
+details.continuation summary:hover { background: rgba(25, 118, 210, 0.15); }
+details.continuation[open] summary { border-radius: 12px 12px 0 0; margin-bottom: 0; }
+.index-item { margin-bottom: 16px; border-radius: 12px; overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,0.1); background: var(--user-bg); border-left: 4px solid var(--user-border); }
+.index-item a { display: block; text-decoration: none; color: inherit; }
+.index-item a:hover { background: rgba(25, 118, 210, 0.1); }
+.index-item-header { display: flex; justify-content: space-between; align-items: center; padding: 8px 16px; background: rgba(0,0,0,0.03); font-size: 0.85rem; }
+.index-item-number { font-weight: 600; color: var(--user-border); }
+.index-item-content { padding: 16px; }
+.index-item-stats { padding: 8px 16px 12px 32px; font-size: 0.85rem; color: var(--text-muted); border-top: 1px solid rgba(0,0,0,0.06); }
+.index-item-commit { margin-top: 6px; padding: 4px 8px; background: #fff3e0; border-radius: 4px; font-size: 0.85rem; color: #e65100; }
+.index-item-commit code { background: rgba(0,0,0,0.08); padding: 1px 4px; border-radius: 3px; font-size: 0.8rem; margin-right: 6px; }
+.commit-card { margin: 8px 0; padding: 10px 14px; background: #fff3e0; border-left: 4px solid #ff9800; border-radius: 6px; }
+.commit-card a { text-decoration: none; color: #5d4037; display: block; }
+.commit-card a:hover { color: #e65100; }
+.commit-card-hash { font-family: monospace; color: #e65100; font-weight: 600; margin-right: 8px; }
+.index-commit { margin-bottom: 12px; padding: 10px 16px; background: #fff3e0; border-left: 4px solid #ff9800; border-radius: 8px; box-shadow: 0 1px 2px rgba(0,0,0,0.05); }
+.index-commit a { display: block; text-decoration: none; color: inherit; }
+.index-commit a:hover { background: rgba(255, 152, 0, 0.1); margin: -10px -16px; padding: 10px 16px; border-radius: 8px; }
+.index-commit-header { display: flex; justify-content: space-between; align-items: center; font-size: 0.85rem; margin-bottom: 4px; }
+.index-commit-hash { font-family: monospace; color: #e65100; font-weight: 600; }
+.index-commit-msg { color: #5d4037; }
+.index-item-long-text { margin-top: 8px; padding: 12px; background: var(--card-bg); border-radius: 8px; border-left: 3px solid var(--assistant-border); }
+.index-item-long-text .truncatable.truncated::after { background: linear-gradient(to bottom, transparent, var(--card-bg)); }
+.index-item-long-text-content { color: var(--text-color); }
+#search-box { display: none; align-items: center; gap: 8px; }
+#search-box input { padding: 6px 12px; border: 1px solid var(--assistant-border); border-radius: 6px; font-size: 16px; width: 180px; }
+#search-box button, #modal-search-btn, #modal-close-btn { background: var(--user-border); color: white; border: none; border-radius: 6px; padding: 6px 10px; cursor: pointer; display: flex; align-items: center; justify-content: center; }
+#search-box button:hover, #modal-search-btn:hover { background: #1565c0; }
+#modal-close-btn { background: var(--text-muted); margin-left: 8px; }
+#modal-close-btn:hover { background: #616161; }
+#search-modal[open] { border: none; border-radius: 12px; box-shadow: 0 4px 24px rgba(0,0,0,0.2); padding: 0; width: 90vw; max-width: 900px; height: 80vh; max-height: 80vh; display: flex; flex-direction: column; }
+#search-modal::backdrop { background: rgba(0,0,0,0.5); }
+.search-modal-header { display: flex; align-items: center; gap: 8px; padding: 16px; border-bottom: 1px solid var(--assistant-border); background: var(--bg-color); border-radius: 12px 12px 0 0; }
+.search-modal-header input { flex: 1; padding: 8px 12px; border: 1px solid var(--assistant-border); border-radius: 6px; font-size: 16px; }
+#search-status { padding: 8px 16px; font-size: 0.85rem; color: var(--text-muted); border-bottom: 1px solid rgba(0,0,0,0.06); }
+#search-results { flex: 1; overflow-y: auto; padding: 16px; }
+.search-result { margin-bottom: 16px; border-radius: 8px; overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+.search-result a { display: block; text-decoration: none; color: inherit; }
+.search-result a:hover { background: rgba(25, 118, 210, 0.05); }
+.search-result-page { padding: 6px 12px; background: rgba(0,0,0,0.03); font-size: 0.8rem; color: var(--text-muted); border-bottom: 1px solid rgba(0,0,0,0.06); }
+.search-result-content { padding: 12px; }
+.search-result mark { background: #fff59d; padding: 1px 2px; border-radius: 2px; }
+@media (max-width: 600px) { body { padding: 8px; } .message, .index-item { border-radius: 8px; } .message-content, .index-item-content { padding: 12px; } pre { font-size: 0.8rem; padding: 8px; } #search-box input { width: 120px; } #search-modal[open] { width: 95vw; height: 90vh; } }
+</style>
+</head>
+<body>
+    <div class="container">
+        <h1><a href="index.html" style="color: inherit; text-decoration: none;">Claude Code transcript</a> - page 1/1</h1>
+        
+
+<div class="pagination"><a href="index.html" class="index-link">Index</a></div>
+
+        
+<div class="message user" id="msg-2026-02-24T00-08-47-859Z"><div class="message-header"><span class="role-label">User</span><a href="#msg-2026-02-24T00-08-47-859Z" class="timestamp-link"><time datetime="2026-02-24T00:08:47.859Z" data-timestamp="2026-02-24T00:08:47.859Z">2026-02-24T00:08:47.859Z</time></a></div><div class="message-content">
+<div class="user-content"><p>Please take a look at issue #90.</p></div></div></div>
+<div class="message assistant" id="msg-2026-02-24T00-08-51-047Z"><div class="message-header"><span class="role-label">Assistant</span><a href="#msg-2026-02-24T00-08-51-047Z" class="timestamp-link"><time datetime="2026-02-24T00:08:51.047Z" data-timestamp="2026-02-24T00:08:51.047Z">2026-02-24T00:08:51.047Z</time></a></div><div class="message-content">
+<div class="thinking"><div class="thinking-label">Thinking</div><p>The user wants me to look at issue #90 on the GitHub repository. Let me fetch it using the gh CLI.</p></div></div></div>
+<div class="message assistant" id="msg-2026-02-24T00-08-51-633Z"><div class="message-header"><span class="role-label">Assistant</span><a href="#msg-2026-02-24T00-08-51-633Z" class="timestamp-link"><time datetime="2026-02-24T00:08:51.633Z" data-timestamp="2026-02-24T00:08:51.633Z">2026-02-24T00:08:51.633Z</time></a></div><div class="message-content">
+<div class="tool-use bash-tool" data-tool-id="toolu_01Cy1paNQBoLNmKEta79a2Hi">
+<div class="tool-header"><span class="tool-icon">$</span> Bash</div>
+<div class="tool-description">View GitHub issue #90</div><div class="truncatable"><div class="truncatable-content"><pre class="bash-command">gh issue view 90</pre></div><button class="expand-btn">Show more</button></div>
+</div></div></div>
+<div class="message tool-reply" id="msg-2026-02-24T00-08-52-519Z"><div class="message-header"><span class="role-label">Tool reply</span><a href="#msg-2026-02-24T00-08-52-519Z" class="timestamp-link"><time datetime="2026-02-24T00:08:52.519Z" data-timestamp="2026-02-24T00:08:52.519Z">2026-02-24T00:08:52.519Z</time></a></div><div class="message-content"><div class="tool-result"><div class="truncatable"><div class="truncatable-content"><pre>title:	Support character-by-character keyboard channel semantics
+state:	OPEN
+author:	dboreham
+labels:	
+comments:	0
+assignees:	
+projects:	
+milestone:	
+number:	90
+--
+I noticed that if I try to run one of the course module examples that processes input from the `keyboard` channel one character at a time, that in fact several characters are all received at once only after I hit the enter key. You can see this for example with this example program: kroc/modules/course/examples/echoing.occ. Rather than echoing each character typed, you&#x27;ll see no output after hitting a few keys, then all the characters echoed after you hit newline.
+
+I think the code in the `generateEntryHarness()` function that sets up the `keyboard` channel should perhaps be using a golang keyboard handling library rather than simply connecting to `os.Stdin`.</pre></div><button class="expand-btn">Show more</button></div></div></div></div>
+<div class="message assistant" id="msg-2026-02-24T00-08-58-906Z"><div class="message-header"><span class="role-label">Assistant</span><a href="#msg-2026-02-24T00-08-58-906Z" class="timestamp-link"><time datetime="2026-02-24T00:08:58.906Z" data-timestamp="2026-02-24T00:08:58.906Z">2026-02-24T00:08:58.906Z</time></a></div><div class="message-content">
+<div class="tool-use" data-tool-id="toolu_01UbA1FaX8rLP1G6Ns4nDoC5"><div class="tool-header"><span class="tool-icon">⚙</span> Task</div><div class="tool-description">Explore keyboard channel setup</div><div class="truncatable"><div class="truncatable-content"><pre class="json">{
+  &#34;subagent_type&#34;: &#34;Explore&#34;,
+  &#34;prompt&#34;: &#34;I need to understand the current implementation of the keyboard channel in the occam2go transpiler. Specifically:\n\n1. Find and read the `generateEntryHarness()` function in `codegen/codegen.go` - show me the full function\n2. Find the echoing.occ example at `kroc/modules/course/examples/echoing.occ` and show its contents\n3. Search for any existing keyboard-related code or references in the codebase (grep for \&#34;keyboard\&#34;, \&#34;stdin\&#34;, \&#34;raw\&#34;, \&#34;terminal\&#34;)\n4. Check if there&#39;s a go.mod file and show its contents\n\nBe thorough - I need to understand how the keyboard channel currently works and what would need to change.&#34;
+}</pre></div><button class="expand-btn">Show more</button></div></div></div></div>
+<div class="message tool-reply" id="msg-2026-02-24T00-09-47-252Z"><div class="message-header"><span class="role-label">Tool reply</span><a href="#msg-2026-02-24T00-09-47-252Z" class="timestamp-link"><time datetime="2026-02-24T00:09:47.252Z" data-timestamp="2026-02-24T00:09:47.252Z">2026-02-24T00:09:47.252Z</time></a></div><div class="message-content"><div class="tool-result"><div class="truncatable"><div class="truncatable-content"><pre class="json">[
+  {
+    &quot;type&quot;: &quot;text&quot;,
+    &quot;text&quot;: &quot;Perfect! Now I have all the information needed. Let me create a comprehensive summary:\n\n## Summary: Keyboard Channel Implementation in occam2go\n\nBased on my thorough analysis of the codebase, here&#x27;s the complete picture of how the keyboard channel currently works:\n\n### Current Implementation Overview\n\n**Entry Point Detection (`findEntryProc()` - lines 395-415 in codegen.go)**\n\nThe transpiler automatically detects entry point PROCs by looking for the last top-level PROC with exactly this signature:\n```occam\nPROC name (CHAN BYTE keyboard?, CHAN BYTE screen!, CHAN BYTE error!)\n```\n\nAll three parameters are required:\n1. `keyboard?` - receive-only channel (input)\n2. `screen!` - send-only channel (output to stdout)\n3. `error!` - send-only channel (output to stderr)\n\n**Entry Harness Generation (`generateEntryHarness()` - lines 417-512 in codegen.go)**\n\nWhen an entry PROC is found, the transpiler generates a `func main()` that:\n\n1. **Creates three buffered channels** (256-byte buffers):\n   ```go\n   keyboard := make(chan byte, 256)\n   screen := make(chan byte, 256)\n   _error := make(chan byte, 256)\n   ```\n\n2. **Launches three goroutines:**\n\n   a) **Screen writer goroutine** (lines 436-455):\n   - Reads from the `screen` channel\n   - Uses `bufio.NewWriter(os.Stdout)` for buffered output\n   - Special handling: byte value `255` triggers a `Flush()` operation (used as a flush signal)\n   - All other byte values are written directly via `WriteByte(b)`\n\n   b) **Error writer goroutine** (lines 459-478):\n   - Identical to screen writer but writes to `os.Stderr`\n   - Also uses byte `255` as a flush signal\n\n   c) **Keyboard reader goroutine** (lines 482-498):\n   - Uses `bufio.NewReader(os.Stdin)` for buffered reading\n   - Continuously calls `ReadByte()` to read individual bytes\n   - Sends each byte to the `keyboard` channel\n   - On EOF or read error, closes the `keyboard` channel and exits\n\n3. **Calls the entry PROC** with the three channels (line 502)\n\n4. **Cleanup** (lines 506-508):\n   - Closes `screen` and `error` channels (which terminates the writer goroutines)\n   - Waits for both writer goroutines to finish draining their channels via `sync.WaitGroup`\n\n### Current Hardcoded Behavior\n\n**Keyboard Input:**\n- Reads from `os.Stdin` at the **buffered byte level** (via `bufio.NewReader`)\n- No raw/cooked mode switching\n- Terminal operates in its **default cooked mode**:\n  - Line buffering enabled\n  - Canonical input processing (backspace, Ctrl+U, etc. work)\n  - Echo enabled (characters appear on screen)\n  - Ctrl+C/Ctrl+Z generate signals\n  - No immediate byte-by-byte input until Enter is pressed\n\n**Screen Output:**\n- Writes to `os.Stdout` via `bufio.NewWriter` (buffered for efficiency)\n- Byte value `255` (0xFF) is special: triggers a flush operation\n- Occam uses `FLUSH` constant (mapped to `255`) for explicit buffer flushing\n- Example: `screen ! FLUSH` generates `screen &lt;- 255` in Go code\n\n**Error Output:**\n- Writes to `os.Stderr` identically to screen, with same buffering behavior\n\n### Example Usage\n\nFrom `/home/david/projects/code-associates/occam2go/kroc/modules/course/examples/echoing.occ`:\n\n```occam\nPROC echoing (CHAN BYTE keyboard?, screen!, error!)\n  BYTE ch:\n  SEQ\n    ch := &#x27; &#x27;\n    WHILE ch &lt;&gt; &#x27;Z&#x27;\n      SEQ\n        keyboard ? ch        -- blocks until Enter is pressed, reads byte\n        screen ! ch          -- sends to buffered stdout\n        screen ! FLUSH       -- flush the buffer (sends 255)\n    screen ! &#x27;*c&#x27;            -- sends 13 (carriage return)\n    screen ! &#x27;*n&#x27;            -- sends 10 (newline)\n:\n```\n\nThis transpiles to the Go function shown in test.go (lines 2676-2687), which is called by the generated harness (lines 2689-2740).\n\n### Key Files\n\n1. **`/home/david/projects/code-associates/occam2go/codegen/codegen.go`**\n   - Lines 20: `needBufio` flag\n   - Lines 232: Import generation\n   - Lines 395-415: `findEntryProc()` - Entry point detection\n   - Lines 417-512: `generateEntryHarness()` - Main harness generation\n\n2. **`/home/david/projects/code-associates/occam2go/test.go`**\n   - Lines 2676-2740: Example generated code (echoing function and harness)\n\n3. **Examples:**\n   - `/home/david/projects/code-associates/occam2go/kroc/modules/course/examples/echoing.occ` - Keyboard input example\n   - `/home/david/projects/code-associates/occam2go/kroc/modules/course/examples/hello_raw_world.occ` - Screen output example\n   - `/home/david/projects/code-associates/occam2go/examples/course_hello.occ` - Entry point pattern\n\n4. **Dependencies:**\n   - Go 1.25.6 (specified in `go.mod`)\n   - Standard library packages: `bufio`, `os`, `sync`, `fmt`\n\n### What Would Need to Change for Raw Mode\n\nTo implement keyboard raw mode (immediate byte-by-byte input without waiting for Enter), you would need to:\n\n1. Add terminal control imports (e.g., `golang.org/x/term` package)\n2. Modify the keyboard reader goroutine in `generateEntryHarness()` to:\n   - Call `term.MakeRaw(os.Stdin)` to enter raw mode\n   - Restore terminal state with `term.Restore()` on exit\n3. Handle cleanup properly (via defer or try/finally pattern)\n4. Possibly add an optional flag/pragma to control raw mode behavior\n\nThe current implementation is designed for **cooked/line-buffered input**, which is appropriate for many teaching examples but would need enhancement for interactive applications requiring immediate character-by-character input.&quot;
+  },
+  {
+    &quot;type&quot;: &quot;text&quot;,
+    &quot;text&quot;: &quot;agentId: aadcc46134c8227fe (for resuming to continue this agent&#x27;s work if needed)\n&lt;usage&gt;total_tokens: 36049\ntool_uses: 26\nduration_ms: 48343&lt;/usage&gt;&quot;
+  }
+]</pre></div><button class="expand-btn">Show more</button></div></div></div></div>
+<div class="message assistant" id="msg-2026-02-24T00-09-52-500Z"><div class="message-header"><span class="role-label">Assistant</span><a href="#msg-2026-02-24T00-09-52-500Z" class="timestamp-link"><time datetime="2026-02-24T00:09:52.500Z" data-timestamp="2026-02-24T00:09:52.500Z">2026-02-24T00:09:52.500Z</time></a></div><div class="message-content">
+<div class="thinking"><div class="thinking-label">Thinking</div><p>Now I have a clear picture of the issue. The keyboard channel currently reads from <code>os.Stdin</code> using <code>bufio.NewReader</code>, which operates in the terminal's default cooked/line-buffered mode. This means characters are only available after the user presses Enter, rather than being available one-at-a-time as they're typed.</p>
+<p>The issue requests switching to raw terminal mode so that characters are available immediately as typed, which is how the original occam <code>keyboard</code> channel worked.</p>
+<p>Let me summarize what I found for the user.</p></div></div></div>
+<div class="message assistant" id="msg-2026-02-24T00-09-58-330Z"><div class="message-header"><span class="role-label">Assistant</span><a href="#msg-2026-02-24T00-09-58-330Z" class="timestamp-link"><time datetime="2026-02-24T00:09:58.330Z" data-timestamp="2026-02-24T00:09:58.330Z">2026-02-24T00:09:58.330Z</time></a></div><div class="message-content">
+<div class="assistant-text"><p>Here's a summary of issue #90:</p>
+<p><strong>Problem:</strong> The <code>keyboard</code> channel in the generated entry harness reads from <code>os.Stdin</code> via <code>bufio.NewReader</code>, which operates in the terminal's default <strong>cooked/line-buffered mode</strong>. Characters aren't delivered until the user presses Enter, so programs like <code>echoing.occ</code> (which expect character-by-character input) don't work correctly — you type several keys with no echo, then everything appears at once after Enter.</p>
+<p><strong>Current code</strong> (<code>codegen/codegen.go:482-498</code>): The keyboard reader goroutine just does <code>bufio.NewReader(os.Stdin).ReadByte()</code> in a loop.</p>
+<p><strong>Fix needed:</strong> Switch the terminal to <strong>raw mode</strong> so bytes are available immediately as typed. The standard approach in Go is <code>golang.org/x/term</code>:
+- <code>term.MakeRaw(int(os.Stdin.Fd()))</code> to enter raw mode
+- <code>term.Restore(...)</code> on cleanup to restore the original terminal state
+- Read directly from <code>os.Stdin</code> (no buffering needed in raw mode)</p>
+<p>This would also require handling Ctrl+C manually (raw mode disables signal generation) and ensuring terminal state is always restored, even on panic.</p>
+<p>Would you like me to implement this fix?</p></div></div></div>
+<div class="message user" id="msg-2026-02-24T00-10-58-359Z"><div class="message-header"><span class="role-label">User</span><a href="#msg-2026-02-24T00-10-58-359Z" class="timestamp-link"><time datetime="2026-02-24T00:10:58.359Z" data-timestamp="2026-02-24T00:10:58.359Z">2026-02-24T00:10:58.359Z</time></a></div><div class="message-content">
+<div class="user-content"><p>Yes please.</p></div></div></div>
+<div class="message assistant" id="msg-2026-02-24T00-11-01-305Z"><div class="message-header"><span class="role-label">Assistant</span><a href="#msg-2026-02-24T00-11-01-305Z" class="timestamp-link"><time datetime="2026-02-24T00:11:01.305Z" data-timestamp="2026-02-24T00:11:01.305Z">2026-02-24T00:11:01.305Z</time></a></div><div class="message-content">
+<div class="tool-use" data-tool-id="toolu_018jV2MmgeABoL1uQEkLdEQC"><div class="tool-header"><span class="tool-icon">⚙</span> EnterPlanMode</div><div class="truncatable"><div class="truncatable-content"><pre class="json">{}</pre></div><button class="expand-btn">Show more</button></div></div></div></div>
+<div class="message tool-reply" id="msg-2026-02-24T00-11-01-307Z"><div class="message-header"><span class="role-label">Tool reply</span><a href="#msg-2026-02-24T00-11-01-307Z" class="timestamp-link"><time datetime="2026-02-24T00:11:01.307Z" data-timestamp="2026-02-24T00:11:01.307Z">2026-02-24T00:11:01.307Z</time></a></div><div class="message-content"><div class="tool-result"><div class="truncatable"><div class="truncatable-content"><pre>Entered plan mode. You should now focus on exploring the codebase and designing an implementation approach.
+
+In plan mode, you should:
+1. Thoroughly explore the codebase to understand existing patterns
+2. Identify similar features and architectural approaches
+3. Consider multiple approaches and their trade-offs
+4. Use AskUserQuestion if you need to clarify the approach
+5. Design a concrete implementation strategy
+6. When ready, use ExitPlanMode to present your plan for approval
+
+Remember: DO NOT write or edit any files yet. This is a read-only exploration and planning phase.</pre></div><button class="expand-btn">Show more</button></div></div></div></div>
+<div class="message assistant" id="msg-2026-02-24T00-11-11-582Z"><div class="message-header"><span class="role-label">Assistant</span><a href="#msg-2026-02-24T00-11-11-582Z" class="timestamp-link"><time datetime="2026-02-24T00:11:11.582Z" data-timestamp="2026-02-24T00:11:11.582Z">2026-02-24T00:11:11.582Z</time></a></div><div class="message-content">
+<div class="tool-use" data-tool-id="toolu_015XJAFcdBmV4JT2L78kT4LM"><div class="tool-header"><span class="tool-icon">⚙</span> Task</div><div class="tool-description">Explore entry harness and terminal</div><div class="truncatable"><div class="truncatable-content"><pre class="json">{
+  &#34;subagent_type&#34;: &#34;Explore&#34;,
+  &#34;prompt&#34;: &#34;I need to understand the current entry harness implementation and how to add raw terminal mode for keyboard input in the occam2go transpiler. Please explore thoroughly:\n\n1. Read the full `generateEntryHarness()` function in `codegen/codegen.go` - show me the complete function with line numbers\n2. Read the `findEntryProc()` function as well\n3. Look at how imports are managed - search for `needBufio`, `needSync`, `needFmt`, `needMath`, `needTime`, `needReflect` and show how they&#39;re set and used in import generation\n4. Read `go.mod` and `go.sum` to see current dependencies\n5. Look at the `echoing.occ` example file\n6. Search for any `containsX()` scanner functions (like `containsAlt`, `containsPar`, etc.) that detect what features are used - show me a couple examples of how these work\n7. Look at how the generated code handles cleanup/defer patterns\n8. Check if there are any e2e tests related to the entry harness pattern (search for \&#34;entry\&#34;, \&#34;harness\&#34;, \&#34;keyboard\&#34;, \&#34;screen\&#34; in test files)\n\nBe very thorough - I need exact line numbers and full function bodies.&#34;
+}</pre></div><button class="expand-btn">Show more</button></div></div></div></div>
+<div class="message tool-reply" id="msg-2026-02-24T00-12-46-109Z"><div class="message-header"><span class="role-label">Tool reply</span><a href="#msg-2026-02-24T00-12-46-109Z" class="timestamp-link"><time datetime="2026-02-24T00:12:46.109Z" data-timestamp="2026-02-24T00:12:46.109Z">2026-02-24T00:12:46.109Z</time></a></div><div class="message-content"><div class="tool-result"><div class="truncatable"><div class="truncatable-content"><pre class="json">[
+  {
+    &quot;type&quot;: &quot;text&quot;,
+    &quot;text&quot;: &quot;Excellent! Now I have all the information needed. Let me create a comprehensive report:\n\n## Comprehensive Exploration Report: Entry Harness Implementation &amp; Raw Terminal Mode\n\nBased on my thorough analysis of the occam2go codebase, here&#x27;s a complete picture of how the entry harness is implemented and what needs to be added for raw terminal mode keyboard input.\n\n---\n\n### 1. **Entry Point Detection: `findEntryProc()` Function**\n**File:** `/home/david/projects/code-associates/occam2go/codegen/codegen.go` (Lines 395-415)\n\n```go\n// findEntryProc looks for the last top-level PROC with the standard occam\n// entry point signature: exactly 3 CHAN OF BYTE params (keyboard?, screen!, error!).\nfunc (g *Generator) findEntryProc(procDecls []ast.Statement) *ast.ProcDecl {\n\tvar entry *ast.ProcDecl\n\tfor _, stmt := range procDecls {\n\t\tproc, ok := stmt.(*ast.ProcDecl)\n\t\tif !ok {\n\t\t\tcontinue\n\t\t}\n\t\tif len(proc.Params) != 3 {\n\t\t\tcontinue\n\t\t}\n\t\tp0, p1, p2 := proc.Params[0], proc.Params[1], proc.Params[2]\n\t\tif p0.IsChan &amp;&amp; p0.ChanElemType == \&quot;BYTE\&quot; &amp;&amp; p0.ChanDir == \&quot;?\&quot; &amp;&amp;\n\t\t\tp1.IsChan &amp;&amp; p1.ChanElemType == \&quot;BYTE\&quot; &amp;&amp; p1.ChanDir == \&quot;!\&quot; &amp;&amp;\n\t\t\tp2.IsChan &amp;&amp; p2.ChanElemType == \&quot;BYTE\&quot; &amp;&amp; p2.ChanDir == \&quot;!\&quot; {\n\t\t\tentry = proc\n\t\t}\n\t}\n\treturn entry\n}\n```\n\n**Key Details:**\n- Scans ALL top-level procedure declarations and returns the **last one** that matches\n- Requires **exactly 3 parameters**:\n  1. `CHAN OF BYTE keyboard?` (input, receive-only)\n  2. `CHAN OF BYTE screen!` (output, send-only)\n  3. `CHAN OF BYTE error!` (output, send-only)\n\n---\n\n### 2. **Entry Harness Generation: `generateEntryHarness()` Function**\n**File:** `/home/david/projects/code-associates/occam2go/codegen/codegen.go` (Lines 417-512)\n\n**Complete function with line numbers:**\n\n```go\n417→// generateEntryHarness emits a func main() that wires stdin/stdout/stderr\n418→// to channels and calls the entry PROC.\n419→func (g *Generator) generateEntryHarness(proc *ast.ProcDecl) {\n420→\tname := goIdent(proc.Name)\n421→\tg.writeLine(\&quot;func main() {\&quot;)\n422→\tg.indent++\n423→\n424→\t// Create channels\n425→\tg.writeLine(\&quot;keyboard := make(chan byte, 256)\&quot;)\n426→\tg.writeLine(\&quot;screen := make(chan byte, 256)\&quot;)\n427→\tg.writeLine(\&quot;_error := make(chan byte, 256)\&quot;)\n428→\tg.writeLine(\&quot;\&quot;)\n429→\n430→\t// WaitGroup for writer goroutines to finish draining\n431→\tg.writeLine(\&quot;var wg sync.WaitGroup\&quot;)\n432→\tg.writeLine(\&quot;wg.Add(2)\&quot;)\n433→\tg.writeLine(\&quot;\&quot;)\n434→\n435→\t// Screen writer goroutine\n436→\tg.writeLine(\&quot;go func() {\&quot;)\n437→\tg.indent++\n438→\tg.writeLine(\&quot;defer wg.Done()\&quot;)\n439→\tg.writeLine(\&quot;w := bufio.NewWriter(os.Stdout)\&quot;)\n440→\tg.writeLine(\&quot;for b := range screen {\&quot;)\n441→\tg.indent++\n442→\tg.writeLine(\&quot;if b == 255 {\&quot;)\n443→\tg.indent++\n444→\tg.writeLine(\&quot;w.Flush()\&quot;)\n445→\tg.indent--\n446→\tg.writeLine(\&quot;} else {\&quot;)\n447→\tg.indent++\n448→\tg.writeLine(\&quot;w.WriteByte(b)\&quot;)\n449→\tg.indent--\n450→\tg.writeLine(\&quot;}\&quot;)\n451→\tg.indent--\n452→\tg.writeLine(\&quot;}\&quot;)\n453→\tg.writeLine(\&quot;w.Flush()\&quot;)\n454→\tg.indent--\n455→\tg.writeLine(\&quot;}()\&quot;)\n456→\tg.writeLine(\&quot;\&quot;)\n457→\n458→\t// Error writer goroutine\n459→\tg.writeLine(\&quot;go func() {\&quot;)\n460→\tg.indent++\n461→\tg.writeLine(\&quot;defer wg.Done()\&quot;)\n462→\tg.writeLine(\&quot;w := bufio.NewWriter(os.Stderr)\&quot;)\n463→\tg.writeLine(\&quot;for b := range _error {\&quot;)\n464→\tg.indent++\n465→\tg.writeLine(\&quot;if b == 255 {\&quot;)\n466→\tg.indent++\n467→\tg.writeLine(\&quot;w.Flush()\&quot;)\n468→\tg.indent--\n469→\tg.writeLine(\&quot;} else {\&quot;)\n470→\tg.indent++\n471→\tg.writeLine(\&quot;w.WriteByte(b)\&quot;)\n472→\tg.indent--\n473→\tg.writeLine(\&quot;}\&quot;)\n474→\tg.indent--\n475→\tg.writeLine(\&quot;}\&quot;)\n476→\tg.writeLine(\&quot;w.Flush()\&quot;)\n477→\tg.indent--\n478→\tg.writeLine(\&quot;}()\&quot;)\n479→\tg.writeLine(\&quot;\&quot;)\n480→\n481→\t// Keyboard reader goroutine\n482→\tg.writeLine(\&quot;go func() {\&quot;)\n483→\tg.indent++\n484→\tg.writeLine(\&quot;r := bufio.NewReader(os.Stdin)\&quot;)\n485→\tg.writeLine(\&quot;for {\&quot;)\n486→\tg.indent++\n487→\tg.writeLine(\&quot;b, err := r.ReadByte()\&quot;)\n488→\tg.writeLine(\&quot;if err != nil {\&quot;)\n489→\tg.indent++\n490→\tg.writeLine(\&quot;close(keyboard)\&quot;)\n491→\tg.writeLine(\&quot;return\&quot;)\n492→\tg.indent--\n493→\tg.writeLine(\&quot;}\&quot;)\n494→\tg.writeLine(\&quot;keyboard &lt;- b\&quot;)\n495→\tg.indent--\n496→\tg.writeLine(\&quot;}\&quot;)\n497→\tg.indent--\n498→\tg.writeLine(\&quot;}()\&quot;)\n499→\tg.writeLine(\&quot;\&quot;)\n500→\n501→\t// Call the entry proc\n502→\tg.writeLine(fmt.Sprintf(\&quot;%s(keyboard, screen, _error)\&quot;, name))\n503→\tg.writeLine(\&quot;\&quot;)\n504→\n505→\t// Close output channels and wait for writers to drain\n506→\tg.writeLine(\&quot;close(screen)\&quot;)\n507→\tg.writeLine(\&quot;close(_error)\&quot;)\n508→\tg.writeLine(\&quot;wg.Wait()\&quot;)\n509→\n510→\tg.indent--\n511→\tg.writeLine(\&quot;}\&quot;)\n512→}\n```\n\n**Current Implementation Details:**\n\n- **3 channels created** with 256-byte buffers (lines 425-427)\n- **Screen writer goroutine** (lines 435-455):\n  - Writes bytes to `os.Stdout` using `bufio.NewWriter`\n  - Byte value **255 triggers `Flush()`**\n  - Uses `defer wg.Done()` for cleanup\n  \n- **Error writer goroutine** (lines 458-478):\n  - Same pattern as screen writer, but to `os.Stderr`\n  \n- **Keyboard reader goroutine** (lines 481-498):\n  - Reads from `os.Stdin` using `bufio.NewReader.ReadByte()`\n  - **No raw mode handling** - just reads raw line-buffered input\n  - Closes channel on EOF\n  \n- **Cleanup pattern**: Uses `sync.WaitGroup` with `Add(2)` (for screen &amp; error writers only - not keyboard reader)\n\n**Critical Issue:** The keyboard reader does NOT set raw terminal mode, so it will:\n- Require Enter key to submit input\n- Echo input to terminal automatically\n- Include newline characters in the input stream\n\n---\n\n### 3. **Import Management System**\n**File:** `/home/david/projects/code-associates/occam2go/codegen/codegen.go` (Lines 14-21, 99-106, 212-255)\n\n**Flags defined in Generator struct (lines 14-21):**\n```go\nneedSync bool // track if we need sync package import\nneedFmt  bool // track if we need fmt package import\nneedTime bool // track if we need time package import\nneedOs   bool // track if we need os package import\nneedMath bool // track if we need math package import\nneedMathBits bool // track if we need math/bits package import\nneedBufio    bool // track if we need bufio package import\nneedReflect    bool // track if we need reflect package import\nneedBoolHelper bool // track if we need _boolToInt helper\n```\n\n**Import flag initialization (lines 99-106):**\n```go\ng.needSync = false\ng.needFmt = false\ng.needTime = false\ng.needOs = false\ng.needMath = false\ng.needMathBits = false\ng.needBufio = false\ng.needReflect = false\ng.needBoolHelper = false\n```\n\n**Auto-set when entry harness is detected (lines 212-220):**\n```go\n// Detect entry point PROC so we can set import flags before writing imports\nvar entryProc *ast.ProcDecl\nif len(mainStatements) == 0 {\n\tentryProc = g.findEntryProc(procDecls)\n\tif entryProc != nil {\n\t\tg.needOs = true\n\t\tg.needSync = true\n\t\tg.needBufio = true\n\t}\n}\n```\n\n**Import output (lines 228-254):**\n```go\nif g.needSync || g.needFmt || g.needTime || g.needOs || g.needMath || g.needMathBits || g.needBufio || g.needReflect {\n\tg.writeLine(\&quot;import (\&quot;)\n\tg.indent++\n\tif g.needBufio {\n\t\tg.writeLine(`\&quot;bufio\&quot;`)\n\t}\n\tif g.needFmt {\n\t\tg.writeLine(`\&quot;fmt\&quot;`)\n\t}\n\tif g.needMath {\n\t\tg.writeLine(`\&quot;math\&quot;`)\n\t}\n\tif g.needMathBits {\n\t\tg.writeLine(`\&quot;math/bits\&quot;`)\n\t}\n\tif g.needOs {\n\t\tg.writeLine(`\&quot;os\&quot;`)\n\t}\n\tif g.needReflect {\n\t\tg.writeLine(`\&quot;reflect\&quot;`)\n\t}\n\tif g.needSync {\n\t\tg.writeLine(`\&quot;sync\&quot;`)\n\t}\n\tif g.needTime {\n\t\tg.writeLine(`\&quot;time\&quot;`)\n\t}\n\tg.indent--\n```\n\n---\n\n### 4. **Feature Detection: Scanner Functions**\n**File:** `/home/david/projects/code-associates/occam2go/codegen/codegen.go` (Lines 514-810)\n\nExample 1: **`containsPar()` scanner** (Lines 514-581)\n```go\nfunc (g *Generator) containsPar(stmt ast.Statement) bool {\n\tswitch s := stmt.(type) {\n\tcase *ast.ParBlock:\n\t\treturn true\n\tcase *ast.SeqBlock:\n\t\tfor _, inner := range s.Statements {\n\t\t\tif g.containsPar(inner) {\n\t\t\t\treturn true\n\t\t\t}\n\t\t}\n\tcase *ast.AltBlock:\n\t\tfor _, c := range s.Cases {\n\t\t\tfor _, inner := range c.Body {\n\t\t\t\tif g.containsPar(inner) {\n\t\t\t\t\treturn true\n\t\t\t\t}\n\t\t\t}\n\t\t}\n\tcase *ast.ProcDecl:\n\t\tfor _, inner := range s.Body {\n\t\t\tif g.containsPar(inner) {\n\t\t\t\treturn true\n\t\t\t}\n\t\t}\n\tcase *ast.FuncDecl:\n\t\tfor _, inner := range s.Body {\n\t\t\tif g.containsPar(inner) {\n\t\t\t\treturn true\n\t\t\t}\n\t\t}\n\tcase *ast.WhileLoop:\n\t\tfor _, inner := range s.Body {\n\t\t\tif g.containsPar(inner) {\n\t\t\t\treturn true\n\t\t\t}\n\t\t}\n\tcase *ast.IfStatement:\n\t\tfor _, choice := range s.Choices {\n\t\t\tif choice.NestedIf != nil {\n\t\t\t\tif g.containsPar(choice.NestedIf) {\n\t\t\t\t\treturn true\n\t\t\t\t}\n\t\t\t}\n\t\t\tfor _, inner := range choice.Body {\n\t\t\t\tif g.containsPar(inner) {\n\t\t\t\t\treturn true\n\t\t\t\t}\n\t\t\t}\n\t\t}\n\tcase *ast.CaseStatement:\n\t\tfor _, choice := range s.Choices {\n\t\t\tfor _, inner := range choice.Body {\n\t\t\t\tif g.containsPar(inner) {\n\t\t\t\t\treturn true\n\t\t\t\t}\n\t\t\t}\n\t\t}\n\tcase *ast.VariantReceive:\n\t\tfor _, c := range s.Cases {\n\t\t\tfor _, inner := range c.Body {\n\t\t\t\tif g.containsPar(inner) {\n\t\t\t\t\treturn true\n\t\t\t\t}\n\t\t\t}\n\t\t}\n\t}\n\treturn false\n}\n```\n\nExample 2: **`containsTimer()` scanner** (Lines 658-734)\n```go\nfunc (g *Generator) containsTimer(stmt ast.Statement) bool {\n\tswitch s := stmt.(type) {\n\tcase *ast.TimerDecl, *ast.TimerRead:\n\t\treturn true\n\tcase *ast.AltBlock:\n\t\tfor _, c := range s.Cases {\n\t\t\tif c.IsTimer {\n\t\t\t\treturn true\n\t\t\t}\n\t\t\tfor _, inner := range c.Body {\n\t\t\t\tif g.containsTimer(inner) {\n\t\t\t\t\treturn true\n\t\t\t\t}\n\t\t\t}\n\t\t}\n\tcase *ast.SeqBlock:\n\t\tfor _, inner := range s.Statements {\n\t\t\tif g.containsTimer(inner) {\n\t\t\t\treturn true\n\t\t\t}\n\t\t}\n\tcase *ast.ParBlock:\n\t\tfor _, inner := range s.Statements {\n\t\t\tif g.containsTimer(inner) {\n\t\t\t\treturn true\n\t\t\t}\n\t\t}\n\tcase *ast.ProcDecl:\n\t\tfor _, inner := range s.Body {\n\t\t\tif g.containsTimer(inner) {\n\t\t\t\treturn true\n\t\t\t}\n\t\t}\n\tcase *ast.FuncDecl:\n\t\tfor _, inner := range s.Body {\n\t\t\tif g.containsTimer(inner) {\n\t\t\t\treturn true\n\t\t\t}\n\t\t}\n\tcase *ast.WhileLoop:\n\t\tfor _, inner := range s.Body {\n\t\t\tif g.containsTimer(inner) {\n\t\t\t\treturn true\n\t\t\t}\n\t\t}\n\tcase *ast.IfStatement:\n\t\tfor _, choice := range s.Choices {\n\t\t\tif choice.NestedIf != nil {\n\t\t\t\tif g.containsTimer(choice.NestedIf) {\n\t\t\t\t\treturn true\n\t\t\t\t}\n\t\t\t}\n\t\t\tfor _, inner := range choice.Body {\n\t\t\t\tif g.containsTimer(inner) {\n\t\t\t\t\treturn true\n\t\t\t\t}\n\t\t\t}\n\t\t}\n\tcase *ast.CaseStatement:\n\t\tfor _, choice := range s.Choices {\n\t\t\tfor _, inner := range choice.Body {\n\t\t\t\tif g.containsTimer(inner) {\n\t\t\t\t\treturn true\n\t\t\t\t}\n\t\t\t}\n\t\t}\n\tcase *ast.VariantReceive:\n\t\tfor _, c := range s.Cases {\n\t\t\tfor _, inner := range c.Body {\n\t\t\t\tif g.containsTimer(inner) {\n\t\t\t\t\treturn true\n\t\t\t\t}\n\t\t\t}\n\t\t}\n\t}\n\treturn false\n}\n```\n\nExample 3: **`containsStop()` scanner** (Lines 736-809)\n```go\nfunc (g *Generator) containsStop(stmt ast.Statement) bool {\n\tswitch s := stmt.(type) {\n\tcase *ast.Stop:\n\t\treturn true\n\tcase *ast.SeqBlock:\n\t\tfor _, inner := range s.Statements {\n\t\t\tif g.containsStop(inner) {\n\t\t\t\treturn true\n\t\t\t}\n\t\t}\n\tcase *ast.ParBlock:\n\t\tfor _, inner := range s.Statements {\n\t\t\tif g.containsStop(inner) {\n\t\t\t\treturn true\n\t\t\t}\n\t\t}\n\tcase *ast.AltBlock:\n\t\tfor _, c := range s.Cases {\n\t\t\tfor _, inner := range c.Body {\n\t\t\t\tif g.containsStop(inner) {\n\t\t\t\t\treturn true\n\t\t\t\t}\n\t\t\t}\n\t\t}\n\tcase *ast.ProcDecl:\n\t\tfor _, inner := range s.Body {\n\t\t\tif g.containsStop(inner) {\n\t\t\t\treturn true\n\t\t\t}\n\t\t}\n\tcase *ast.FuncDecl:\n\t\tfor _, inner := range s.Body {\n\t\t\tif g.containsStop(inner) {\n\t\t\t\treturn true\n\t\t\t}\n\t\t}\n\tcase *ast.WhileLoop:\n\t\tfor _, inner := range s.Body {\n\t\t\tif g.containsStop(inner) {\n\t\t\t\treturn true\n\t\t\t}\n\t\t}\n\tcase *ast.IfStatement:\n\t\tfor _, choice := range s.Choices {\n\t\t\tif choice.NestedIf != nil {\n\t\t\t\tif g.containsStop(choice.NestedIf) {\n\t\t\t\t\treturn true\n\t\t\t\t}\n\t\t\t}\n\t\t\tfor _, inner := range choice.Body {\n\t\t\t\tif g.containsStop(inner) {\n\t\t\t\t\treturn true\n\t\t\t\t}\n\t\t\t}\n\t\t}\n\tcase *ast.CaseStatement:\n\t\tfor _, choice := range s.Choices {\n\t\t\tfor _, inner := range choice.Body {\n\t\t\t\tif g.containsStop(inner) {\n\t\t\t\t\treturn true\n\t\t\t\t}\n\t\t\t}\n\t\t}\n\tcase *ast.VariantReceive:\n\t\tfor _, c := range s.Cases {\n\t\t\tfor _, inner := range c.Body {\n\t\t\t\tif g.containsStop(inner) {\n\t\t\t\t\treturn true\n\t\t\t\t}\n\t\t\t}\n\t\t}\n\t}\n\treturn false\n}\n```\n\n**Pattern:** All scanners recursively traverse the AST to check if any statement contains a specific feature. The first pass (lines 123-150) calls all these scanners to set appropriate import flags.\n\n---\n\n### 5. **Cleanup/Defer Patterns**\n**File:** `/home/david/projects/code-associates/occam2go/codegen/codegen.go`\n\nGrep results show `defer` is used at:\n- **Line 438:** `defer wg.Done()` in screen writer goroutine\n- **Line 461:** `defer wg.Done()` in error writer goroutine\n- **Line 1843:** Inside PAR block generation\n- **Line 1861:** Inside PAR block generation\n\nAll `defer` statements are used to ensure goroutines signal completion via `sync.WaitGroup.Done()`.\n\n---\n\n### 6. **Real-World Examples**\n\n**Example 1: echoing.occ** \n**File:** `/home/david/projects/code-associates/occam2go/kroc/modules/course/examples/echoing.occ`\n\n```occam\n#INCLUDE \&quot;course.module\&quot;\n\nPROC echoing (CHAN BYTE keyboard?, screen!, error!)\n  --{{{  \n  BYTE ch:\n  SEQ\n    ch := &#x27; &#x27;\n    WHILE ch &lt;&gt; &#x27;Z&#x27;\n      SEQ\n        keyboard ? ch\n        screen ! ch\n        screen ! FLUSH\n    screen ! &#x27;*c&#x27;\n    screen ! &#x27;*n&#x27;\n  --}}}\n:\n```\n\nThis is a perfect example of the entry pattern:\n- Signature matches exactly: `PROC echoing (CHAN BYTE keyboard?, screen!, error!)`\n- Reads from keyboard with `?`\n- Writes to screen with `!`\n- Uses special byte value `FLUSH` (255) to flush the buffer\n\n**Example 2: life.occ**\n**File:** `/home/david/projects/code-associates/occam2go/historical-examples/life.occ` (435 lines)\n\n```occam\nPROC life (CHAN BYTE keyboard?, screen!, error!)\n  [array.width][array.height][neighbours]CHAN OF STATE link :\n  [array.width][array.height]CHAN OF COMMAND control :\n  [array.width][array.height]CHAN OF RESPONSE sense :\n  PAR\n    controller(keyboard, screen, control, sense)\n    PAR x = 0 FOR array.width\n      PAR y = 0 FOR array.height\n        VAL INT left  IS ((x - 1) + array.width)  \\ array.width  :\n        VAL INT right IS  (x + 1)                 \\ array.width  :\n        VAL INT up    IS  (y + 1)                 \\ array.height :\n        VAL INT down  IS ((y - 1) + array.height) \\ array.height :\n        VAL [neighbours]INT nx IS\n              [ right, x,    left, left, left, x,  right, right ] :\n        VAL [neighbours]INT ny IS\n              [ down,  down, down, y,    up,   up, up,    y     ] :\n        cell(link, x, y, nx, ny, control[x][y], sense[x][y])\n:\n```\n\nThis is a complex example with:\n- Exactly the required 3 parameters with exact signature\n- A `controller` that reads from keyboard and writes to screen\n- Interactive Game of Life display logic\n\n---\n\n### 7. **Generated Code Example**\n**File:** `/home/david/projects/code-associates/occam2go/test.go` (Lines 2689-2740)\n\nThis shows what the generated `main()` function looks like:\n\n```go\nfunc main() {\n\tkeyboard := make(chan byte, 256)\n\tscreen := make(chan byte, 256)\n\t_error := make(chan byte, 256)\n\n\tvar wg sync.WaitGroup\n\twg.Add(2)\n\n\tgo func() {\n\t\tdefer wg.Done()\n\t\tw := bufio.NewWriter(os.Stdout)\n\t\tfor b := range screen {\n\t\t\tif b == 255 {\n\t\t\t\tw.Flush()\n\t\t\t} else {\n\t\t\t\tw.WriteByte(b)\n\t\t\t}\n\t\t}\n\t\tw.Flush()\n\t}()\n\n\tgo func() {\n\t\tdefer wg.Done()\n\t\tw := bufio.NewWriter(os.Stderr)\n\t\tfor b := range _error {\n\t\t\tif b == 255 {\n\t\t\t\tw.Flush()\n\t\t\t} else {\n\t\t\t\tw.WriteByte(b)\n\t\t\t}\n\t\t}\n\t\tw.Flush()\n\t}()\n\n\tgo func() {\n\t\tr := bufio.NewReader(os.Stdin)\n\t\tfor {\n\t\t\tb, err := r.ReadByte()\n\t\t\tif err != nil {\n\t\t\t\tclose(keyboard)\n\t\t\t\treturn\n\t\t\t}\n\t\t\tkeyboard &lt;- b\n\t\t}\n\t}()\n\n\techoing(keyboard, screen, _error)\n\n\tclose(screen)\n\tclose(_error)\n\twg.Wait()\n}\n```\n\n**Note:** The keyboard reader goroutine does **NOT** use `defer wg.Done()` because it only tracks the 2 writer goroutines.\n\n---\n\n### 8. **Test Infrastructure**\n**File:** `/home/david/projects/code-associates/occam2go/codegen/e2e_helpers_test.go` (Lines 16-82)\n\nThe test helper functions show how the transpilation pipeline works:\n\n```go\nfunc transpileCompileRun(t *testing.T, occamSource string) string {\n\tt.Helper()\n\n\t// Transpile\n\tl := lexer.New(occamSource)\n\tp := parser.New(l)\n\tprogram := p.ParseProgram()\n\n\tif len(p.Errors()) &gt; 0 {\n\t\tfor _, err := range p.Errors() {\n\t\t\tt.Errorf(\&quot;parser error: %s\&quot;, err)\n\t\t}\n\t\tt.FailNow()\n\t}\n\n\tgen := New()\n\tgoCode := gen.Generate(program)\n\n\t// Create temp directory for this test\n\ttmpDir, err := os.MkdirTemp(\&quot;\&quot;, \&quot;occam2go-test-*\&quot;)\n\tif err != nil {\n\t\tt.Fatalf(\&quot;failed to create temp dir: %v\&quot;, err)\n\t}\n\tdefer os.RemoveAll(tmpDir)\n\n\t// Write Go source\n\tgoFile := filepath.Join(tmpDir, \&quot;main.go\&quot;)\n\tif err := os.WriteFile(goFile, []byte(goCode), 0644); err != nil {\n\t\tt.Fatalf(\&quot;failed to write Go file: %v\&quot;, err)\n\t}\n\n\t// Compile\n\tbinFile := filepath.Join(tmpDir, \&quot;main\&quot;)\n\tcompileCmd := exec.Command(\&quot;go\&quot;, \&quot;build\&quot;, \&quot;-o\&quot;, binFile, goFile)\n\tcompileOutput, err := compileCmd.CombinedOutput()\n\tif err != nil {\n\t\tt.Fatalf(\&quot;compilation failed: %v\\nOutput: %s\\nGo code:\\n%s\&quot;, err, compileOutput, goCode)\n\t}\n\n\t// Run\n\trunCmd := exec.Command(binFile)\n\toutput, err := runCmd.CombinedOutput()\n\tif err != nil {\n\t\tt.Fatalf(\&quot;execution failed: %v\\nOutput: %s\&quot;, err, output)\n\t}\n\n\treturn string(output)\n}\n```\n\n**Note:** Tests do NOT currently test entry harness interactively. All tests use `print.int()` and similar functions, not the entry point pattern.\n\n---\n\n### 9. **Current Dependencies**\n**File:** `/home/david/projects/code-associates/occam2go/go.mod`\n\n```\nmodule github.com/codeassociates/occam2go\n\ngo 1.25.6\n```\n\nNo external dependencies beyond Go standard library. This is significant because:\n- **Adding raw terminal mode will require either:**\n  - An external package like `golang.org/x/term` (for Unix/Linux/macOS)\n  - Platform-specific syscalls\n  - Or a cross-platform package like `github.com/urfave/cli` or `tmc/keyring`\n\n---\n\n### 10. **Key Findings for Raw Terminal Mode Implementation**\n\n**Current Limitations:**\n\n1. **Keyboard reader is line-buffered** (line 484): Uses `bufio.NewReader(os.Stdin)` which reads one byte at a time BUT the underlying `os.Stdin` is in canonical (line-buffered) mode\n2. **No echo control**: When user types, terminal automatically echoes input\n3. **Newline required**: User must press Enter to submit input\n4. **No special key handling**: Arrow keys, function keys are received as escape sequences\n\n**What Would Need to Be Added:**\n\n1. **New import flag** in Generator: `needTerm bool` (for `golang.org/x/term` package)\n2. **Scanner function** `containsRawTerminal()` to detect if special terminal control is needed\n3. **Modified `generateEntryHarness()`** to:\n   - Save original terminal settings before changing them\n   - Call `term.MakeRaw(os.Stdin)` \n   - Restore terminal mode in a defer statement or cleanup goroutine\n   - Handle SIGWINCH (terminal resize) if needed\n4. **Wire up the import** when entry harness is detected\n\n**Example structure for raw mode support:**\n```go\nif runtime.GOOS != \&quot;windows\&quot; {\n    // Unix-like systems\n    oldState, err := term.MakeRaw(int(os.Stdin.Fd()))\n    if err != nil {\n        // handle error\n    }\n    defer term.Restore(int(os.Stdin.Fd()), oldState)\n}\n```\n\n---\n\nThis completes the thorough exploration of the entry harness implementation and identifies exactly where and how to add raw terminal mode support.&quot;
+  },
+  {
+    &quot;type&quot;: &quot;text&quot;,
+    &quot;text&quot;: &quot;agentId: ad261b9c6e451be41 (for resuming to continue this agent&#x27;s work if needed)\n&lt;usage&gt;total_tokens: 63181\ntool_uses: 48\nduration_ms: 94524&lt;/usage&gt;&quot;
+  }
+]</pre></div><button class="expand-btn">Show more</button></div></div></div></div>
+<div class="message assistant" id="msg-2026-02-24T00-17-08-414Z"><div class="message-header"><span class="role-label">Assistant</span><a href="#msg-2026-02-24T00-17-08-414Z" class="timestamp-link"><time datetime="2026-02-24T00:17:08.414Z" data-timestamp="2026-02-24T00:17:08.414Z">2026-02-24T00:17:08.414Z</time></a></div><div class="message-content">
+<div class="thinking"><div class="thinking-label">Thinking</div><p>Now I have a thorough understanding of the codebase. Let me design the implementation plan.</p>
+<p>Key considerations:
+1. The generated Go code needs to put the terminal in raw mode using <code>golang.org/x/term</code>
+2. This adds an external dependency to the generated code, not to occam2go itself
+3. Wait - actually, the generated code needs to import <code>golang.org/x/term</code>. But the generated code is standalone Go files. The user would need to <code>go get golang.org/x/term</code> in their project. Hmm, but the generated code is typically run standalone...</p>
+<p>Actually, let me reconsider. The issue is about what the <em>generated</em> Go code does. </p>
+<p>I'm weighing the tradeoffs between using the external <code>golang.org/x/term</code> package for clean cross-platform support, calling raw syscalls directly to avoid dependencies, or shelling out to <code>stty</code> which is simpler but less elegant. The syscall approach seems most self-contained for generated code.</p>
+<p>The real issue is that <code>golang.org/x/term</code> is the idiomatic Go solution, but requiring users to set up a Go module and fetch the dependency adds friction. I'm considering whether we could embed the terminal handling logic directly in the generated code instead.</p>
+<p>Writing terminal control code... Finishing the syscall to apply the terminal settings, then realizing this approach is platform-specific and uses unsafe pointers, which isn't ideal. I'm thinking the better solution is to use <code>golang.org/x/term</code> as a dependency for the generated code rather than implementing raw syscalls—the transpiler itself wouldn't need it, but users would need to add it to their go.mod.</p>
+<p>Now I'm working through the implications for the e2e tests: since they transpile, compile, and run the generated code in a temp directory, that directory would need its own go.mod file to resolve external dependencies. This adds complexity, so I'm reconsidering whether to embed the terminal functions directly in the generated code instead of relying on an external import, or just add the dependency to the occam2go project itself. I'm realizing that embedding terminal handling directly using just the standard library won't work since Go's <code>syscall</code> package doesn't export the necessary constants like <code>TCGETS</code> and <code>TCSETS</code>. I'd need to use <code>golang.org/x/sys/unix</code> anyway, so the real question is whether to add that as a dependency or use <code>golang.org/x/term</code> which is higher-level and cleaner.</p>
+<p>I think <code>golang.org/x/term</code> is the right call—it's the standard Go solution for this. My plan is to add it to the generated code's dependencies, then modify the entry harness to set raw mode before starting goroutines, restore it on defer, handle Ctrl+C manually since raw mode disables that signal, and read directly from stdin instead of using a buffered reader.</p>
+<p>For the implementation, I need to add a flag tracking whether the term package is needed, generate the import conditionally, and add tests to verify the codegen works correctly.</p>
+<p>Actually, I'm reconsidering the Ctrl+C handling—in raw mode, Ctrl+C becomes byte 0x03 instead of a signal, so the occam programs themselves should handle their own exit conditions. But that leaves a problem: if a program hangs, the user can't force quit it. I should probably intercept that byte and handle it gracefully.</p>
+<p>Alternatively, I could use cbreak mode instead of fully raw—disabling canonical input and echo while keeping signal handling enabled so Ctrl+C still works as expected. The issue is that <code>golang.org/x/term</code> only provides <code>MakeRaw</code>, which disables signals entirely. I'd need to either re-enable ISIG after calling it or handle Ctrl+C manually in the keyboard reader.</p>
+<p>Looking at how KRoC handles this, the keyboard channel provides raw character input, and Ctrl+C handling typically falls to the host system rather than the occam program itself.</p>
+<p>The safest approach is probably to use raw mode but then re-enable signal handling, though the <code>golang.org/x/term</code> package doesn't expose the underlying termios structure directly, so I'd need to work around that limitation.</p>
+<p>My best option is to apply full raw mode with <code>term.MakeRaw()</code>, then manually detect Ctrl+C (0x03) in the keyboard reader and handle it by restoring the terminal and exiting, while also setting up SIGINT handling as a backup. I'm setting up the terminal restoration logic with a keyboard reader that catches Ctrl+C directly and restores the terminal state before exiting, rather than relying on signal handlers. sending Ctrl+C as byte 3 to the channel might be what the occam program expects. Some occam programs might use Ctrl+C as a quit signal. Let me just send it through normally and also set up a signal handler.</p>
+<p>Hmm, but with raw mode, Ctrl+C won't generate SIGINT, so there's no signal to catch. The user would have no way to kill the program except <code>kill</code> from another terminal.</p>
+<p>I think the practical approach is:
+1. Use raw mode for character-by-character input
+2. Handle Ctrl+C (byte 3) by restoring terminal and exiting
+3. The occam program can still receive all other characters immediately</p>
+<p>Let me also consider: should this be opt-in or always-on for entry harness programs? I think it should always be on when an entry harness is detected, since the whole point of the keyboard channel in occam is character-by-character input.</p>
+<p>Now I need to handle the case where stdin isn't a terminal—like when input is piped in. I should check if stdin is actually connected to a terminal before enabling raw mode, and fall back to buffered input otherwise.</p>
+<p>For the output side, raw mode won't automatically translate newlines, but occam programs explicitly send carriage returns and line feeds as separate bytes. I should make sure the screen writer properly handles the newline translation so the output displays correctly. occam programs do send both CR and LF. And the <code>course.module</code> output procedures should also handle this. So we might be OK without output translation.</p>
+<p>But actually, the screen writer currently uses <code>bufio.NewWriter(os.Stdout)</code>. In raw mode, the terminal won't do <code>\n</code> -&gt; <code>\r\n</code> translation (OPOST is disabled). So if an occam program sends just <code>*n</code> (LF=10), the cursor will go down but not to the left margin.</p>
+<p>This could be a problem. Let me think through the options. I could use cbreak mode instead of full raw mode—disabling ICANON and ECHO while keeping OPOST enabled so output translation still works, and keeping ISIG so Ctrl+C works. Or I could stick with full raw mode but add output translation in the screen writer goroutine. Or I could use raw mode but only change input settings, which is essentially cbreak anyway.</p>
+<p>Option 1 seems most appropriate since it gives character-by-character input without line buffering, no echo, working Ctrl+C, and output translation. The problem is <code>golang.org/x/term</code> doesn't provide cbreak mode directly—I'd need <code>golang.org/x/sys/unix</code> for that level of control. Let me check what <code>term.MakeRaw</code> actually does.</p>
+<p>Looking at the Go source, <code>term.MakeRaw</code> on Unix clears various termios flags to disable input processing, output translation, and signal handling.</p>
+<p>Examining the termios flags being modified...</p>
+<p>The issue is that <code>term.MakeRaw</code> disables both <code>OPOST</code> and <code>ISIG</code>, but for our use case we'd want to keep those enabled. Since <code>term.State</code> is opaque and doesn't expose the underlying termios structure, I can't easily adjust individual flags after calling <code>MakeRaw</code>. I'm considering whether to use <code>term.MakeRaw</code> as a starting point and then work around its limitations, or take a different approach entirely. I could embed the terminal control code directly using the <code>syscall</code> package instead of relying on external dependencies, defining the <code>termios</code> struct and implementing low-level ioctl calls to get and set terminal attributes on Linux.</p>
+<p>However, that approach is Linux-specific and relies on magic numbers, making it non-portable. The better choice is to use <code>golang.org/x/term</code>, which is the standard Go package for terminal handling maintained by the Go team. For handling Ctrl+C, I'll intercept byte 3 in the keyboard reader and restore the terminal before exiting, and for the output formatting, I'll translate line feeds to carriage return plus line feed sequences in the screen writer.</p>
+<p>Looking at the actual Occam programs though, they already send CR before LF when writing to the screen channel—the echoing example shows this pattern, and the course module's output procedures follow the same convention. So the output side might not need translation at all. Let me just implement raw mode for input first and test whether the existing Occam programs work correctly without additional output handling.</p>
+<p>For the implementation, I'll add the <code>golang.org/x/term</code> dependency and use it to detect when stdin is a terminal, then enable raw mode in the entry harness. The keyboard reader will need to read directly from stdin and handle the raw bytes appropriately.</p>
+<p>But wait—the generated code is a standalone program that needs <code>golang.org/x/term</code> available at compile time, so I'll need to ensure the e2e test helper sets up a proper Go module in the temp directory with that dependency included.</p>
+<p>Actually, thinking about this more—interactive terminal programs can't really be tested in automated e2e tests anyway since there's no actual terminal available. So maybe I should focus on just verifying the generated code compiles correctly, and add a unit test that checks the raw mode handling is present in the generated output.</p>
+<p>For the actual implementation, I could either embed the terminal control logic inline using syscalls and build constraints, or just depend on <code>golang.org/x/term</code>. The inline approach avoids external dependencies but is error-prone, so I'll stick with using the library. Users building Go programs almost certainly have a go.mod file already, so they just need to add the dependency.</p>
+<p>Now looking back at what the issue actually asks for—using a proper Go keyboard handling library instead of raw stdin—<code>golang.org/x/term</code> is the standard choice. I'll use it to set raw mode, handle Ctrl+C properly, and check whether stdin is actually a terminal before trying to configure it.</p>
+<p>For testing, I need to update the test infrastructure to support external dependencies: the temp directory needs a <code>go.mod</code> file and we need to run <code>go get golang.org/x/term</code> before building, plus add a unit test that verifies the generated code includes the raw mode handling.</p>
+<p>Actually, since none of the existing e2e tests use the entry harness pattern, I don't need to modify the current helper—I can just create a new test specifically for entry harness programs.</p>
+<p>Now I'm thinking about whether the generated code should handle cases where the occam program doesn't actually read from the keyboard, since some entry-point procs might only write output. But the entry harness is only generated for procs with that specific 3-parameter signature, so I can probably assume keyboard input is needed.</p>
+<p>Actually, there's a subtlety with raw mode: even if the program doesn't read from keyboard, the keyboard reader goroutine will still be running in raw mode, but that's harmless—it just won't receive any data. The trickier part is ensuring terminal state gets restored properly, especially if the program panics. I can use <code>defer</code> to restore the terminal, and with raw mode disabling ISIG, I'll need to handle Ctrl+C manually in the reader rather than relying on SIGINT.</p>
+<p>When the entry proc finishes, the keyboard reader goroutine is still blocked on stdin, but that's okay since the deferred restore will run before the process exits. There might be a race condition if the main function tries to restore the terminal while the reader is still blocked, but the deferred cleanup should handle that before the process actually terminates.</p>
+<p>Now I'm thinking about the screen writer in raw mode and how it handles newlines. Since OPOST is disabled, the terminal won't automatically translate LF to CRLF, but occam programs typically send both explicitly using the <code>*c*n</code> convention. The course module's newline procedure would follow this pattern, so it should work fine. To be extra safe though, I could add a check in the screen writer to translate any standalone newlines to CR+LF when raw mode is active.</p>
+<p>But wait—if an occam program sends CR followed by LF and we translate the LF to CRLF, we'd end up with CR CR LF, which would create a double carriage return. That's a problem. The simplest approach is to just trust that occam programs follow the convention and skip the translation for now. If issues come up later, we can revisit it.</p>
+<p>Actually, there's a better option: instead of full raw mode, I could use a modified raw mode that keeps OPOST enabled so the terminal still handles LF to CRLF translation automatically. This would require going beyond the standard <code>term.MakeRaw()</code> function.</p>
+<p>I'd need to manually configure the termios settings—disable ICANON and ECHO for immediate character input without echoing, but keep ISIG so Ctrl+C still works and OPOST for output translation. This is essentially cbreak mode, which is perfect for occam-style keyboard input. The problem is that <code>golang.org/x/term</code> doesn't support this level of control, so I'd need to use <code>golang.org/x/sys/unix</code> or direct syscalls instead.</p>
+<p>The <code>unix</code> package gives me <code>GetTermios</code> and <code>IoctlSetTermios</code> along with all the flag constants I need, but that's Unix-only and wouldn't work on Windows. I could handle both platforms separately—using the unix approach on Unix systems and the Windows console API on Windows—but since occam programs typically run on Unix anyway and the original KRoC only supports Unix, going with the unix package seems like the most practical choice here.</p>
+<p>I'm realizing I need to handle the termios flags directly myself since <code>term.State</code> is opaque and I can't modify it after calling <code>MakeRaw</code>. So I'll use <code>golang.org/x/sys/unix</code> to get the current termios state, then selectively disable the flags I need to turn off for cbreak mode while keeping ISIG and OPOST enabled.</p>
+<p>Writing the termios flag manipulation... one byte is available, which blocks until data arrives. The <code>golang.org/x/sys/unix</code> package is Unix-only though, so I'd lose Windows support if I go that route. Both <code>golang.org/x/term</code> and <code>golang.org/x/sys/unix</code> handle cross-platform concerns internally with build tags, but <code>unix</code> specifically doesn't work on Windows. I think the best approach is to use <code>golang.org/x/term</code> for the terminal detection and then implement cbreak mode myself with platform-specific code.</p>
+<p>Actually, I could leverage <code>golang.org/x/term.MakeRaw</code> to set full raw mode, then use <code>unix.IoctlGetTermios</code> to retrieve and modify the termios settings—re-enabling ISIG and OPOST to get cbreak behavior. But that requires both packages and is getting messy. Let me just stick with <code>golang.org/x/term.MakeRaw</code> for full raw mode and accept that limitation for now.</p>
+<p>The approach is straightforward: intercept Ctrl+C (byte 3) in the keyboard reader to restore the terminal and exit cleanly, don't translate output since Occam programs send CR+LF explicitly, and fall back to buffered mode when stdin isn't a terminal. It's simple, well-tested, and handles the common cases—any edge cases with output can be addressed later.</p>
+<p>Let me verify what happens to screen output without OPOST. When <code>screen ! FLUSH</code> sends byte 255, it triggers <code>w.Flush()</code> and output goes to stdout. Without OPOST, newlines just move the cursor down without changing columns, and carriage returns move to column 0, which is exactly what we want since Occam programs handle line endings explicitly.</p>
+<p>The real question is whether all Occam programs send CR+LF or just LF. The <code>echoing.occ</code> example sends both, which is correct, and the course module's standard output procedures should too—though individual programmers might cut corners.</p>
+<p>I think the safest approach is to handle LF→CRLF translation in the screen writer, but I need to be careful not to double up on carriage returns when a program already sends CR+LF. Actually, even if we end up with CR CR LF, that's harmless since the extra CR just repositions the cursor to column 0 again, so maybe I can simplify this.</p>
+<p>Let me trace through what happens if I just prepend CR before every LF without tracking state: when the program sends CR followed by LF, the CR gets written as-is, then when the LF arrives, I add another CR before it, giving me CR CR LF in the output—which is fine since that extra CR is a no-op.</p>
+<p>Rather than overcomplicating this with conditional logic, I'll just keep it simple: always translate LF to CRLF in the screen writer when raw mode is active. I can pass a flag to the writer goroutines based on whether stdin is a terminal, which I already check before starting them anyway.</p>
+<p>For the implementation, I need to add the <code>golang.org/x/term</code> dependency and generate code that checks if stdin is a terminal, enables raw mode with proper restoration, handles the screen writer to insert CR before LF, intercepts Ctrl+C in the keyboard reader to clean up, and reads directly from stdin instead of using a buffered reader.</p>
+<p>I also need to handle signal cleanup properly—deferred functions won't run if <code>os.Exit()</code> is called from a signal handler, so I should set up a signal handler that catches SIGINT, SIGTERM, and SIGHUP to ensure the terminal is restored before exiting.</p>
+<p>Actually, since raw mode disables ISIG, SIGINT won't be generated and we handle Ctrl+C manually in the keyboard reader, so really only SIGTERM and SIGHUP from external kill commands are a concern. It's an edge case—if the process gets killed, the terminal stays in raw mode until the user runs <code>reset</code> or <code>stty sane</code>—but it's worth handling properly anyway.</p>
+<p>Now I need to think through what changes are needed in the codegen side of things.</p>
+<p>Modifying <code>codegen.go</code> to support this means adding a <code>needTerm</code> flag to the Generator struct that gets set when we detect an entry harness, then using that to conditionally import <code>golang.org/x/term</code>, <code>os/signal</code>, and <code>syscall</code>. The <code>generateEntryHarness()</code> function will need to emit the raw mode setup code. I should also verify that <code>bufio</code> is still needed—the keyboard reader switched away from <code>bufio.NewReader</code> to direct <code>os.Stdin.Read</code>, but the screen and error writers still use <code>bufio.NewWriter</code>, so yes, it's still required.</p>
+<p>There's probably a cleaner approach here instead of what I was initially thinking. Writing the Go main function... Setting up the error writer goroutine with the same buffering and line-ending logic, then implementing the keyboard reader to handle raw mode input and detect Ctrl+C for graceful shutdown.</p>
+<p>Now I'm noticing a potential race condition where both the Ctrl+C handler and the signal handler goroutine could try to restore the terminal state simultaneously, though it's probably safe since restoring twice shouldn't cause issues.</p>
+<p>There's also the matter of <code>os.Exit(1)</code> in the keyboard reader bypassing the deferred restore, but that's fine since we explicitly restore before exiting. The signal handler is still necessary even in raw mode since SIGINT won't come from Ctrl+C itself (ISIG is disabled), but external kill signals can still trigger it. When the keyboard reader detects Ctrl+C and exits, the screen and error writer goroutines might have pending data, but that's acceptable given the immediate termination.</p>
+<p>Now I'm mapping out the different scenarios: Ctrl+C on the terminal goes through the keyboard reader in raw mode, external kill signals go through the handler, and normal completion flows through the channel closure and deferred restore. This approach handles all the cases correctly.</p>
+<p>The shared variables are safe too—<code>rawMode</code> is set once before goroutines start, <code>fd</code> is read-only, and <code>oldState</code> gets passed to <code>Restore</code> which should handle concurrent calls fine since it's just an ioctl call.</p>
+<p>I need to add imports for <code>golang.org/x/term</code>, <code>os/signal</code>, and <code>syscall</code> alongside the existing ones.</p>
+<p>Now I'm realizing <code>oldState</code> needs to be accessible in the signal handler and keyboard reader goroutines, but it's currently scoped inside the terminal check. I should declare it before that conditional block so the closures can reach it.</p>
+<p>For testing, I can't easily simulate interactive terminal input in e2e tests, but I can verify the generated code compiles and test it with piped input to exercise the non-terminal fallback path. I'd need to extend the test helper to support sending data through stdin.</p>
+<p>For unit tests, I can just check that the generated Go code contains the expected terminal handling functions like <code>term.MakeRaw</code> and <code>term.IsTerminal</code>. I should also consider whether the e2e test helper needs to support Go modules for the <code>golang.org/x/term</code> dependency.</p>
+<p>The test helper currently just creates a temp directory, writes the Go file, and runs <code>go build</code>, but for entry harness tests to compile, I'd need a go.mod with the external dependency. The cleanest approach is probably to add a separate test helper that sets up a module with dependencies, rather than modifying the existing one.</p>
+<p>For e2e testing, I could initialize a module in the temp directory and let <code>go mod tidy</code> automatically resolve the <code>golang.org/x/term</code> dependency based on the imports in the generated file. The downside is that this requires network access during tests, which isn't ideal—I could work around that with vendoring, but that adds complexity.</p>
+<p>Actually, I'm reconsidering whether an e2e test is even necessary here. The entry harness code generation is fairly straightforward and template-like, so a unit test that verifies the generated code contains the expected patterns should be sufficient. I can always manually test with the echoing.occ example if needed. Let me keep this simple and just add a codegen unit test that checks the generated entry harness code.</p>
+<p>I notice there's a <code>test.go</code> file in the project root with generated code, but it's in the untracked files so I'll leave it alone.</p>
+<p>Now I'm ready to write out the plan for addressing the keyboard input issue in the entry harness.</p>
+<p>The core problem is that the keyboard channel reads from stdin using buffered I/O, which waits for Enter before making characters available. For programs like echoing.occ that need immediate character-by-character input, I need to switch the terminal to raw mode using the <code>golang.org/x/term</code> package, with a fallback to buffered mode when stdin isn't a terminal.</p>
+<p>The implementation involves adding a <code>needTerm</code> flag to the Generator struct, detecting when an entry harness is present, and then modifying the generated code to set up raw mode before reading from the keyboard channel.</p>
+<p>For the import generation, I need to add <code>golang.org/x/term</code> along with <code>os/signal</code> and <code>syscall</code> from the standard library when raw terminal mode is needed.</p>
+<p>In the entry harness generation, after creating the channels, I'll add logic to check if stdin is a terminal, enable raw mode if it is, and set up signal handlers to restore the terminal state on exit. The screen writer also needs to translate line feeds to carriage return-line feed pairs when operating in raw mode.</p>
+<p>For the keyboard reader, I'm handling raw mode by reading directly from stdin one byte at a time and intercepting Ctrl+C to restore the terminal before exiting, while keeping the existing buffered reader approach for non-terminal environments.</p>
+<p>I should add a unit test to verify the generated code includes the raw mode setup functions, then test it manually by transpiling and running the echoing example, and finally run the full test suite to make sure nothing breaks.</p></div></div></div>
+<div class="message assistant" id="msg-2026-02-24T00-17-08-414Z"><div class="message-header"><span class="role-label">Assistant</span><a href="#msg-2026-02-24T00-17-08-414Z" class="timestamp-link"><time datetime="2026-02-24T00:17:08.414Z" data-timestamp="2026-02-24T00:17:08.414Z">2026-02-24T00:17:08.414Z</time></a></div><div class="message-content">
+<div class="assistant-text"><p>Now let me read the key sections of <code>codegen.go</code> that I'll need to modify.</p></div></div></div>
+<div class="message assistant" id="msg-2026-02-24T00-17-08-885Z"><div class="message-header"><span class="role-label">Assistant</span><a href="#msg-2026-02-24T00-17-08-885Z" class="timestamp-link"><time datetime="2026-02-24T00:17:08.885Z" data-timestamp="2026-02-24T00:17:08.885Z">2026-02-24T00:17:08.885Z</time></a></div><div class="message-content">
+<div class="tool-use" data-tool-id="toolu_01RJaQwUPdmbbc3wWjqWi9UD"><div class="tool-header"><span class="tool-icon">⚙</span> Read</div><div class="truncatable"><div class="truncatable-content"><pre class="json">{
+  &#34;file_path&#34;: &#34;/home/david/projects/code-associates/occam2go/codegen/codegen.go&#34;,
+  &#34;limit&#34;: 30
+}</pre></div><button class="expand-btn">Show more</button></div></div></div></div>
+<div class="message tool-reply" id="msg-2026-02-24T00-17-08-896Z"><div class="message-header"><span class="role-label">Tool reply</span><a href="#msg-2026-02-24T00-17-08-896Z" class="timestamp-link"><time datetime="2026-02-24T00:17:08.896Z" data-timestamp="2026-02-24T00:17:08.896Z">2026-02-24T00:17:08.896Z</time></a></div><div class="message-content"><div class="tool-result"><div class="truncatable"><div class="truncatable-content"><pre>     1→package codegen
+     2→
+     3→import (
+     4→	&quot;fmt&quot;
+     5→	&quot;strings&quot;
+     6→
+     7→	&quot;github.com/codeassociates/occam2go/ast&quot;
+     8→)
+     9→
+    10→// Generator converts an AST to Go code
+    11→type Generator struct {
+    12→	indent   int
+    13→	builder  strings.Builder
+    14→	needSync bool // track if we need sync package import
+    15→	needFmt  bool // track if we need fmt package import
+    16→	needTime bool // track if we need time package import
+    17→	needOs   bool // track if we need os package import
+    18→	needMath bool // track if we need math package import
+    19→	needMathBits bool // track if we need math/bits package import
+    20→	needBufio    bool // track if we need bufio package import
+    21→	needReflect    bool // track if we need reflect package import
+    22→	needBoolHelper bool // track if we need _boolToInt helper
+    23→
+    24→	// Track procedure signatures for proper pointer handling
+    25→	procSigs map[string][]ast.ProcParam
+    26→	// Track current procedure&#x27;s reference parameters
+    27→	refParams map[string]bool
+    28→
+    29→	// Protocol support
+    30→	protocolDefs  map[string]*ast.ProtocolDecl</pre></div><button class="expand-btn">Show more</button></div></div></div></div>
+<div class="message assistant" id="msg-2026-02-24T00-17-09-525Z"><div class="message-header"><span class="role-label">Assistant</span><a href="#msg-2026-02-24T00-17-09-525Z" class="timestamp-link"><time datetime="2026-02-24T00:17:09.525Z" data-timestamp="2026-02-24T00:17:09.525Z">2026-02-24T00:17:09.525Z</time></a></div><div class="message-content">
+<div class="tool-use" data-tool-id="toolu_01YJ5dufFUKXK4zVZ2dML5BS"><div class="tool-header"><span class="tool-icon">⚙</span> Read</div><div class="truncatable"><div class="truncatable-content"><pre class="json">{
+  &#34;file_path&#34;: &#34;/home/david/projects/code-associates/occam2go/codegen/codegen.go&#34;,
+  &#34;offset&#34;: 90,
+  &#34;limit&#34;: 30
+}</pre></div><button class="expand-btn">Show more</button></div></div></div></div>
+<div class="message tool-reply" id="msg-2026-02-24T00-17-09-533Z"><div class="message-header"><span class="role-label">Tool reply</span><a href="#msg-2026-02-24T00-17-09-533Z" class="timestamp-link"><time datetime="2026-02-24T00:17:09.533Z" data-timestamp="2026-02-24T00:17:09.533Z">2026-02-24T00:17:09.533Z</time></a></div><div class="message-content"><div class="tool-result"><div class="truncatable"><div class="truncatable-content"><pre>    90→	if goReserved[name] {
+    91→		return &quot;_&quot; + name
+    92→	}
+    93→	return name
+    94→}
+    95→
+    96→// Generate produces Go code from the AST
+    97→func (g *Generator) Generate(program *ast.Program) string {
+    98→	g.builder.Reset()
+    99→	g.needSync = false
+   100→	g.needFmt = false
+   101→	g.needTime = false
+   102→	g.needOs = false
+   103→	g.needMath = false
+   104→	g.needMathBits = false
+   105→	g.needBufio = false
+   106→	g.needReflect = false
+   107→	g.needBoolHelper = false
+   108→	g.procSigs = make(map[string][]ast.ProcParam)
+   109→	g.refParams = make(map[string]bool)
+   110→	g.protocolDefs = make(map[string]*ast.ProtocolDecl)
+   111→	g.chanProtocols = make(map[string]string)
+   112→	g.chanElemTypes = make(map[string]string)
+   113→	g.tmpCounter = 0
+   114→	g.recordDefs = make(map[string]*ast.RecordDecl)
+   115→	g.recordVars = make(map[string]string)
+   116→	g.boolVars = make(map[string]bool)
+   117→
+   118→	// Pre-pass: collect BOOL variable names (needed before containsBoolConversion)
+   119→	for _, stmt := range program.Statements {</pre></div><button class="expand-btn">Show more</button></div></div></div></div>
+<div class="message assistant" id="msg-2026-02-24T00-17-10-752Z"><div class="message-header"><span class="role-label">Assistant</span><a href="#msg-2026-02-24T00-17-10-752Z" class="timestamp-link"><time datetime="2026-02-24T00:17:10.752Z" data-timestamp="2026-02-24T00:17:10.752Z">2026-02-24T00:17:10.752Z</time></a></div><div class="message-content">
+<div class="tool-use" data-tool-id="toolu_01KiXK5L4NM47fAfizBeKkEu"><div class="tool-header"><span class="tool-icon">⚙</span> Read</div><div class="truncatable"><div class="truncatable-content"><pre class="json">{
+  &#34;file_path&#34;: &#34;/home/david/projects/code-associates/occam2go/codegen/codegen.go&#34;,
+  &#34;offset&#34;: 205,
+  &#34;limit&#34;: 65
+}</pre></div><button class="expand-btn">Show more</button></div></div></div></div>
+<div class="message tool-reply" id="msg-2026-02-24T00-17-10-758Z"><div class="message-header"><span class="role-label">Tool reply</span><a href="#msg-2026-02-24T00-17-10-758Z" class="timestamp-link"><time datetime="2026-02-24T00:17:10.758Z" data-timestamp="2026-02-24T00:17:10.758Z">2026-02-24T00:17:10.758Z</time></a></div><div class="message-content"><div class="tool-result"><div class="truncatable"><div class="truncatable-content"><pre>   205→			// RETYPES declarations are local to functions, not package-level
+   206→			mainStatements = append(mainStatements, stmt)
+   207→		default:
+   208→			mainStatements = append(mainStatements, stmt)
+   209→		}
+   210→	}
+   211→
+   212→	// Detect entry point PROC so we can set import flags before writing imports
+   213→	var entryProc *ast.ProcDecl
+   214→	if len(mainStatements) == 0 {
+   215→		entryProc = g.findEntryProc(procDecls)
+   216→		if entryProc != nil {
+   217→			g.needOs = true
+   218→			g.needSync = true
+   219→			g.needBufio = true
+   220→		}
+   221→	}
+   222→
+   223→	// Write package declaration
+   224→	g.writeLine(&quot;package main&quot;)
+   225→	g.writeLine(&quot;&quot;)
+   226→
+   227→	// Write imports
+   228→	if g.needSync || g.needFmt || g.needTime || g.needOs || g.needMath || g.needMathBits || g.needBufio || g.needReflect {
+   229→		g.writeLine(&quot;import (&quot;)
+   230→		g.indent++
+   231→		if g.needBufio {
+   232→			g.writeLine(`&quot;bufio&quot;`)
+   233→		}
+   234→		if g.needFmt {
+   235→			g.writeLine(`&quot;fmt&quot;`)
+   236→		}
+   237→		if g.needMath {
+   238→			g.writeLine(`&quot;math&quot;`)
+   239→		}
+   240→		if g.needMathBits {
+   241→			g.writeLine(`&quot;math/bits&quot;`)
+   242→		}
+   243→		if g.needOs {
+   244→			g.writeLine(`&quot;os&quot;`)
+   245→		}
+   246→		if g.needReflect {
+   247→			g.writeLine(`&quot;reflect&quot;`)
+   248→		}
+   249→		if g.needSync {
+   250→			g.writeLine(`&quot;sync&quot;`)
+   251→		}
+   252→		if g.needTime {
+   253→			g.writeLine(`&quot;time&quot;`)
+   254→		}
+   255→		g.indent--
+   256→		g.writeLine(&quot;)&quot;)
+   257→		g.writeLine(&quot;&quot;)
+   258→	}
+   259→
+   260→	// Emit transputer intrinsic helper functions
+   261→	if g.needMathBits {
+   262→		g.emitIntrinsicHelpers()
+   263→	}
+   264→
+   265→	// Emit _boolToInt helper function
+   266→	if g.needBoolHelper {
+   267→		g.emitBoolHelper()
+   268→	}
+   269→</pre></div><button class="expand-btn">Show more</button></div></div></div></div>
+<div class="message assistant" id="msg-2026-02-24T00-17-10-897Z"><div class="message-header"><span class="role-label">Assistant</span><a href="#msg-2026-02-24T00-17-10-897Z" class="timestamp-link"><time datetime="2026-02-24T00:17:10.897Z" data-timestamp="2026-02-24T00:17:10.897Z">2026-02-24T00:17:10.897Z</time></a></div><div class="message-content">
+<div class="tool-use" data-tool-id="toolu_01UcTyBGZjTpMzitNNVCYDfB"><div class="tool-header"><span class="tool-icon">⚙</span> Read</div><div class="truncatable"><div class="truncatable-content"><pre class="json">{
+  &#34;file_path&#34;: &#34;/home/david/projects/code-associates/occam2go/codegen/codegen.go&#34;,
+  &#34;offset&#34;: 415,
+  &#34;limit&#34;: 100
+}</pre></div><button class="expand-btn">Show more</button></div></div></div></div>
+<div class="message tool-reply" id="msg-2026-02-24T00-17-10-906Z"><div class="message-header"><span class="role-label">Tool reply</span><a href="#msg-2026-02-24T00-17-10-906Z" class="timestamp-link"><time datetime="2026-02-24T00:17:10.906Z" data-timestamp="2026-02-24T00:17:10.906Z">2026-02-24T00:17:10.906Z</time></a></div><div class="message-content"><div class="tool-result"><div class="truncatable"><div class="truncatable-content"><pre>   415→}
+   416→
+   417→// generateEntryHarness emits a func main() that wires stdin/stdout/stderr
+   418→// to channels and calls the entry PROC.
+   419→func (g *Generator) generateEntryHarness(proc *ast.ProcDecl) {
+   420→	name := goIdent(proc.Name)
+   421→	g.writeLine(&quot;func main() {&quot;)
+   422→	g.indent++
+   423→
+   424→	// Create channels
+   425→	g.writeLine(&quot;keyboard := make(chan byte, 256)&quot;)
+   426→	g.writeLine(&quot;screen := make(chan byte, 256)&quot;)
+   427→	g.writeLine(&quot;_error := make(chan byte, 256)&quot;)
+   428→	g.writeLine(&quot;&quot;)
+   429→
+   430→	// WaitGroup for writer goroutines to finish draining
+   431→	g.writeLine(&quot;var wg sync.WaitGroup&quot;)
+   432→	g.writeLine(&quot;wg.Add(2)&quot;)
+   433→	g.writeLine(&quot;&quot;)
+   434→
+   435→	// Screen writer goroutine
+   436→	g.writeLine(&quot;go func() {&quot;)
+   437→	g.indent++
+   438→	g.writeLine(&quot;defer wg.Done()&quot;)
+   439→	g.writeLine(&quot;w := bufio.NewWriter(os.Stdout)&quot;)
+   440→	g.writeLine(&quot;for b := range screen {&quot;)
+   441→	g.indent++
+   442→	g.writeLine(&quot;if b == 255 {&quot;)
+   443→	g.indent++
+   444→	g.writeLine(&quot;w.Flush()&quot;)
+   445→	g.indent--
+   446→	g.writeLine(&quot;} else {&quot;)
+   447→	g.indent++
+   448→	g.writeLine(&quot;w.WriteByte(b)&quot;)
+   449→	g.indent--
+   450→	g.writeLine(&quot;}&quot;)
+   451→	g.indent--
+   452→	g.writeLine(&quot;}&quot;)
+   453→	g.writeLine(&quot;w.Flush()&quot;)
+   454→	g.indent--
+   455→	g.writeLine(&quot;}()&quot;)
+   456→	g.writeLine(&quot;&quot;)
+   457→
+   458→	// Error writer goroutine
+   459→	g.writeLine(&quot;go func() {&quot;)
+   460→	g.indent++
+   461→	g.writeLine(&quot;defer wg.Done()&quot;)
+   462→	g.writeLine(&quot;w := bufio.NewWriter(os.Stderr)&quot;)
+   463→	g.writeLine(&quot;for b := range _error {&quot;)
+   464→	g.indent++
+   465→	g.writeLine(&quot;if b == 255 {&quot;)
+   466→	g.indent++
+   467→	g.writeLine(&quot;w.Flush()&quot;)
+   468→	g.indent--
+   469→	g.writeLine(&quot;} else {&quot;)
+   470→	g.indent++
+   471→	g.writeLine(&quot;w.WriteByte(b)&quot;)
+   472→	g.indent--
+   473→	g.writeLine(&quot;}&quot;)
+   474→	g.indent--
+   475→	g.writeLine(&quot;}&quot;)
+   476→	g.writeLine(&quot;w.Flush()&quot;)
+   477→	g.indent--
+   478→	g.writeLine(&quot;}()&quot;)
+   479→	g.writeLine(&quot;&quot;)
+   480→
+   481→	// Keyboard reader goroutine
+   482→	g.writeLine(&quot;go func() {&quot;)
+   483→	g.indent++
+   484→	g.writeLine(&quot;r := bufio.NewReader(os.Stdin)&quot;)
+   485→	g.writeLine(&quot;for {&quot;)
+   486→	g.indent++
+   487→	g.writeLine(&quot;b, err := r.ReadByte()&quot;)
+   488→	g.writeLine(&quot;if err != nil {&quot;)
+   489→	g.indent++
+   490→	g.writeLine(&quot;close(keyboard)&quot;)
+   491→	g.writeLine(&quot;return&quot;)
+   492→	g.indent--
+   493→	g.writeLine(&quot;}&quot;)
+   494→	g.writeLine(&quot;keyboard &lt;- b&quot;)
+   495→	g.indent--
+   496→	g.writeLine(&quot;}&quot;)
+   497→	g.indent--
+   498→	g.writeLine(&quot;}()&quot;)
+   499→	g.writeLine(&quot;&quot;)
+   500→
+   501→	// Call the entry proc
+   502→	g.writeLine(fmt.Sprintf(&quot;%s(keyboard, screen, _error)&quot;, name))
+   503→	g.writeLine(&quot;&quot;)
+   504→
+   505→	// Close output channels and wait for writers to drain
+   506→	g.writeLine(&quot;close(screen)&quot;)
+   507→	g.writeLine(&quot;close(_error)&quot;)
+   508→	g.writeLine(&quot;wg.Wait()&quot;)
+   509→
+   510→	g.indent--
+   511→	g.writeLine(&quot;}&quot;)
+   512→}
+   513→
+   514→func (g *Generator) containsPar(stmt ast.Statement) bool {</pre></div><button class="expand-btn">Show more</button></div></div></div></div>
+<div class="message assistant" id="msg-2026-02-24T00-17-14-537Z"><div class="message-header"><span class="role-label">Assistant</span><a href="#msg-2026-02-24T00-17-14-537Z" class="timestamp-link"><time datetime="2026-02-24T00:17:14.537Z" data-timestamp="2026-02-24T00:17:14.537Z">2026-02-24T00:17:14.537Z</time></a></div><div class="message-content">
+<div class="thinking"><div class="thinking-label">Thinking</div><p>Now I have a clear picture of all the code that needs to change. Let me also check the go.mod to see the current state and the echoing.occ example.</p></div></div></div>
+<div class="message assistant" id="msg-2026-02-24T00-17-15-277Z"><div class="message-header"><span class="role-label">Assistant</span><a href="#msg-2026-02-24T00-17-15-277Z" class="timestamp-link"><time datetime="2026-02-24T00:17:15.277Z" data-timestamp="2026-02-24T00:17:15.277Z">2026-02-24T00:17:15.277Z</time></a></div><div class="message-content">
+<div class="tool-use" data-tool-id="toolu_0174a3vAojjgd3qniGRCG8ye"><div class="tool-header"><span class="tool-icon">⚙</span> Read</div><div class="truncatable"><div class="truncatable-content"><pre class="json">{
+  &#34;file_path&#34;: &#34;/home/david/projects/code-associates/occam2go/go.mod&#34;
+}</pre></div><button class="expand-btn">Show more</button></div></div></div></div>
+<div class="message tool-reply" id="msg-2026-02-24T00-17-15-284Z"><div class="message-header"><span class="role-label">Tool reply</span><a href="#msg-2026-02-24T00-17-15-284Z" class="timestamp-link"><time datetime="2026-02-24T00:17:15.284Z" data-timestamp="2026-02-24T00:17:15.284Z">2026-02-24T00:17:15.284Z</time></a></div><div class="message-content"><div class="tool-result"><div class="truncatable"><div class="truncatable-content"><pre>     1→module github.com/codeassociates/occam2go
+     2→
+     3→go 1.25.6
+     4→</pre></div><button class="expand-btn">Show more</button></div></div></div></div>
+<div class="message assistant" id="msg-2026-02-24T00-17-16-003Z"><div class="message-header"><span class="role-label">Assistant</span><a href="#msg-2026-02-24T00-17-16-003Z" class="timestamp-link"><time datetime="2026-02-24T00:17:16.003Z" data-timestamp="2026-02-24T00:17:16.003Z">2026-02-24T00:17:16.003Z</time></a></div><div class="message-content">
+<div class="tool-use" data-tool-id="toolu_013ipbSRmeUiDmhzDshbDamu"><div class="tool-header"><span class="tool-icon">⚙</span> Read</div><div class="truncatable"><div class="truncatable-content"><pre class="json">{
+  &#34;file_path&#34;: &#34;/home/david/projects/code-associates/occam2go/kroc/modules/course/examples/echoing.occ&#34;
+}</pre></div><button class="expand-btn">Show more</button></div></div></div></div>
+<div class="message tool-reply" id="msg-2026-02-24T00-17-16-012Z"><div class="message-header"><span class="role-label">Tool reply</span><a href="#msg-2026-02-24T00-17-16-012Z" class="timestamp-link"><time datetime="2026-02-24T00:17:16.012Z" data-timestamp="2026-02-24T00:17:16.012Z">2026-02-24T00:17:16.012Z</time></a></div><div class="message-content"><div class="tool-result"><div class="truncatable"><div class="truncatable-content"><pre>     1→#INCLUDE &quot;course.module&quot;
+     2→
+     3→PROC echoing (CHAN BYTE keyboard?, screen!, error!)
+     4→  --{{{  
+     5→  BYTE ch:
+     6→  SEQ
+     7→    ch := &#x27; &#x27;
+     8→    WHILE ch &lt;&gt; &#x27;Z&#x27;
+     9→      SEQ
+    10→        keyboard ? ch
+    11→        screen ! ch
+    12→        screen ! FLUSH
+    13→    screen ! &#x27;*c&#x27;
+    14→    screen ! &#x27;*n&#x27;
+    15→  --}}}
+    16→:
+    17→</pre></div><button class="expand-btn">Show more</button></div></div></div></div>
+<div class="message assistant" id="msg-2026-02-24T00-17-20-169Z"><div class="message-header"><span class="role-label">Assistant</span><a href="#msg-2026-02-24T00-17-20-169Z" class="timestamp-link"><time datetime="2026-02-24T00:17:20.169Z" data-timestamp="2026-02-24T00:17:20.169Z">2026-02-24T00:17:20.169Z</time></a></div><div class="message-content">
+<div class="thinking"><div class="thinking-label">Thinking</div><p>Now let me also check the e2e test helper to understand how tests compile generated code.</p></div></div></div>
+<div class="message assistant" id="msg-2026-02-24T00-17-20-730Z"><div class="message-header"><span class="role-label">Assistant</span><a href="#msg-2026-02-24T00-17-20-730Z" class="timestamp-link"><time datetime="2026-02-24T00:17:20.730Z" data-timestamp="2026-02-24T00:17:20.730Z">2026-02-24T00:17:20.730Z</time></a></div><div class="message-content">
+<div class="tool-use" data-tool-id="toolu_01KUZzvXYz4jbezem3WHwYj4"><div class="tool-header"><span class="tool-icon">⚙</span> Read</div><div class="truncatable"><div class="truncatable-content"><pre class="json">{
+  &#34;file_path&#34;: &#34;/home/david/projects/code-associates/occam2go/codegen/e2e_helpers_test.go&#34;
+}</pre></div><button class="expand-btn">Show more</button></div></div></div></div>
+<div class="message tool-reply" id="msg-2026-02-24T00-17-20-734Z"><div class="message-header"><span class="role-label">Tool reply</span><a href="#msg-2026-02-24T00-17-20-734Z" class="timestamp-link"><time datetime="2026-02-24T00:17:20.734Z" data-timestamp="2026-02-24T00:17:20.734Z">2026-02-24T00:17:20.734Z</time></a></div><div class="message-content"><div class="tool-result"><div class="truncatable"><div class="truncatable-content"><pre>     1→package codegen
+     2→
+     3→import (
+     4→	&quot;os&quot;
+     5→	&quot;os/exec&quot;
+     6→	&quot;path/filepath&quot;
+     7→	&quot;testing&quot;
+     8→
+     9→	&quot;github.com/codeassociates/occam2go/lexer&quot;
+    10→	&quot;github.com/codeassociates/occam2go/parser&quot;
+    11→	&quot;github.com/codeassociates/occam2go/preproc&quot;
+    12→)
+    13→
+    14→// transpileCompileRun takes Occam source, transpiles to Go, compiles, runs,
+    15→// and returns the stdout output
+    16→func transpileCompileRun(t *testing.T, occamSource string) string {
+    17→	t.Helper()
+    18→
+    19→	// Transpile
+    20→	l := lexer.New(occamSource)
+    21→	p := parser.New(l)
+    22→	program := p.ParseProgram()
+    23→
+    24→	if len(p.Errors()) &gt; 0 {
+    25→		for _, err := range p.Errors() {
+    26→			t.Errorf(&quot;parser error: %s&quot;, err)
+    27→		}
+    28→		t.FailNow()
+    29→	}
+    30→
+    31→	gen := New()
+    32→	goCode := gen.Generate(program)
+    33→
+    34→	// Create temp directory for this test
+    35→	tmpDir, err := os.MkdirTemp(&quot;&quot;, &quot;occam2go-test-*&quot;)
+    36→	if err != nil {
+    37→		t.Fatalf(&quot;failed to create temp dir: %v&quot;, err)
+    38→	}
+    39→	defer os.RemoveAll(tmpDir)
+    40→
+    41→	// Write Go source
+    42→	goFile := filepath.Join(tmpDir, &quot;main.go&quot;)
+    43→	if err := os.WriteFile(goFile, []byte(goCode), 0644); err != nil {
+    44→		t.Fatalf(&quot;failed to write Go file: %v&quot;, err)
+    45→	}
+    46→
+    47→	// Compile
+    48→	binFile := filepath.Join(tmpDir, &quot;main&quot;)
+    49→	compileCmd := exec.Command(&quot;go&quot;, &quot;build&quot;, &quot;-o&quot;, binFile, goFile)
+    50→	compileOutput, err := compileCmd.CombinedOutput()
+    51→	if err != nil {
+    52→		t.Fatalf(&quot;compilation failed: %v\nOutput: %s\nGo code:\n%s&quot;, err, compileOutput, goCode)
+    53→	}
+    54→
+    55→	// Run
+    56→	runCmd := exec.Command(binFile)
+    57→	output, err := runCmd.CombinedOutput()
+    58→	if err != nil {
+    59→		t.Fatalf(&quot;execution failed: %v\nOutput: %s&quot;, err, output)
+    60→	}
+    61→
+    62→	return string(output)
+    63→}
+    64→
+    65→// transpileCompileRunFromFile takes an occam file path, preprocesses it,
+    66→// then transpiles, compiles, and runs.
+    67→func transpileCompileRunFromFile(t *testing.T, mainFile string, includePaths []string) string {
+    68→	t.Helper()
+    69→
+    70→	pp := preproc.New(preproc.WithIncludePaths(includePaths))
+    71→	expanded, err := pp.ProcessFile(mainFile)
+    72→	if err != nil {
+    73→		t.Fatalf(&quot;preprocessor error: %v&quot;, err)
+    74→	}
+    75→	if len(pp.Errors()) &gt; 0 {
+    76→		for _, e := range pp.Errors() {
+    77→			t.Errorf(&quot;preprocessor warning: %s&quot;, e)
+    78→		}
+    79→	}
+    80→
+    81→	return transpileCompileRun(t, expanded)
+    82→}
+    83→</pre></div><button class="expand-btn">Show more</button></div></div></div></div>
+<div class="message assistant" id="msg-2026-02-24T00-17-24-038Z"><div class="message-header"><span class="role-label">Assistant</span><a href="#msg-2026-02-24T00-17-24-038Z" class="timestamp-link"><time datetime="2026-02-24T00:17:24.038Z" data-timestamp="2026-02-24T00:17:24.038Z">2026-02-24T00:17:24.038Z</time></a></div><div class="message-content">
+<div class="assistant-text"><p>Now I have a thorough understanding. Let me write the plan.</p></div></div></div>
+<div class="message assistant" id="msg-2026-02-24T00-17-56-440Z"><div class="message-header"><span class="role-label">Assistant</span><a href="#msg-2026-02-24T00-17-56-440Z" class="timestamp-link"><time datetime="2026-02-24T00:17:56.440Z" data-timestamp="2026-02-24T00:17:56.440Z">2026-02-24T00:17:56.440Z</time></a></div><div class="message-content"><div class="file-tool write-tool" data-tool-id="toolu_01P2eA59Mb358H4K4WS7EWi8">
+<div class="file-tool-header write-header"><span class="file-tool-icon">📝</span> Write <span class="file-tool-path">abstract-cooking-dolphin.md</span></div>
+<div class="file-tool-fullpath">/home/david/.claude/plans/abstract-cooking-dolphin.md</div>
+<div class="truncatable"><div class="truncatable-content"><pre class="file-content"># Plan: Raw terminal mode for keyboard channel (Issue #90)
+
+## Context
+
+The generated entry harness reads keyboard input via `bufio.NewReader(os.Stdin)`, which operates in the terminal&#39;s default line-buffered mode. Characters aren&#39;t available until Enter is pressed, breaking programs like `echoing.occ` that expect character-by-character input. We need to put the terminal in raw mode so bytes are available immediately as typed.
+
+## Approach
+
+Use `golang.org/x/term` to switch stdin to raw mode in the generated entry harness. Fall back to the current buffered behavior when stdin is not a terminal (piped input).
+
+## Changes
+
+### 1. Add dependency
+- `go get golang.org/x/term` — adds the package to `go.mod`/`go.sum`
+
+### 2. `codegen/codegen.go` — Generator struct (line ~21)
+- Add `needTerm bool` flag
+
+### 3. `codegen/codegen.go` — flag initialization (line ~106)
+- Add `g.needTerm = false`
+
+### 4. `codegen/codegen.go` — entry harness detection (lines 216-220)
+- Set `g.needTerm = true` when entry harness is detected
+
+### 5. `codegen/codegen.go` — import generation (lines 228-256)
+- Add condition for `needTerm` in the import block guard
+- When `needTerm`, emit imports for `&#34;os/signal&#34;`, `&#34;syscall&#34;`, and `&#34;golang.org/x/term&#34;` (alphabetical order within the block)
+
+### 6. `codegen/codegen.go` — `generateEntryHarness()` (lines 419-512)
+
+Rewrite to generate code structured like this:
+
+```go
+func main() {
+    keyboard := make(chan byte, 256)
+    screen := make(chan byte, 256)
+    _error := make(chan byte, 256)
+
+    // Raw terminal mode
+    var rawMode bool
+    var oldState *term.State
+    fd := int(os.Stdin.Fd())
+    if term.IsTerminal(fd) {
+        var err error
+        oldState, err = term.MakeRaw(fd)
+        if err == nil {
+            rawMode = true
+            defer term.Restore(fd, oldState)
+            // Restore terminal on signals (SIGINT won&#39;t fire from Ctrl+C in
+            // raw mode, but can arrive via external kill; SIGTERM from kill)
+            sigCh := make(chan os.Signal, 1)
+            signal.Notify(sigCh, syscall.SIGINT, syscall.SIGTERM)
+            go func() {
+                &lt;-sigCh
+                term.Restore(fd, oldState)
+                os.Exit(1)
+            }()
+        }
+    }
+
+    var wg sync.WaitGroup
+    wg.Add(2)
+
+    // Screen writer — in raw mode, insert CR before LF
+    go func() {
+        defer wg.Done()
+        w := bufio.NewWriter(os.Stdout)
+        for b := range screen {
+            if b == 255 {
+                w.Flush()
+            } else {
+                if rawMode &amp;&amp; b == &#39;\n&#39; {
+                    w.WriteByte(&#39;\r&#39;)
+                }
+                w.WriteByte(b)
+            }
+        }
+        w.Flush()
+    }()
+
+    // Error writer — same CR/LF handling
+    go func() { /* same pattern as screen, writing to os.Stderr */ }()
+
+    // Keyboard reader
+    go func() {
+        if rawMode {
+            buf := make([]byte, 1)
+            for {
+                n, err := os.Stdin.Read(buf)
+                if err != nil || n == 0 {
+                    close(keyboard)
+                    return
+                }
+                if buf[0] == 3 { // Ctrl+C
+                    term.Restore(fd, oldState)
+                    os.Exit(1)
+                }
+                keyboard &lt;- buf[0]
+            }
+        } else {
+            r := bufio.NewReader(os.Stdin)
+            for {
+                b, err := r.ReadByte()
+                if err != nil {
+                    close(keyboard)
+                    return
+                }
+                keyboard &lt;- b
+            }
+        }
+    }()
+
+    entryProc(keyboard, screen, _error)
+
+    close(screen)
+    close(_error)
+    wg.Wait()
+}
+```
+
+Key design decisions:
+- **Ctrl+C handling**: In raw mode, ISIG is disabled so Ctrl+C sends byte 3 instead of SIGINT. The keyboard reader intercepts byte 3 to restore terminal and exit cleanly.
+- **LF→CRLF in output**: Raw mode disables OPOST, so `\n` no longer auto-translates to `\r\n`. The screen/error writers insert CR before LF. This is harmless if the occam program already sends both `*c` and `*n` (the extra CR is a no-op).
+- **Non-terminal fallback**: When stdin is piped, skip raw mode and use the existing `bufio.NewReader` approach for efficient buffered reading.
+- **Signal handler**: Catches external SIGINT/SIGTERM to restore terminal state before exit.
+
+### 7. `codegen/codegen_test.go` — unit test
+- Add test that verifies entry-harness-style program generates code containing `term.MakeRaw`, `term.IsTerminal`, and `term.Restore`.
+
+### 8. `codegen/e2e_helpers_test.go` — new helper + e2e test
+- Add `transpileCompileRunWithInput()` helper that:
+  - Initializes a Go module in the temp dir (`go mod init test &amp;&amp; go mod tidy`)
+  - Pipes stdin to the binary
+- Add e2e test: transpile `echoing.occ`-style program, pipe input `&#34;hello Z&#34;`, verify output matches.
+
+## Verification
+1. `go test ./...` — all existing tests pass
+2. Manual test with `echoing.occ`:
+   ```bash
+   go build -o occam2go . &amp;&amp; ./occam2go -I kroc/modules/course/libsrc -o /tmp/echo.go kroc/modules/course/examples/echoing.occ
+   cd /tmp &amp;&amp; go mod init echo_test &amp;&amp; go mod tidy &amp;&amp; go run echo.go
+   # Type characters — they should echo immediately, one at a time
+   # Type &#39;Z&#39; to exit
+   ```
+</pre></div><button class="expand-btn">Show more</button></div>
+</div></div></div>
+<div class="message tool-reply" id="msg-2026-02-24T00-17-56-830Z"><div class="message-header"><span class="role-label">Tool reply</span><a href="#msg-2026-02-24T00-17-56-830Z" class="timestamp-link"><time datetime="2026-02-24T00:17:56.830Z" data-timestamp="2026-02-24T00:17:56.830Z">2026-02-24T00:17:56.830Z</time></a></div><div class="message-content"><div class="tool-result"><div class="truncatable"><div class="truncatable-content"><pre>File created successfully at: /home/david/.claude/plans/abstract-cooking-dolphin.md</pre></div><button class="expand-btn">Show more</button></div></div></div></div>
+<div class="message assistant" id="msg-2026-02-24T00-18-03-861Z"><div class="message-header"><span class="role-label">Assistant</span><a href="#msg-2026-02-24T00-18-03-861Z" class="timestamp-link"><time datetime="2026-02-24T00:18:03.861Z" data-timestamp="2026-02-24T00:18:03.861Z">2026-02-24T00:18:03.861Z</time></a></div><div class="message-content">
+<div class="tool-use" data-tool-id="toolu_019pt4nvTS4nezxAb2kQUU3b"><div class="tool-header"><span class="tool-icon">⚙</span> ExitPlanMode</div><div class="truncatable"><div class="truncatable-content"><pre class="json">{
+  &#34;allowedPrompts&#34;: [
+    {
+      &#34;tool&#34;: &#34;Bash&#34;,
+      &#34;prompt&#34;: &#34;run go get to add golang.org/x/term dependency&#34;
+    },
+    {
+      &#34;tool&#34;: &#34;Bash&#34;,
+      &#34;prompt&#34;: &#34;run go test to verify changes&#34;
+    },
+    {
+      &#34;tool&#34;: &#34;Bash&#34;,
+      &#34;prompt&#34;: &#34;build and run transpiler for manual testing&#34;
+    }
+  ],
+  &#34;plan&#34;: &#34;# Plan: Raw terminal mode for keyboard channel (Issue #90)\n\n## Context\n\nThe generated entry harness reads keyboard input via `bufio.NewReader(os.Stdin)`, which operates in the terminal&#39;s default line-buffered mode. Characters aren&#39;t available until Enter is pressed, breaking programs like `echoing.occ` that expect character-by-character input. We need to put the terminal in raw mode so bytes are available immediately as typed.\n\n## Approach\n\nUse `golang.org/x/term` to switch stdin to raw mode in the generated entry harness. Fall back to the current buffered behavior when stdin is not a terminal (piped input).\n\n## Changes\n\n### 1. Add dependency\n- `go get golang.org/x/term` — adds the package to `go.mod`/`go.sum`\n\n### 2. `codegen/codegen.go` — Generator struct (line ~21)\n- Add `needTerm bool` flag\n\n### 3. `codegen/codegen.go` — flag initialization (line ~106)\n- Add `g.needTerm = false`\n\n### 4. `codegen/codegen.go` — entry harness detection (lines 216-220)\n- Set `g.needTerm = true` when entry harness is detected\n\n### 5. `codegen/codegen.go` — import generation (lines 228-256)\n- Add condition for `needTerm` in the import block guard\n- When `needTerm`, emit imports for `\&#34;os/signal\&#34;`, `\&#34;syscall\&#34;`, and `\&#34;golang.org/x/term\&#34;` (alphabetical order within the block)\n\n### 6. `codegen/codegen.go` — `generateEntryHarness()` (lines 419-512)\n\nRewrite to generate code structured like this:\n\n```go\nfunc main() {\n    keyboard := make(chan byte, 256)\n    screen := make(chan byte, 256)\n    _error := make(chan byte, 256)\n\n    // Raw terminal mode\n    var rawMode bool\n    var oldState *term.State\n    fd := int(os.Stdin.Fd())\n    if term.IsTerminal(fd) {\n        var err error\n        oldState, err = term.MakeRaw(fd)\n        if err == nil {\n            rawMode = true\n            defer term.Restore(fd, oldState)\n            // Restore terminal on signals (SIGINT won&#39;t fire from Ctrl+C in\n            // raw mode, but can arrive via external kill; SIGTERM from kill)\n            sigCh := make(chan os.Signal, 1)\n            signal.Notify(sigCh, syscall.SIGINT, syscall.SIGTERM)\n            go func() {\n                &lt;-sigCh\n                term.Restore(fd, oldState)\n                os.Exit(1)\n            }()\n        }\n    }\n\n    var wg sync.WaitGroup\n    wg.Add(2)\n\n    // Screen writer — in raw mode, insert CR before LF\n    go func() {\n        defer wg.Done()\n        w := bufio.NewWriter(os.Stdout)\n        for b := range screen {\n            if b == 255 {\n                w.Flush()\n            } else {\n                if rawMode &amp;&amp; b == &#39;\\n&#39; {\n                    w.WriteByte(&#39;\\r&#39;)\n                }\n                w.WriteByte(b)\n            }\n        }\n        w.Flush()\n    }()\n\n    // Error writer — same CR/LF handling\n    go func() { /* same pattern as screen, writing to os.Stderr */ }()\n\n    // Keyboard reader\n    go func() {\n        if rawMode {\n            buf := make([]byte, 1)\n            for {\n                n, err := os.Stdin.Read(buf)\n                if err != nil || n == 0 {\n                    close(keyboard)\n                    return\n                }\n                if buf[0] == 3 { // Ctrl+C\n                    term.Restore(fd, oldState)\n                    os.Exit(1)\n                }\n                keyboard &lt;- buf[0]\n            }\n        } else {\n            r := bufio.NewReader(os.Stdin)\n            for {\n                b, err := r.ReadByte()\n                if err != nil {\n                    close(keyboard)\n                    return\n                }\n                keyboard &lt;- b\n            }\n        }\n    }()\n\n    entryProc(keyboard, screen, _error)\n\n    close(screen)\n    close(_error)\n    wg.Wait()\n}\n```\n\nKey design decisions:\n- **Ctrl+C handling**: In raw mode, ISIG is disabled so Ctrl+C sends byte 3 instead of SIGINT. The keyboard reader intercepts byte 3 to restore terminal and exit cleanly.\n- **LF→CRLF in output**: Raw mode disables OPOST, so `\\n` no longer auto-translates to `\\r\\n`. The screen/error writers insert CR before LF. This is harmless if the occam program already sends both `*c` and `*n` (the extra CR is a no-op).\n- **Non-terminal fallback**: When stdin is piped, skip raw mode and use the existing `bufio.NewReader` approach for efficient buffered reading.\n- **Signal handler**: Catches external SIGINT/SIGTERM to restore terminal state before exit.\n\n### 7. `codegen/codegen_test.go` — unit test\n- Add test that verifies entry-harness-style program generates code containing `term.MakeRaw`, `term.IsTerminal`, and `term.Restore`.\n\n### 8. `codegen/e2e_helpers_test.go` — new helper + e2e test\n- Add `transpileCompileRunWithInput()` helper that:\n  - Initializes a Go module in the temp dir (`go mod init test &amp;&amp; go mod tidy`)\n  - Pipes stdin to the binary\n- Add e2e test: transpile `echoing.occ`-style program, pipe input `\&#34;hello Z\&#34;`, verify output matches.\n\n## Verification\n1. `go test ./...` — all existing tests pass\n2. Manual test with `echoing.occ`:\n   ```bash\n   go build -o occam2go . &amp;&amp; ./occam2go -I kroc/modules/course/libsrc -o /tmp/echo.go kroc/modules/course/examples/echoing.occ\n   cd /tmp &amp;&amp; go mod init echo_test &amp;&amp; go mod tidy &amp;&amp; go run echo.go\n   # Type characters — they should echo immediately, one at a time\n   # Type &#39;Z&#39; to exit\n   ```\n&#34;
+}</pre></div><button class="expand-btn">Show more</button></div></div></div></div>
+<div class="message tool-reply" id="msg-2026-02-24T00-18-22-307Z"><div class="message-header"><span class="role-label">Tool reply</span><a href="#msg-2026-02-24T00-18-22-307Z" class="timestamp-link"><time datetime="2026-02-24T00:18:22.307Z" data-timestamp="2026-02-24T00:18:22.307Z">2026-02-24T00:18:22.307Z</time></a></div><div class="message-content"><div class="tool-result tool-error"><div class="truncatable"><div class="truncatable-content"><pre>The user doesn&#x27;t want to proceed with this tool use. The tool use was rejected (eg. if it was a file edit, the new_string was NOT written to the file). STOP what you are doing and wait for the user to tell you how to proceed.</pre></div><button class="expand-btn">Show more</button></div></div></div></div>
+<div class="message user" id="msg-2026-02-24T00-18-22-307Z"><div class="message-header"><span class="role-label">User</span><a href="#msg-2026-02-24T00-18-22-307Z" class="timestamp-link"><time datetime="2026-02-24T00:18:22.307Z" data-timestamp="2026-02-24T00:18:22.307Z">2026-02-24T00:18:22.307Z</time></a></div><div class="message-content">
+<div class="assistant-text"><p>[Request interrupted by user for tool use]</p></div></div></div>
+        
+
+<div class="pagination"><a href="index.html" class="index-link">Index</a></div>
+
+    </div>
+    <script>
+document.querySelectorAll('time[data-timestamp]').forEach(function(el) {
+    const timestamp = el.getAttribute('data-timestamp');
+    const date = new Date(timestamp);
+    const now = new Date();
+    const isToday = date.toDateString() === now.toDateString();
+    const timeStr = date.toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' });
+    if (isToday) { el.textContent = timeStr; }
+    else { el.textContent = date.toLocaleDateString(undefined, { month: 'short', day: 'numeric' }) + ' ' + timeStr; }
+});
+document.querySelectorAll('pre.json').forEach(function(el) {
+    let text = el.textContent;
+    text = text.replace(/"([^"]+)":/g, '<span style="color: #ce93d8">"$1"</span>:');
+    text = text.replace(/: "([^"]*)"/g, ': <span style="color: #81d4fa">"$1"</span>');
+    text = text.replace(/: (\d+)/g, ': <span style="color: #ffcc80">$1</span>');
+    text = text.replace(/: (true|false|null)/g, ': <span style="color: #f48fb1">$1</span>');
+    el.innerHTML = text;
+});
+document.querySelectorAll('.truncatable').forEach(function(wrapper) {
+    const content = wrapper.querySelector('.truncatable-content');
+    const btn = wrapper.querySelector('.expand-btn');
+    if (content.scrollHeight > 250) {
+        wrapper.classList.add('truncated');
+        btn.addEventListener('click', function() {
+            if (wrapper.classList.contains('truncated')) { wrapper.classList.remove('truncated'); wrapper.classList.add('expanded'); btn.textContent = 'Show less'; }
+            else { wrapper.classList.remove('expanded'); wrapper.classList.add('truncated'); btn.textContent = 'Show more'; }
+        });
+    }
+});
+</script>
+</body>
+</html>
