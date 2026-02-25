@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Occam Transpiler Sessions</title>
+    <title>An Occam to Go Transpiler</title>
     <style>
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
@@ -32,20 +32,95 @@
     </style>
 </head>
 <body>
-    <h1>Occam Transpiler Sessions</h1>
+    <h1>An Occam to Go Transpiler</h1>
 
-    <p>Conversations with Claude about building and improving
+    <p>Persuading and encouraging Claude to build
     <a href="https://github.com/codeassociates/occam2go">occam2go</a>,
     an occam to golang transpiler.</p>
+    <p>David Boreham, February 24, 2026</p>
 
-    <h2>Sessions</h2>
+    <h2>Why?</h2>
+    <p>The first part of why is that since Go the language was unveiled 16 years ago I'd been curious about the similarity 
+        between its concurrency features and those of the much older language Occam. The two share a common ancestry in
+    Tony Hoare's CSP, although there may be a more direct relationship through Go contributors that had some prior exposure to Occam.
+    It occurred to me that perhaps Occam could be translated into Go since Occam's PAR construct looks quite similar to 
+    goroutines. And of course they both have channels. The program that translated Occam into Go, if it existed, would be called a 
+    <i>transpiler</i>. A compiler that generates code in another high level language rather than machine code.
+    </p>
+    <p>
+        The other half of why came much more recently. A few weeks ago a team from Anthropic published the results of
+        a project where they had used LLMs (specifically, Opus 4.6) to write a C compiler, in Rust. Not a toy compiler: 
+        one that could build the Linux kernel into a bootable image. That was obviously an impressive
+        achievement but for me it was more interesting to read the varying reactions from other developers.
+        In particular I saw many comments saying something to the effect that this wasn't such a big deal 
+        because LLMs essentially just regurgitate elements of their training data. The theory went like this:
+        because there's the source code for many C compilers in LLM training data, an LLM can just somehow
+        spit all that out when asked. This of course ignores the fact that most C compilers are written in C 
+        whereas Anthropic had generated a compiler written in Rust. But it set me to thinking: if I could get
+        an LLM to write a compiler for a language that almost nobody has heard of, that doesn't appear in training data,
+        then I could do that thing all of us yearn to do above all else: prove someone wrong on the internet.
+    </p>
+    <p>
+       Mix into all that my new year pledge to myself that I was going to post all my LLM sessions online (because
+       people say all kinds of things about what they do with LLMs while providing no hard evidence), at least 
+       the ones that didn't contain sensitive material, and here we are. So let's dive into what happened:
+    </p>
+    <h2>The Sessions</h2>
+    <p>Initially I had no idea whether a February 2026 LLM could write a transpiler for a language nobody had heard of
+        so I began by engaging it in conversation about the topic in general. It seemed enthusiastic (LLMs are 
+        great at that) and asked if it could fetch some PDFs of books about Occam, so we agreed on a simple
+        plan of attack and it got down to cutting code. Surprisingly it also seemed to have some ideas
+        and understanding of the semantic similarities and differences between Occam concurrency constructs
+        and Go's. Perhaps somewhere there's a Subreddit I don't know about...
+        I used Simon Willison's invaluable <a href="https://simonwillison.net/2025/Dec/25/claude-code-transcripts/">claude-code-transcripts </a> 
+        utility to extract each LLM chat session, beginning with that initial discussion, linked below:
+    </p>
     <ol>
         <li><a href="write-a-transpiler/index.html">Write an occam to golang transpiler</a></li>
+    </ol>
+    <p>The "that was easy" moment. At this point Claude had created a transpiler that at least ran, and processed a set of test programs
+        it had created. As the designated human I did point out that none of the tests actually ran 
+        a transpiled program. After Claude told me that I was absolutely right, it fixed that by
+        generating a set of "end to end" tests. Claude continued the remainder of the project adding more 
+        and more e2e tests without being asked again.
+    </p><p>
+        It occurred to me that simply leaving Claude to write tests for its own tool would never prove
+        that we actually had a working transpiler. To do that we'd need to process at least one real 
+        Occam program from the past. Initially I hoped I could track down the source code for the 
+        iconic Mandelbrot set program used to demo the Transputer and Occam in the 1980s.
+        That has so far proved elusive, although it's probably on some 1600BPI tape in someone's garage.
+        In the meantime I did find a project from UKC that had continued work on the Occam language through
+        the turn of the century, available on GitHub: kroc. It contained various
+        <a href="https://github.com/concurrency/kroc/tree/master/modules/course/examples">example Occam programs</a>.
+        The next phase of the project consisted of asking Claude to make those examples build and run.
+        But before that, it turned out that kroc had a language extension to support modules (libraries).
+        How that #INCLUDE mechanism worked wasn't obvious, so I fired up Claude on the kroc project and asked
+        it to figure that out:
+    </p>
+    <ol start="2">
         <li><a href="explain-occam-include/index.html">Explain the occam #INCLUDE mechanism</a></li>
         <li><a href="fix-a-simple-bug/index.html">Fix CLI usage examples to match argument order</a></li>
+    </ol>
+    <p>Armed with the analysis from "kroc Claude", I asked "occam2go Claude" to use that analysis to implement
+       a simple version of the feature. This would allow the kroc example programs to be consumed:
+    </p>
+    <ol start="4">        
         <li><a href="include-plan/index.html">Plan support for #INCLUDE module directives</a></li>
         <li><a href="include-implement/index.html">Implement preprocessor and #INCLUDE support</a></li>
         <li><a href="compiler-bug-1/index.html">Fix multi-statement bodies in IF/CASE/WHILE/ALT constructs</a></li>
+    </ol>
+    <p>Now Claude had made a transpiler that in theory supported all the language features required
+       to process the kroc example programs. In theory. Problem #1 here was that the transpiler crashed
+       both Claude and the host machine. Impressive! Obviously there was some sort of infinite loop/memory leak
+       in play. Initially Claude wasn't too savvy. It continually tried to re-start the previous session
+	(ended when it crashed). That just crashed again. It, I suppose understandably, didn't realize it 
+        was in the LLM equivalent of <i>Groundhog Day</i>. Once I gave it a hint that the command it was
+        about to run would hang/crash, it was impressive to see Claude grind away at the problem.
+        It wrote many test programs on the fly, working through pieces of the problematic source
+        program, running with a timeout guard, until it had isolated the cause of the infinite loop.
+        On this one particular problem it looked like AGI to me!
+    </p>
+    <ol start="7">
         <li><a href="compiler-bug-2/index.html">Diagnose infinite loop during course module transpilation</a></li>
         <li><a href="fixing-parser-infinite-loop/index.html">Fix infinite loops in parser and nested IF support</a></li>
         <li><a href="transpiler-course-fixes/index.html">Fix real-world occam syntax for course module transpilation</a></li>
@@ -53,9 +128,20 @@
         <li><a href="course-lib-grind-2/index.html">Implement full course module transpilation including float_io.occ</a></li>
         <li><a href="course-lib-grind-3/index.html">Enable running course module programs end-to-end</a></li>
         <li><a href="course-lib-grind-4/index.html">Continue getting course module example programs to compile and run</a></li>
+    </ol>
+    <p>After grinding through fixing the parser hangs and other issues with the example Occam programs,
+       I realized that Claude was capable of writing many more test cases than it had committed to the repository
+       (I saw it generate countless test programs on-the-fly to diagnose problems).
+       A human developer, at least this one, would have preserved those test programs and added them to the project.
+       More tests, better, right? So I asked the LLM if it could generate more test cases:
+    </p>
+    <ol start="14">
         <li><a href="additional-tests/index.html">Add tests covering previously untested transpiler features</a></li>
         <li><a href="example-doc-fix/index.html">Add missing gen-module step to course module instructions</a></li>
         <li><a href="sconscript-doc-fix/index.html">Document gen-module regex-based limitation</a></li>
+    </ol>
+    <p>More grinding, after which most of the example programs built and ran, leaving some unsupported "difficult" features:</p>
+    <ol start="17">
         <li><a href="parse-error-messages-issue/index.html">Investigate improving parser error messages with source file tracking</a></li>
         <li><a href="parse-error-messages-fix/index.html">Add source file tracking to parser error messages</a></li>
         <li><a href="implement-inline/index.html">Support INLINE function modifier</a></li>
@@ -71,20 +157,47 @@
         <li><a href="rerecheck-example-coverage/index.html">Re-recheck example coverage after golang validity fixes</a></li>
         <li><a href="issue-68-plan/index.html">Plan support for dotted protocol tags</a></li>
         <li><a href="issue-68-implement/index.html">Implement dotted protocol tag support</a></li>
+    </ol>
+    <p>At this point things were looking good, but all the example programs the transpiler had been able to run were quite
+       simple and not exactly visually impressive as the Mandelbrot set would have been.
+       A random Google search pulled up the online version of the original book: 
+       <a href="https://www.cs.ox.ac.uk/geraint.jones/publications/book/Pio2/">Programming in occam®2</a>.
+       I'd glanced at this site before, but hadn't realized it included source code for the book's example
+       programs. One of those examples was an implementation of Conway's game of life. I had also
+       found a kind of Mandelbrot program (not the original) in kroc. Claude was therefore asked
+       to make either of those build. The Mandelbrot program proved too difficult because it used
+       Occam-pi features that were beyond our scope. But the Conway life program actually worked (eventually):
+    </p>
+    <ol start="32">
         <li><a href="mandelbrot-check/index.html">Investigate Mandelbrot example compilation</a></li>
-        <li><a href="mandelbrot-analysis/index.html">Analyse remaining Mandelbrot transpilation issues</a></li>
+        <li><a href="mandelbrot-analysis/index.html">Analyze Conway game of life transpilation issues</a></li>
         <li><a href="mandelbrot-fixes-1/index.html">Fix protocol trailing colon, CASE comma values, ALT paren guards</a></li>
         <li><a href="multidim-arrays-plan/index.html">Plan multi-dimensional array and channel array support</a></li>
         <li><a href="multidim-arrays-implement/index.html">Implement multi-dimensional array and channel array support</a></li>
-        <li><a href="life-example-analysis/index.html">Analyse Game of Life example compilation status</a></li>
+        <li><a href="life-example-analysis/index.html">Analyze Game of Life example compilation status</a></li>
         <li><a href="issue-86-fix/index.html">Support scoped declarations in variant receive case bodies</a></li>
         <li><a href="issue-85-fix/index.html">Support receive into indexed target variables</a></li>
-        <li><a href="life-example-reanalysis/index.html">Re-analyse Game of Life compilation after recent fixes</a></li>
+        <li><a href="life-example-reanalysis/index.html">Re-analyze Game of Life compilation after recent fixes</a></li>
+    </ol>
+    <p>The last part of the "debug into existence" slog in getting the life program to work
+    was done by asking Claude to run it itself, rather than attempting to describe the problems explicitly:</p>
+    <ol start="41">
         <li><a href="issue-90-plan/index.html">Plan raw terminal mode for keyboard channel</a></li>
         <li><a href="issue-90-fix/index.html">Implement raw terminal mode for keyboard channel</a></li>
-        <li><a href="life-example-rereanalysis/index.html">Re-re-analyse Game of Life after latest fixes</a></li>
+        <li><a href="life-example-rereanalysis/index.html">Re-re-analyze Game of Life after latest fixes</a></li>
         <li><a href="life-example-last-fixes/index.html">Fix display buffering and PRI ALT busy-wait in life.occ</a></li>
+    </ol>
+    <p>I wanted to remove the life program's source from the project repository (since it's copyright protected),
+       yet allow users to try running it. Because there were a few modifications to get the source code to 
+       be compatible with the transpiler's version of Occam, they wouldn't be able to just download it from the book web site.
+       Working around this is a good example of a task so tedious that a human is unlikely to tackle it, but the LLM
+       didn't complain or roll its eyes: it just got to work making a sed script that modifies the downloaded file
+       in-place:
+    </p>
+    <ol start="45">
         <li><a href="remove-copyright-code/index.html">Replace copyrighted life.occ with download-and-patch script</a></li>
     </ol>
+    <p>Et voilà! an Occam to Go transpiler that can handle some historical nontrivial Occam programs, entirely LLM-generated.</p>
+    <p style="margin-top: 4rem;">A Code Associates project <a href="https://github.com/codeassociates"><svg height="20" width="20" viewBox="0 0 16 16" style="vertical-align: text-bottom;"><path fill="#333" d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/></svg></a></p>
 </body>
 </html>
