@@ -1,0 +1,1196 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Claude Code transcript - page 1</title>
+    <style>
+:root { --bg-color: #f5f5f5; --card-bg: #ffffff; --user-bg: #e3f2fd; --user-border: #1976d2; --assistant-bg: #f5f5f5; --assistant-border: #9e9e9e; --thinking-bg: #fff8e1; --thinking-border: #ffc107; --thinking-text: #666; --tool-bg: #f3e5f5; --tool-border: #9c27b0; --tool-result-bg: #e8f5e9; --tool-error-bg: #ffebee; --text-color: #212121; --text-muted: #757575; --code-bg: #263238; --code-text: #aed581; }
+* { box-sizing: border-box; }
+body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: var(--bg-color); color: var(--text-color); margin: 0; padding: 16px; line-height: 1.6; }
+.container { max-width: 800px; margin: 0 auto; }
+h1 { font-size: 1.5rem; margin-bottom: 24px; padding-bottom: 8px; border-bottom: 2px solid var(--user-border); }
+.header-row { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; border-bottom: 2px solid var(--user-border); padding-bottom: 8px; margin-bottom: 24px; }
+.header-row h1 { border-bottom: none; padding-bottom: 0; margin-bottom: 0; flex: 1; min-width: 200px; }
+.message { margin-bottom: 16px; border-radius: 12px; overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+.message.user { background: var(--user-bg); border-left: 4px solid var(--user-border); }
+.message.assistant { background: var(--card-bg); border-left: 4px solid var(--assistant-border); }
+.message.tool-reply { background: #fff8e1; border-left: 4px solid #ff9800; }
+.tool-reply .role-label { color: #e65100; }
+.tool-reply .tool-result { background: transparent; padding: 0; margin: 0; }
+.tool-reply .tool-result .truncatable.truncated::after { background: linear-gradient(to bottom, transparent, #fff8e1); }
+.message-header { display: flex; justify-content: space-between; align-items: center; padding: 8px 16px; background: rgba(0,0,0,0.03); font-size: 0.85rem; }
+.role-label { font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; }
+.user .role-label { color: var(--user-border); }
+time { color: var(--text-muted); font-size: 0.8rem; }
+.timestamp-link { color: inherit; text-decoration: none; }
+.timestamp-link:hover { text-decoration: underline; }
+.message:target { animation: highlight 2s ease-out; }
+@keyframes highlight { 0% { background-color: rgba(25, 118, 210, 0.2); } 100% { background-color: transparent; } }
+.message-content { padding: 16px; }
+.message-content p { margin: 0 0 12px 0; }
+.message-content p:last-child { margin-bottom: 0; }
+.thinking { background: var(--thinking-bg); border: 1px solid var(--thinking-border); border-radius: 8px; padding: 12px; margin: 12px 0; font-size: 0.9rem; color: var(--thinking-text); }
+.thinking-label { font-size: 0.75rem; font-weight: 600; text-transform: uppercase; color: #f57c00; margin-bottom: 8px; }
+.thinking p { margin: 8px 0; }
+.assistant-text { margin: 8px 0; }
+.tool-use { background: var(--tool-bg); border: 1px solid var(--tool-border); border-radius: 8px; padding: 12px; margin: 12px 0; }
+.tool-header { font-weight: 600; color: var(--tool-border); margin-bottom: 8px; display: flex; align-items: center; gap: 8px; }
+.tool-icon { font-size: 1.1rem; }
+.tool-description { font-size: 0.9rem; color: var(--text-muted); margin-bottom: 8px; font-style: italic; }
+.tool-result { background: var(--tool-result-bg); border-radius: 8px; padding: 12px; margin: 12px 0; }
+.tool-result.tool-error { background: var(--tool-error-bg); }
+.file-tool { border-radius: 8px; padding: 12px; margin: 12px 0; }
+.write-tool { background: linear-gradient(135deg, #e3f2fd 0%, #e8f5e9 100%); border: 1px solid #4caf50; }
+.edit-tool { background: linear-gradient(135deg, #fff3e0 0%, #fce4ec 100%); border: 1px solid #ff9800; }
+.file-tool-header { font-weight: 600; margin-bottom: 4px; display: flex; align-items: center; gap: 8px; font-size: 0.95rem; }
+.write-header { color: #2e7d32; }
+.edit-header { color: #e65100; }
+.file-tool-icon { font-size: 1rem; }
+.file-tool-path { font-family: monospace; background: rgba(0,0,0,0.08); padding: 2px 8px; border-radius: 4px; }
+.file-tool-fullpath { font-family: monospace; font-size: 0.8rem; color: var(--text-muted); margin-bottom: 8px; word-break: break-all; }
+.file-content { margin: 0; }
+.edit-section { display: flex; margin: 4px 0; border-radius: 4px; overflow: hidden; }
+.edit-label { padding: 8px 12px; font-weight: bold; font-family: monospace; display: flex; align-items: flex-start; }
+.edit-old { background: #fce4ec; }
+.edit-old .edit-label { color: #b71c1c; background: #f8bbd9; }
+.edit-old .edit-content { color: #880e4f; }
+.edit-new { background: #e8f5e9; }
+.edit-new .edit-label { color: #1b5e20; background: #a5d6a7; }
+.edit-new .edit-content { color: #1b5e20; }
+.edit-content { margin: 0; flex: 1; background: transparent; font-size: 0.85rem; }
+.edit-replace-all { font-size: 0.75rem; font-weight: normal; color: var(--text-muted); }
+.write-tool .truncatable.truncated::after { background: linear-gradient(to bottom, transparent, #e6f4ea); }
+.edit-tool .truncatable.truncated::after { background: linear-gradient(to bottom, transparent, #fff0e5); }
+.todo-list { background: linear-gradient(135deg, #e8f5e9 0%, #f1f8e9 100%); border: 1px solid #81c784; border-radius: 8px; padding: 12px; margin: 12px 0; }
+.todo-header { font-weight: 600; color: #2e7d32; margin-bottom: 10px; display: flex; align-items: center; gap: 8px; font-size: 0.95rem; }
+.todo-items { list-style: none; margin: 0; padding: 0; }
+.todo-item { display: flex; align-items: flex-start; gap: 10px; padding: 6px 0; border-bottom: 1px solid rgba(0,0,0,0.06); font-size: 0.9rem; }
+.todo-item:last-child { border-bottom: none; }
+.todo-icon { flex-shrink: 0; width: 20px; height: 20px; display: flex; align-items: center; justify-content: center; font-weight: bold; border-radius: 50%; }
+.todo-completed .todo-icon { color: #2e7d32; background: rgba(46, 125, 50, 0.15); }
+.todo-completed .todo-content { color: #558b2f; text-decoration: line-through; }
+.todo-in-progress .todo-icon { color: #f57c00; background: rgba(245, 124, 0, 0.15); }
+.todo-in-progress .todo-content { color: #e65100; font-weight: 500; }
+.todo-pending .todo-icon { color: #757575; background: rgba(0,0,0,0.05); }
+.todo-pending .todo-content { color: #616161; }
+pre { background: var(--code-bg); color: var(--code-text); padding: 12px; border-radius: 6px; overflow-x: auto; font-size: 0.85rem; line-height: 1.5; margin: 8px 0; white-space: pre-wrap; word-wrap: break-word; }
+pre.json { color: #e0e0e0; }
+code { background: rgba(0,0,0,0.08); padding: 2px 6px; border-radius: 4px; font-size: 0.9em; }
+pre code { background: none; padding: 0; }
+.user-content { margin: 0; }
+.truncatable { position: relative; }
+.truncatable.truncated .truncatable-content { max-height: 200px; overflow: hidden; }
+.truncatable.truncated::after { content: ''; position: absolute; bottom: 32px; left: 0; right: 0; height: 60px; background: linear-gradient(to bottom, transparent, var(--card-bg)); pointer-events: none; }
+.message.user .truncatable.truncated::after { background: linear-gradient(to bottom, transparent, var(--user-bg)); }
+.message.tool-reply .truncatable.truncated::after { background: linear-gradient(to bottom, transparent, #fff8e1); }
+.tool-use .truncatable.truncated::after { background: linear-gradient(to bottom, transparent, var(--tool-bg)); }
+.tool-result .truncatable.truncated::after { background: linear-gradient(to bottom, transparent, var(--tool-result-bg)); }
+.expand-btn { display: none; width: 100%; padding: 8px 16px; margin-top: 4px; background: rgba(0,0,0,0.05); border: 1px solid rgba(0,0,0,0.1); border-radius: 6px; cursor: pointer; font-size: 0.85rem; color: var(--text-muted); }
+.expand-btn:hover { background: rgba(0,0,0,0.1); }
+.truncatable.truncated .expand-btn, .truncatable.expanded .expand-btn { display: block; }
+.pagination { display: flex; justify-content: center; gap: 8px; margin: 24px 0; flex-wrap: wrap; }
+.pagination a, .pagination span { padding: 5px 10px; border-radius: 6px; text-decoration: none; font-size: 0.85rem; }
+.pagination a { background: var(--card-bg); color: var(--user-border); border: 1px solid var(--user-border); }
+.pagination a:hover { background: var(--user-bg); }
+.pagination .current { background: var(--user-border); color: white; }
+.pagination .disabled { color: var(--text-muted); border: 1px solid #ddd; }
+.pagination .index-link { background: var(--user-border); color: white; }
+details.continuation { margin-bottom: 16px; }
+details.continuation summary { cursor: pointer; padding: 12px 16px; background: var(--user-bg); border-left: 4px solid var(--user-border); border-radius: 12px; font-weight: 500; color: var(--text-muted); }
+details.continuation summary:hover { background: rgba(25, 118, 210, 0.15); }
+details.continuation[open] summary { border-radius: 12px 12px 0 0; margin-bottom: 0; }
+.index-item { margin-bottom: 16px; border-radius: 12px; overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,0.1); background: var(--user-bg); border-left: 4px solid var(--user-border); }
+.index-item a { display: block; text-decoration: none; color: inherit; }
+.index-item a:hover { background: rgba(25, 118, 210, 0.1); }
+.index-item-header { display: flex; justify-content: space-between; align-items: center; padding: 8px 16px; background: rgba(0,0,0,0.03); font-size: 0.85rem; }
+.index-item-number { font-weight: 600; color: var(--user-border); }
+.index-item-content { padding: 16px; }
+.index-item-stats { padding: 8px 16px 12px 32px; font-size: 0.85rem; color: var(--text-muted); border-top: 1px solid rgba(0,0,0,0.06); }
+.index-item-commit { margin-top: 6px; padding: 4px 8px; background: #fff3e0; border-radius: 4px; font-size: 0.85rem; color: #e65100; }
+.index-item-commit code { background: rgba(0,0,0,0.08); padding: 1px 4px; border-radius: 3px; font-size: 0.8rem; margin-right: 6px; }
+.commit-card { margin: 8px 0; padding: 10px 14px; background: #fff3e0; border-left: 4px solid #ff9800; border-radius: 6px; }
+.commit-card a { text-decoration: none; color: #5d4037; display: block; }
+.commit-card a:hover { color: #e65100; }
+.commit-card-hash { font-family: monospace; color: #e65100; font-weight: 600; margin-right: 8px; }
+.index-commit { margin-bottom: 12px; padding: 10px 16px; background: #fff3e0; border-left: 4px solid #ff9800; border-radius: 8px; box-shadow: 0 1px 2px rgba(0,0,0,0.05); }
+.index-commit a { display: block; text-decoration: none; color: inherit; }
+.index-commit a:hover { background: rgba(255, 152, 0, 0.1); margin: -10px -16px; padding: 10px 16px; border-radius: 8px; }
+.index-commit-header { display: flex; justify-content: space-between; align-items: center; font-size: 0.85rem; margin-bottom: 4px; }
+.index-commit-hash { font-family: monospace; color: #e65100; font-weight: 600; }
+.index-commit-msg { color: #5d4037; }
+.index-item-long-text { margin-top: 8px; padding: 12px; background: var(--card-bg); border-radius: 8px; border-left: 3px solid var(--assistant-border); }
+.index-item-long-text .truncatable.truncated::after { background: linear-gradient(to bottom, transparent, var(--card-bg)); }
+.index-item-long-text-content { color: var(--text-color); }
+#search-box { display: none; align-items: center; gap: 8px; }
+#search-box input { padding: 6px 12px; border: 1px solid var(--assistant-border); border-radius: 6px; font-size: 16px; width: 180px; }
+#search-box button, #modal-search-btn, #modal-close-btn { background: var(--user-border); color: white; border: none; border-radius: 6px; padding: 6px 10px; cursor: pointer; display: flex; align-items: center; justify-content: center; }
+#search-box button:hover, #modal-search-btn:hover { background: #1565c0; }
+#modal-close-btn { background: var(--text-muted); margin-left: 8px; }
+#modal-close-btn:hover { background: #616161; }
+#search-modal[open] { border: none; border-radius: 12px; box-shadow: 0 4px 24px rgba(0,0,0,0.2); padding: 0; width: 90vw; max-width: 900px; height: 80vh; max-height: 80vh; display: flex; flex-direction: column; }
+#search-modal::backdrop { background: rgba(0,0,0,0.5); }
+.search-modal-header { display: flex; align-items: center; gap: 8px; padding: 16px; border-bottom: 1px solid var(--assistant-border); background: var(--bg-color); border-radius: 12px 12px 0 0; }
+.search-modal-header input { flex: 1; padding: 8px 12px; border: 1px solid var(--assistant-border); border-radius: 6px; font-size: 16px; }
+#search-status { padding: 8px 16px; font-size: 0.85rem; color: var(--text-muted); border-bottom: 1px solid rgba(0,0,0,0.06); }
+#search-results { flex: 1; overflow-y: auto; padding: 16px; }
+.search-result { margin-bottom: 16px; border-radius: 8px; overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+.search-result a { display: block; text-decoration: none; color: inherit; }
+.search-result a:hover { background: rgba(25, 118, 210, 0.05); }
+.search-result-page { padding: 6px 12px; background: rgba(0,0,0,0.03); font-size: 0.8rem; color: var(--text-muted); border-bottom: 1px solid rgba(0,0,0,0.06); }
+.search-result-content { padding: 12px; }
+.search-result mark { background: #fff59d; padding: 1px 2px; border-radius: 2px; }
+@media (max-width: 600px) { body { padding: 8px; } .message, .index-item { border-radius: 8px; } .message-content, .index-item-content { padding: 12px; } pre { font-size: 0.8rem; padding: 8px; } #search-box input { width: 120px; } #search-modal[open] { width: 95vw; height: 90vh; } }
+</style>
+</head>
+<body>
+    <div class="container">
+        <h1><a href="index.html" style="color: inherit; text-decoration: none;">Claude Code transcript</a> - page 1/2</h1>
+        
+
+<div class="pagination">
+<a href="index.html" class="index-link">Index</a>
+<span class="disabled">&larr; Prev</span>
+<span class="current">1</span>
+<a href="page-002.html">2</a>
+<a href="page-002.html">Next &rarr;</a>
+</div>
+
+        
+<div class="message user" id="msg-2026-03-16T14-40-29-736Z"><div class="message-header"><span class="role-label">User</span><a href="#msg-2026-03-16T14-40-29-736Z" class="timestamp-link"><time datetime="2026-03-16T14:40:29.736Z" data-timestamp="2026-03-16T14:40:29.736Z">2026-03-16T14:40:29.736Z</time></a></div><div class="message-content">
+<div class="user-content"><p>Please take a look at issue #51.</p></div></div></div>
+<div class="message assistant" id="msg-2026-03-16T14-40-33-614Z"><div class="message-header"><span class="role-label">Assistant</span><a href="#msg-2026-03-16T14-40-33-614Z" class="timestamp-link"><time datetime="2026-03-16T14:40:33.614Z" data-timestamp="2026-03-16T14:40:33.614Z">2026-03-16T14:40:33.614Z</time></a></div><div class="message-content">
+<div class="tool-use bash-tool" data-tool-id="toolu_01SVoDETz33QzdBccnjbvrsW">
+<div class="tool-header"><span class="tool-icon">$</span> Bash</div>
+<div class="tool-description">View GitHub issue #51</div><div class="truncatable"><div class="truncatable-content"><pre class="bash-command">gh issue view 51</pre></div><button class="expand-btn">Show more</button></div>
+</div></div></div>
+<div class="message tool-reply" id="msg-2026-03-16T14-40-41-594Z"><div class="message-header"><span class="role-label">Tool reply</span><a href="#msg-2026-03-16T14-40-41-594Z" class="timestamp-link"><time datetime="2026-03-16T14:40:41.594Z" data-timestamp="2026-03-16T14:40:41.594Z">2026-03-16T14:40:41.594Z</time></a></div><div class="message-content"><div class="tool-result"><div class="truncatable"><div class="truncatable-content"><pre>title:	Allow different dns zones for providers in e2e tests
+state:	OPEN
+author:	dboreham
+labels:	
+comments:	0
+assignees:	
+projects:	
+milestone:	
+number:	51
+--
+The test CI job here: https://github.com/stirlingbridge/machine/blob/main/.github/workflows/e2e-test.yml currently uses the same DNS zone for both providers (Digitalocean and Vultr) via the E2E_DNS_ZONE variable. In reality it isn&#x27;t possible to host the same DNS zone at two different DNS hosting providers, so we need to be able to specify different zones for each provider.</pre></div><button class="expand-btn">Show more</button></div></div></div></div>
+<div class="message assistant" id="msg-2026-03-16T14-40-44-616Z"><div class="message-header"><span class="role-label">Assistant</span><a href="#msg-2026-03-16T14-40-44-616Z" class="timestamp-link"><time datetime="2026-03-16T14:40:44.616Z" data-timestamp="2026-03-16T14:40:44.616Z">2026-03-16T14:40:44.616Z</time></a></div><div class="message-content">
+<div class="tool-use" data-tool-id="toolu_014XjGBxXGcoh8kiMu64BPBN"><div class="tool-header"><span class="tool-icon">⚙</span> Read</div><div class="truncatable"><div class="truncatable-content"><pre class="json">{
+  &#34;file_path&#34;: &#34;/home/david/projects/stirlingbridge/machine/.github/workflows/e2e-test.yml&#34;
+}</pre></div><button class="expand-btn">Show more</button></div></div></div></div>
+<div class="message tool-reply" id="msg-2026-03-16T14-40-44-635Z"><div class="message-header"><span class="role-label">Tool reply</span><a href="#msg-2026-03-16T14-40-44-635Z" class="timestamp-link"><time datetime="2026-03-16T14:40:44.635Z" data-timestamp="2026-03-16T14:40:44.635Z">2026-03-16T14:40:44.635Z</time></a></div><div class="message-content"><div class="tool-result"><div class="truncatable"><div class="truncatable-content"><pre>     1→name: E2E Test
+     2→
+     3→on:
+     4→  push:
+     5→    branches: [main]
+     6→  pull_request:
+     7→    branches: [main]
+     8→  workflow_dispatch:
+     9→  schedule:
+    10→    # Run weekly on Monday at 06:00 UTC
+    11→    - cron: &quot;0 6 * * 1&quot;
+    12→
+    13→jobs:
+    14→  e2e:
+    15→    name: &quot;E2E Tests (${{ matrix.provider }})&quot;
+    16→    runs-on: ubuntu-latest
+    17→    environment: e2e
+    18→    strategy:
+    19→      fail-fast: false
+    20→      matrix:
+    21→        provider: [digital-ocean, vultr]
+    22→    steps:
+    23→      - name: &quot;Clone project repository&quot;
+    24→        uses: actions/checkout@v4
+    25→      - name: &quot;Install uv&quot;
+    26→        uses: astral-sh/setup-uv@v4
+    27→      - name: &quot;Install Python&quot;
+    28→        run: uv python install 3.13
+    29→      - name: &quot;Install dependencies&quot;
+    30→        run: uv sync
+    31→      - name: &quot;Run E2E tests&quot;
+    32→        env:
+    33→          E2E_PROVIDER: ${{ matrix.provider }}
+    34→          E2E_SSH_KEY: ${{ vars.E2E_SSH_KEY }}
+    35→          E2E_DNS_ZONE: ${{ vars.E2E_DNS_ZONE }}
+    36→          # DigitalOcean credentials
+    37→          E2E_DO_TOKEN: ${{ secrets.E2E_DO_TOKEN }}
+    38→          E2E_PROJECT: ${{ vars.E2E_PROJECT }}
+    39→          # Vultr credentials
+    40→          E2E_VULTR_API_KEY: ${{ secrets.E2E_VULTR_API_KEY }}
+    41→        run: uv run pytest tests/test_e2e.py -v -m e2e
+    42→</pre></div><button class="expand-btn">Show more</button></div></div></div></div>
+<div class="message assistant" id="msg-2026-03-16T14-40-48-333Z"><div class="message-header"><span class="role-label">Assistant</span><a href="#msg-2026-03-16T14-40-48-333Z" class="timestamp-link"><time datetime="2026-03-16T14:40:48.333Z" data-timestamp="2026-03-16T14:40:48.333Z">2026-03-16T14:40:48.333Z</time></a></div><div class="message-content">
+<div class="tool-use" data-tool-id="toolu_01XGvJ54hQRn1RYdWDqfjKq3"><div class="tool-header"><span class="tool-icon">⚙</span> Grep</div><div class="truncatable"><div class="truncatable-content"><pre class="json">{
+  &#34;pattern&#34;: &#34;E2E_DNS_ZONE&#34;,
+  &#34;output_mode&#34;: &#34;content&#34;
+}</pre></div><button class="expand-btn">Show more</button></div></div></div></div>
+<div class="message tool-reply" id="msg-2026-03-16T14-40-48-352Z"><div class="message-header"><span class="role-label">Tool reply</span><a href="#msg-2026-03-16T14-40-48-352Z" class="timestamp-link"><time datetime="2026-03-16T14:40:48.352Z" data-timestamp="2026-03-16T14:40:48.352Z">2026-03-16T14:40:48.352Z</time></a></div><div class="message-content"><div class="tool-result"><div class="truncatable"><div class="truncatable-content"><pre>tests/E2E.md:55:| `E2E_DNS_ZONE` | Yes | Provider-managed DNS zone for test records |
+tests/E2E.md:84:export E2E_DNS_ZONE=&quot;test.example.com&quot;
+tests/E2E.md:98:export E2E_DNS_ZONE=&quot;example.com&quot;
+tests/E2E.md:113:| DigitalOcean | `E2E_DO_TOKEN` | `E2E_SSH_KEY`, `E2E_DNS_ZONE`, `E2E_PROJECT` |
+tests/E2E.md:114:| Vultr | `E2E_VULTR_API_KEY` | `E2E_SSH_KEY`, `E2E_DNS_ZONE` |
+.github/workflows/e2e-test.yml:35:          E2E_DNS_ZONE: ${{ vars.E2E_DNS_ZONE }}
+tests/test_e2e.py:13:    E2E_DNS_ZONE    - DNS zone managed by the provider (e.g. &quot;test.example.com&quot;)
+tests/test_e2e.py:58:E2E_DNS_ZONE = os.environ.get(&quot;E2E_DNS_ZONE&quot;)
+tests/test_e2e.py:78:if not E2E_DNS_ZONE:
+tests/test_e2e.py:79:    _MISSING.append(&quot;E2E_DNS_ZONE&quot;)
+tests/test_e2e.py:115:            &quot;dns-zone&quot;: E2E_DNS_ZONE,
+tests/test_e2e.py:128:            &quot;dns-zone&quot;: E2E_DNS_ZONE,
+tests/test_e2e.py:289:            E2E_DNS_ZONE,
+tests/test_e2e.py:296:        assert len(a_records) &gt;= 1, f&quot;No A record found for {instance[&#x27;name&#x27;]}.{E2E_DNS_ZONE}&quot;
+tests/test_e2e.py:300:        assert E2E_DNS_ZONE in instance[&quot;create_out&quot;], f&quot;DNS zone not mentioned in output:\n{instance[&#x27;create_out&#x27;]}&quot;</pre></div><button class="expand-btn">Show more</button></div></div></div></div>
+<div class="message assistant" id="msg-2026-03-16T14-40-51-419Z"><div class="message-header"><span class="role-label">Assistant</span><a href="#msg-2026-03-16T14-40-51-419Z" class="timestamp-link"><time datetime="2026-03-16T14:40:51.419Z" data-timestamp="2026-03-16T14:40:51.419Z">2026-03-16T14:40:51.419Z</time></a></div><div class="message-content">
+<div class="tool-use" data-tool-id="toolu_015PXrikVVmDijisxwAaR3yL"><div class="tool-header"><span class="tool-icon">⚙</span> Read</div><div class="truncatable"><div class="truncatable-content"><pre class="json">{
+  &#34;file_path&#34;: &#34;/home/david/projects/stirlingbridge/machine/tests/test_e2e.py&#34;
+}</pre></div><button class="expand-btn">Show more</button></div></div></div></div>
+<div class="message tool-reply" id="msg-2026-03-16T14-40-51-439Z"><div class="message-header"><span class="role-label">Tool reply</span><a href="#msg-2026-03-16T14-40-51-439Z" class="timestamp-link"><time datetime="2026-03-16T14:40:51.439Z" data-timestamp="2026-03-16T14:40:51.439Z">2026-03-16T14:40:51.439Z</time></a></div><div class="message-content"><div class="tool-result"><div class="truncatable"><div class="truncatable-content"><pre>     1→&quot;&quot;&quot;End-to-end tests that create real VMs on a cloud provider.
+     2→
+     3→These tests require a real cloud provider environment and are NOT run as part of
+     4→the normal test suite. They must be invoked explicitly:
+     5→
+     6→    uv run pytest tests/test_e2e.py -v
+     7→
+     8→Provider selection:
+     9→    E2E_PROVIDER    - Provider name: &quot;digital-ocean&quot; (default) or &quot;vultr&quot;
+    10→
+    11→Required environment variables (all providers):
+    12→    E2E_SSH_KEY     - Name of an SSH key already registered with the provider
+    13→    E2E_DNS_ZONE    - DNS zone managed by the provider (e.g. &quot;test.example.com&quot;)
+    14→
+    15→Required environment variables (DigitalOcean):
+    16→    E2E_DO_TOKEN    - DigitalOcean API token
+    17→    E2E_PROJECT     - DO project name to assign droplets to
+    18→
+    19→Required environment variables (Vultr):
+    20→    E2E_VULTR_API_KEY - Vultr API key
+    21→
+    22→Optional environment variables:
+    23→    E2E_REGION      - Region slug (default: provider-specific)
+    24→    E2E_IMAGE       - Image slug or ID (default: provider-specific)
+    25→    E2E_SIZE        - Machine size slug (default: provider-specific)
+    26→&quot;&quot;&quot;
+    27→
+    28→import json
+    29→import os
+    30→import subprocess
+    31→import uuid
+    32→
+    33→import pytest
+    34→
+    35→
+    36→# ---------------------------------------------------------------------------
+    37→# Provider configuration
+    38→# ---------------------------------------------------------------------------
+    39→
+    40→E2E_PROVIDER = os.environ.get(&quot;E2E_PROVIDER&quot;, &quot;digital-ocean&quot;)
+    41→
+    42→_PROVIDER_DEFAULTS = {
+    43→    &quot;digital-ocean&quot;: {
+    44→        &quot;region&quot;: &quot;nyc1&quot;,
+    45→        &quot;image&quot;: &quot;ubuntu-24-04-x64&quot;,
+    46→        &quot;size&quot;: &quot;s-1vcpu-512mb-10gb&quot;,
+    47→    },
+    48→    &quot;vultr&quot;: {
+    49→        &quot;region&quot;: &quot;ewr&quot;,
+    50→        &quot;image&quot;: &quot;2136&quot;,
+    51→        &quot;size&quot;: &quot;vc2-1c-1gb&quot;,
+    52→    },
+    53→}
+    54→
+    55→_defaults = _PROVIDER_DEFAULTS.get(E2E_PROVIDER, _PROVIDER_DEFAULTS[&quot;digital-ocean&quot;])
+    56→
+    57→E2E_SSH_KEY = os.environ.get(&quot;E2E_SSH_KEY&quot;)
+    58→E2E_DNS_ZONE = os.environ.get(&quot;E2E_DNS_ZONE&quot;)
+    59→E2E_REGION = os.environ.get(&quot;E2E_REGION&quot;, _defaults[&quot;region&quot;])
+    60→E2E_IMAGE = os.environ.get(&quot;E2E_IMAGE&quot;, _defaults[&quot;image&quot;])
+    61→E2E_SIZE = os.environ.get(&quot;E2E_SIZE&quot;, _defaults[&quot;size&quot;])
+    62→
+    63→# Provider-specific credentials
+    64→E2E_DO_TOKEN = os.environ.get(&quot;E2E_DO_TOKEN&quot;)
+    65→E2E_PROJECT = os.environ.get(&quot;E2E_PROJECT&quot;)
+    66→E2E_VULTR_API_KEY = os.environ.get(&quot;E2E_VULTR_API_KEY&quot;)
+    67→
+    68→
+    69→# ---------------------------------------------------------------------------
+    70→# Skip the entire module if credentials are not provided
+    71→# ---------------------------------------------------------------------------
+    72→
+    73→pytestmark = pytest.mark.e2e
+    74→
+    75→_MISSING = []
+    76→if not E2E_SSH_KEY:
+    77→    _MISSING.append(&quot;E2E_SSH_KEY&quot;)
+    78→if not E2E_DNS_ZONE:
+    79→    _MISSING.append(&quot;E2E_DNS_ZONE&quot;)
+    80→
+    81→if E2E_PROVIDER == &quot;digital-ocean&quot;:
+    82→    if not E2E_DO_TOKEN:
+    83→        _MISSING.append(&quot;E2E_DO_TOKEN&quot;)
+    84→    if not E2E_PROJECT:
+    85→        _MISSING.append(&quot;E2E_PROJECT&quot;)
+    86→elif E2E_PROVIDER == &quot;vultr&quot;:
+    87→    if not E2E_VULTR_API_KEY:
+    88→        _MISSING.append(&quot;E2E_VULTR_API_KEY&quot;)
+    89→else:
+    90→    _MISSING.append(f&quot;E2E_PROVIDER (unknown provider: {E2E_PROVIDER})&quot;)
+    91→
+    92→if _MISSING:
+    93→    pytestmark = [
+    94→        pytest.mark.e2e,
+    95→        pytest.mark.skip(reason=f&quot;E2E env vars not set: {&#x27;, &#x27;.join(_MISSING)}&quot;),
+    96→    ]
+    97→
+    98→
+    99→# ---------------------------------------------------------------------------
+   100→# Helpers
+   101→# ---------------------------------------------------------------------------
+   102→
+   103→
+   104→def _unique_name(prefix=&quot;e2etest&quot;):
+   105→    &quot;&quot;&quot;Generate a short unique instance name safe for DNS.&quot;&quot;&quot;
+   106→    return f&quot;{prefix}-{uuid.uuid4().hex[:8]}&quot;
+   107→
+   108→
+   109→def _write_config(path, **overrides):
+   110→    &quot;&quot;&quot;Write a minimal config file for the e2e test run.&quot;&quot;&quot;
+   111→    if E2E_PROVIDER == &quot;digital-ocean&quot;:
+   112→        cfg = {
+   113→            &quot;access-token&quot;: E2E_DO_TOKEN,
+   114→            &quot;ssh-key&quot;: E2E_SSH_KEY,
+   115→            &quot;dns-zone&quot;: E2E_DNS_ZONE,
+   116→            &quot;machine-size&quot;: E2E_SIZE,
+   117→            &quot;image&quot;: E2E_IMAGE,
+   118→            &quot;region&quot;: E2E_REGION,
+   119→            &quot;project&quot;: E2E_PROJECT,
+   120→        }
+   121→        cfg.update(overrides)
+   122→        provider_lines = &quot;\n&quot;.join(f&quot;  {k}: {v}&quot; for k, v in cfg.items())
+   123→        content = f&quot;digital-ocean:\n{provider_lines}\nmachines:\n  e2e-basic:\n    new-user-name: e2euser\n&quot;
+   124→    elif E2E_PROVIDER == &quot;vultr&quot;:
+   125→        cfg = {
+   126→            &quot;api-key&quot;: E2E_VULTR_API_KEY,
+   127→            &quot;ssh-key&quot;: E2E_SSH_KEY,
+   128→            &quot;dns-zone&quot;: E2E_DNS_ZONE,
+   129→            &quot;machine-size&quot;: E2E_SIZE,
+   130→            &quot;image&quot;: E2E_IMAGE,
+   131→            &quot;region&quot;: E2E_REGION,
+   132→        }
+   133→        cfg.update(overrides)
+   134→        provider_lines = &quot;\n&quot;.join(f&quot;  {k}: {v}&quot; for k, v in cfg.items())
+   135→        content = f&quot;vultr:\n{provider_lines}\nmachines:\n  e2e-basic:\n    new-user-name: e2euser\n&quot;
+   136→
+   137→    with open(path, &quot;w&quot;) as f:
+   138→        f.write(content)
+   139→
+   140→
+   141→def run_machine(*args, config_file=None, session_id=None):
+   142→    &quot;&quot;&quot;Run the machine CLI as a subprocess with the given arguments.&quot;&quot;&quot;
+   143→    cmd = [&quot;uv&quot;, &quot;run&quot;, &quot;machine&quot;]
+   144→    if config_file:
+   145→        cmd += [&quot;--config-file&quot;, str(config_file)]
+   146→    if session_id:
+   147→        cmd += [&quot;--session-id&quot;, session_id]
+   148→    cmd += list(args)
+   149→    result = subprocess.run(cmd, capture_output=True, text=True, timeout=300)
+   150→    return result
+   151→
+   152→
+   153→def _extract_instance_id(output_text):
+   154→    &quot;&quot;&quot;Extract the instance ID from CLI output like &#x27;New droplet created with id: 12345&#x27;.
+   155→
+   156→    Handles both numeric IDs (DigitalOcean) and UUID IDs (Vultr).
+   157→    &quot;&quot;&quot;
+   158→    for line in output_text.splitlines():
+   159→        if &quot;id:&quot; in line.lower():
+   160→            parts = line.split(&quot;id:&quot;)
+   161→            if len(parts) &gt;= 2:
+   162→                candidate = parts[-1].strip()
+   163→                if candidate:
+   164→                    return candidate
+   165→    return None
+   166→
+   167→
+   168→# ---------------------------------------------------------------------------
+   169→# Fixtures
+   170→# ---------------------------------------------------------------------------
+   171→
+   172→
+   173→@pytest.fixture(scope=&quot;module&quot;)
+   174→def config_file(tmp_path_factory):
+   175→    &quot;&quot;&quot;Write a config file that lives for the whole test module.&quot;&quot;&quot;
+   176→    path = tmp_path_factory.mktemp(&quot;e2e&quot;) / &quot;config.yml&quot;
+   177→    _write_config(path)
+   178→    return path
+   179→
+   180→
+   181→@pytest.fixture(scope=&quot;module&quot;)
+   182→def session_id():
+   183→    &quot;&quot;&quot;A unique session id shared across all tests in this module.&quot;&quot;&quot;
+   184→    return uuid.uuid4().hex[:8]
+   185→
+   186→
+   187→@pytest.fixture(scope=&quot;class&quot;)
+   188→def instance(config_file, session_id):
+   189→    &quot;&quot;&quot;Create a single instance with all features and destroy it after all tests.
+   190→
+   191→    The instance is created with DNS, a machine type (cloud-init), a custom tag,
+   192→    and --wait-for-ip so that all aspects can be verified by individual tests.
+   193→    &quot;&quot;&quot;
+   194→    name = _unique_name()
+   195→    custom_tag = f&quot;e2e-tag-{uuid.uuid4().hex[:6]}&quot;
+   196→
+   197→    # ---- CREATE with all features ------------------------------------------
+   198→    result = run_machine(
+   199→        &quot;create&quot;,
+   200→        &quot;--name&quot;,
+   201→        name,
+   202→        &quot;--type&quot;,
+   203→        &quot;e2e-basic&quot;,
+   204→        &quot;--update-dns&quot;,
+   205→        &quot;--tag&quot;,
+   206→        custom_tag,
+   207→        &quot;--wait-for-ip&quot;,
+   208→        config_file=config_file,
+   209→        session_id=session_id,
+   210→    )
+   211→    assert result.returncode == 0, f&quot;create failed: {result.stderr}&quot;
+   212→    create_out = result.stdout + result.stderr
+   213→    instance_id = _extract_instance_id(create_out)
+   214→    assert instance_id, f&quot;Could not find instance id in output:\n{create_out}&quot;
+   215→
+   216→    info = {
+   217→        &quot;name&quot;: name,
+   218→        &quot;id&quot;: instance_id,
+   219→        &quot;custom_tag&quot;: custom_tag,
+   220→        &quot;create_out&quot;: create_out,
+   221→    }
+   222→
+   223→    yield info
+   224→
+   225→    # ---- TEARDOWN: destroy with DNS cleanup --------------------------------
+   226→    run_machine(
+   227→        &quot;--verbose&quot;,
+   228→        &quot;destroy&quot;,
+   229→        &quot;--no-confirm&quot;,
+   230→        &quot;--delete-dns&quot;,
+   231→        instance_id,
+   232→        config_file=config_file,
+   233→        session_id=session_id,
+   234→    )
+   235→
+   236→
+   237→# ---------------------------------------------------------------------------
+   238→# Tests — one instance, many assertions
+   239→# ---------------------------------------------------------------------------
+   240→
+   241→
+   242→class TestInstanceLifecycle:
+   243→    &quot;&quot;&quot;Create one instance with all features and verify each aspect independently.
+   244→
+   245→    A single instance is created (via the class-scoped ``instance`` fixture) with
+   246→    DNS, a machine type, and a custom tag.  Each test method verifies a different
+   247→    aspect so that failures are reported individually.  The instance is destroyed
+   248→    automatically after all tests complete.
+   249→    &quot;&quot;&quot;
+   250→
+   251→    def test_instance_appears_in_list(self, instance, config_file, session_id):
+   252→        &quot;&quot;&quot;Verify the instance shows up in ``list`` with the correct name.&quot;&quot;&quot;
+   253→        result = run_machine(
+   254→            &quot;list&quot;,
+   255→            &quot;--output&quot;,
+   256→            &quot;json&quot;,
+   257→            config_file=config_file,
+   258→            session_id=session_id,
+   259→        )
+   260→        assert result.returncode == 0, f&quot;list failed: {result.stderr}&quot;
+   261→        instances = json.loads(result.stdout)
+   262→        matched = [i for i in instances if str(i[&quot;id&quot;]) == instance[&quot;id&quot;]]
+   263→        assert len(matched) == 1, f&quot;Expected 1 instance with id {instance[&#x27;id&#x27;]}, got {len(matched)}&quot;
+   264→        assert matched[0][&quot;name&quot;] == instance[&quot;name&quot;]
+   265→
+   266→    def test_instance_has_ip(self, instance, config_file, session_id):
+   267→        &quot;&quot;&quot;Verify the instance was assigned an IP address.&quot;&quot;&quot;
+   268→        result = run_machine(
+   269→            &quot;list&quot;,
+   270→            &quot;--output&quot;,
+   271→            &quot;json&quot;,
+   272→            config_file=config_file,
+   273→            session_id=session_id,
+   274→        )
+   275→        assert result.returncode == 0
+   276→        instances = json.loads(result.stdout)
+   277→        matched = [i for i in instances if str(i[&quot;id&quot;]) == instance[&quot;id&quot;]]
+   278→        assert len(matched) == 1
+   279→        assert matched[0][&quot;ip&quot;] is not None, &quot;Instance has no IP address&quot;
+   280→
+   281→    def test_dns_record_created(self, instance, config_file, session_id):
+   282→        &quot;&quot;&quot;Verify that a DNS A record was created for the instance.&quot;&quot;&quot;
+   283→        result = run_machine(
+   284→            &quot;list-domain&quot;,
+   285→            &quot;--name&quot;,
+   286→            instance[&quot;name&quot;],
+   287→            &quot;--output&quot;,
+   288→            &quot;json&quot;,
+   289→            E2E_DNS_ZONE,
+   290→            config_file=config_file,
+   291→            session_id=session_id,
+   292→        )
+   293→        assert result.returncode == 0, f&quot;list-domain failed: {result.stderr}&quot;
+   294→        records = json.loads(result.stdout)
+   295→        a_records = [r for r in records if r.get(&quot;name&quot;) == instance[&quot;name&quot;] and r.get(&quot;type&quot;) == &quot;A&quot;]
+   296→        assert len(a_records) &gt;= 1, f&quot;No A record found for {instance[&#x27;name&#x27;]}.{E2E_DNS_ZONE}&quot;
+   297→
+   298→    def test_dns_zone_in_create_output(self, instance):
+   299→        &quot;&quot;&quot;Verify that DNS zone was mentioned in the create output.&quot;&quot;&quot;
+   300→        assert E2E_DNS_ZONE in instance[&quot;create_out&quot;], f&quot;DNS zone not mentioned in output:\n{instance[&#x27;create_out&#x27;]}&quot;
+   301→
+   302→    def test_type_tag_applied(self, instance, config_file, session_id):
+   303→        &quot;&quot;&quot;Verify that the machine type tag was applied and is filterable.&quot;&quot;&quot;
+   304→        result = run_machine(
+   305→            &quot;list&quot;,
+   306→            &quot;--type&quot;,
+   307→            &quot;e2e-basic&quot;,
+   308→            &quot;--output&quot;,
+   309→            &quot;json&quot;,
+   310→            config_file=config_file,
+   311→            session_id=session_id,
+   312→        )
+   313→        assert result.returncode == 0
+   314→        instances = json.loads(result.stdout)
+   315→        matched = [i for i in instances if str(i[&quot;id&quot;]) == instance[&quot;id&quot;]]
+   316→        assert len(matched) == 1, &quot;Instance not found when filtering by type e2e-basic&quot;
+   317→        assert matched[0][&quot;type&quot;] == &quot;e2e-basic&quot;, &quot;Type tag mismatch&quot;
+   318→
+   319→    def test_custom_tag_applied(self, instance, config_file, session_id):
+   320→        &quot;&quot;&quot;Verify that the custom tag was applied and is filterable.&quot;&quot;&quot;
+   321→        result = run_machine(
+   322→            &quot;list&quot;,
+   323→            &quot;--tag&quot;,
+   324→            instance[&quot;custom_tag&quot;],
+   325→            &quot;--output&quot;,
+   326→            &quot;json&quot;,
+   327→            config_file=config_file,
+   328→            session_id=session_id,
+   329→        )
+   330→        assert result.returncode == 0
+   331→        instances = json.loads(result.stdout)
+   332→        matched = [i for i in instances if str(i[&quot;id&quot;]) == instance[&quot;id&quot;]]
+   333→        assert len(matched) == 1, f&quot;Instance not found with tag {instance[&#x27;custom_tag&#x27;]}&quot;
+   334→</pre></div><button class="expand-btn">Show more</button></div></div></div></div>
+<div class="message assistant" id="msg-2026-03-16T14-40-58-896Z"><div class="message-header"><span class="role-label">Assistant</span><a href="#msg-2026-03-16T14-40-58-896Z" class="timestamp-link"><time datetime="2026-03-16T14:40:58.896Z" data-timestamp="2026-03-16T14:40:58.896Z">2026-03-16T14:40:58.896Z</time></a></div><div class="message-content">
+<div class="thinking"><div class="thinking-label">Thinking</div></div></div></div>
+<div class="message assistant" id="msg-2026-03-16T14-41-00-700Z"><div class="message-header"><span class="role-label">Assistant</span><a href="#msg-2026-03-16T14-41-00-700Z" class="timestamp-link"><time datetime="2026-03-16T14:41:00.700Z" data-timestamp="2026-03-16T14:41:00.700Z">2026-03-16T14:41:00.700Z</time></a></div><div class="message-content">
+<div class="assistant-text"><p>The issue is straightforward: the workflow uses a single <code>E2E_DNS_ZONE</code> for both providers, but each provider needs its own DNS zone. Here's the plan:</p>
+<ol>
+<li>Add per-provider DNS zone variables (<code>E2E_DO_DNS_ZONE</code>, <code>E2E_VULTR_DNS_ZONE</code>) in the workflow</li>
+<li>Update the test to pick the right one based on provider, falling back to <code>E2E_DNS_ZONE</code></li>
+<li>Update the docs</li>
+</ol>
+<p>Let me implement this.</p></div></div></div>
+<div class="message assistant" id="msg-2026-03-16T14-41-04-390Z"><div class="message-header"><span class="role-label">Assistant</span><a href="#msg-2026-03-16T14-41-04-390Z" class="timestamp-link"><time datetime="2026-03-16T14:41:04.390Z" data-timestamp="2026-03-16T14:41:04.390Z">2026-03-16T14:41:04.390Z</time></a></div><div class="message-content"><div class="file-tool edit-tool" data-tool-id="toolu_01XpeyaQyje3nyJesQ3cHVbe">
+<div class="file-tool-header edit-header"><span class="file-tool-icon">✏️</span> Edit <span class="file-tool-path">e2e-test.yml</span></div>
+<div class="file-tool-fullpath">/home/david/projects/stirlingbridge/machine/.github/workflows/e2e-test.yml</div>
+<div class="truncatable"><div class="truncatable-content">
+<div class="edit-section edit-old"><div class="edit-label">−</div><pre class="edit-content">          E2E_SSH_KEY: ${{ vars.E2E_SSH_KEY }}
+          E2E_DNS_ZONE: ${{ vars.E2E_DNS_ZONE }}
+          # DigitalOcean credentials
+          E2E_DO_TOKEN: ${{ secrets.E2E_DO_TOKEN }}
+          E2E_PROJECT: ${{ vars.E2E_PROJECT }}
+          # Vultr credentials
+          E2E_VULTR_API_KEY: ${{ secrets.E2E_VULTR_API_KEY }}</pre></div>
+<div class="edit-section edit-new"><div class="edit-label">+</div><pre class="edit-content">          E2E_SSH_KEY: ${{ vars.E2E_SSH_KEY }}
+          # DigitalOcean credentials
+          E2E_DO_TOKEN: ${{ secrets.E2E_DO_TOKEN }}
+          E2E_DO_DNS_ZONE: ${{ vars.E2E_DO_DNS_ZONE }}
+          E2E_PROJECT: ${{ vars.E2E_PROJECT }}
+          # Vultr credentials
+          E2E_VULTR_API_KEY: ${{ secrets.E2E_VULTR_API_KEY }}
+          E2E_VULTR_DNS_ZONE: ${{ vars.E2E_VULTR_DNS_ZONE }}</pre></div>
+</div><button class="expand-btn">Show more</button></div>
+</div></div></div>
+<div class="message tool-reply" id="msg-2026-03-16T14-41-29-768Z"><div class="message-header"><span class="role-label">Tool reply</span><a href="#msg-2026-03-16T14-41-29-768Z" class="timestamp-link"><time datetime="2026-03-16T14:41:29.768Z" data-timestamp="2026-03-16T14:41:29.768Z">2026-03-16T14:41:29.768Z</time></a></div><div class="message-content"><div class="tool-result"><div class="truncatable"><div class="truncatable-content"><pre>The file /home/david/projects/stirlingbridge/machine/.github/workflows/e2e-test.yml has been updated successfully.</pre></div><button class="expand-btn">Show more</button></div></div></div></div>
+<div class="message assistant" id="msg-2026-03-16T14-41-32-858Z"><div class="message-header"><span class="role-label">Assistant</span><a href="#msg-2026-03-16T14-41-32-858Z" class="timestamp-link"><time datetime="2026-03-16T14:41:32.858Z" data-timestamp="2026-03-16T14:41:32.858Z">2026-03-16T14:41:32.858Z</time></a></div><div class="message-content">
+<div class="assistant-text"><p>Now update the test file to use provider-specific DNS zone variables:</p></div></div></div>
+<div class="message assistant" id="msg-2026-03-16T14-41-36-249Z"><div class="message-header"><span class="role-label">Assistant</span><a href="#msg-2026-03-16T14-41-36-249Z" class="timestamp-link"><time datetime="2026-03-16T14:41:36.249Z" data-timestamp="2026-03-16T14:41:36.249Z">2026-03-16T14:41:36.249Z</time></a></div><div class="message-content"><div class="file-tool edit-tool" data-tool-id="toolu_01YG5GSE1AdX1EMgATLzCjRE">
+<div class="file-tool-header edit-header"><span class="file-tool-icon">✏️</span> Edit <span class="file-tool-path">test_e2e.py</span></div>
+<div class="file-tool-fullpath">/home/david/projects/stirlingbridge/machine/tests/test_e2e.py</div>
+<div class="truncatable"><div class="truncatable-content">
+<div class="edit-section edit-old"><div class="edit-label">−</div><pre class="edit-content">    E2E_DNS_ZONE    - DNS zone managed by the provider (e.g. &#34;test.example.com&#34;)
+
+Required environment variables (DigitalOcean):
+    E2E_DO_TOKEN    - DigitalOcean API token
+    E2E_PROJECT     - DO project name to assign droplets to
+
+Required environment variables (Vultr):
+    E2E_VULTR_API_KEY - Vultr API key</pre></div>
+<div class="edit-section edit-new"><div class="edit-label">+</div><pre class="edit-content">Required environment variables (DigitalOcean):
+    E2E_DO_TOKEN    - DigitalOcean API token
+    E2E_DO_DNS_ZONE - DNS zone hosted at DigitalOcean (e.g. &#34;do.example.com&#34;)
+    E2E_PROJECT     - DO project name to assign droplets to
+
+Required environment variables (Vultr):
+    E2E_VULTR_API_KEY  - Vultr API key
+    E2E_VULTR_DNS_ZONE - DNS zone hosted at Vultr (e.g. &#34;vultr.example.com&#34;)</pre></div>
+</div><button class="expand-btn">Show more</button></div>
+</div></div></div>
+<div class="message tool-reply" id="msg-2026-03-16T14-41-53-048Z"><div class="message-header"><span class="role-label">Tool reply</span><a href="#msg-2026-03-16T14-41-53-048Z" class="timestamp-link"><time datetime="2026-03-16T14:41:53.048Z" data-timestamp="2026-03-16T14:41:53.048Z">2026-03-16T14:41:53.048Z</time></a></div><div class="message-content"><div class="tool-result"><div class="truncatable"><div class="truncatable-content"><pre>The file /home/david/projects/stirlingbridge/machine/tests/test_e2e.py has been updated successfully.</pre></div><button class="expand-btn">Show more</button></div></div></div></div>
+<div class="message assistant" id="msg-2026-03-16T14-42-00-761Z"><div class="message-header"><span class="role-label">Assistant</span><a href="#msg-2026-03-16T14-42-00-761Z" class="timestamp-link"><time datetime="2026-03-16T14:42:00.761Z" data-timestamp="2026-03-16T14:42:00.761Z">2026-03-16T14:42:00.761Z</time></a></div><div class="message-content"><div class="file-tool edit-tool" data-tool-id="toolu_01XiNuqe15NEP4Ep5tJ1zzdz">
+<div class="file-tool-header edit-header"><span class="file-tool-icon">✏️</span> Edit <span class="file-tool-path">test_e2e.py</span></div>
+<div class="file-tool-fullpath">/home/david/projects/stirlingbridge/machine/tests/test_e2e.py</div>
+<div class="truncatable"><div class="truncatable-content">
+<div class="edit-section edit-old"><div class="edit-label">−</div><pre class="edit-content">E2E_SSH_KEY = os.environ.get(&#34;E2E_SSH_KEY&#34;)
+E2E_DNS_ZONE = os.environ.get(&#34;E2E_DNS_ZONE&#34;)</pre></div>
+<div class="edit-section edit-new"><div class="edit-label">+</div><pre class="edit-content">E2E_SSH_KEY = os.environ.get(&#34;E2E_SSH_KEY&#34;)
+
+# Per-provider DNS zones
+E2E_DO_DNS_ZONE = os.environ.get(&#34;E2E_DO_DNS_ZONE&#34;)
+E2E_VULTR_DNS_ZONE = os.environ.get(&#34;E2E_VULTR_DNS_ZONE&#34;)
+
+# Select the DNS zone for the active provider
+if E2E_PROVIDER == &#34;digital-ocean&#34;:
+    E2E_DNS_ZONE = E2E_DO_DNS_ZONE
+elif E2E_PROVIDER == &#34;vultr&#34;:
+    E2E_DNS_ZONE = E2E_VULTR_DNS_ZONE
+else:
+    E2E_DNS_ZONE = None</pre></div>
+</div><button class="expand-btn">Show more</button></div>
+</div></div></div>
+<div class="message tool-reply" id="msg-2026-03-16T14-43-24-870Z"><div class="message-header"><span class="role-label">Tool reply</span><a href="#msg-2026-03-16T14-43-24-870Z" class="timestamp-link"><time datetime="2026-03-16T14:43:24.870Z" data-timestamp="2026-03-16T14:43:24.870Z">2026-03-16T14:43:24.870Z</time></a></div><div class="message-content"><div class="tool-result"><div class="truncatable"><div class="truncatable-content"><pre>The file /home/david/projects/stirlingbridge/machine/tests/test_e2e.py has been updated successfully.</pre></div><button class="expand-btn">Show more</button></div></div></div></div>
+<div class="message assistant" id="msg-2026-03-16T14-43-28-519Z"><div class="message-header"><span class="role-label">Assistant</span><a href="#msg-2026-03-16T14-43-28-519Z" class="timestamp-link"><time datetime="2026-03-16T14:43:28.519Z" data-timestamp="2026-03-16T14:43:28.519Z">2026-03-16T14:43:28.519Z</time></a></div><div class="message-content">
+<div class="assistant-text"><p>Now update the missing-variable checks to reference the provider-specific variable names:</p></div></div></div>
+<div class="message assistant" id="msg-2026-03-16T14-43-32-189Z"><div class="message-header"><span class="role-label">Assistant</span><a href="#msg-2026-03-16T14-43-32-189Z" class="timestamp-link"><time datetime="2026-03-16T14:43:32.189Z" data-timestamp="2026-03-16T14:43:32.189Z">2026-03-16T14:43:32.189Z</time></a></div><div class="message-content"><div class="file-tool edit-tool" data-tool-id="toolu_015UMLQL7sxN7WYAtVMTUUc9">
+<div class="file-tool-header edit-header"><span class="file-tool-icon">✏️</span> Edit <span class="file-tool-path">test_e2e.py</span></div>
+<div class="file-tool-fullpath">/home/david/projects/stirlingbridge/machine/tests/test_e2e.py</div>
+<div class="truncatable"><div class="truncatable-content">
+<div class="edit-section edit-old"><div class="edit-label">−</div><pre class="edit-content">if not E2E_DNS_ZONE:
+    _MISSING.append(&#34;E2E_DNS_ZONE&#34;)
+
+if E2E_PROVIDER == &#34;digital-ocean&#34;:
+    if not E2E_DO_TOKEN:
+        _MISSING.append(&#34;E2E_DO_TOKEN&#34;)
+    if not E2E_PROJECT:
+        _MISSING.append(&#34;E2E_PROJECT&#34;)
+elif E2E_PROVIDER == &#34;vultr&#34;:
+    if not E2E_VULTR_API_KEY:
+        _MISSING.append(&#34;E2E_VULTR_API_KEY&#34;)</pre></div>
+<div class="edit-section edit-new"><div class="edit-label">+</div><pre class="edit-content">if E2E_PROVIDER == &#34;digital-ocean&#34;:
+    if not E2E_DO_TOKEN:
+        _MISSING.append(&#34;E2E_DO_TOKEN&#34;)
+    if not E2E_DO_DNS_ZONE:
+        _MISSING.append(&#34;E2E_DO_DNS_ZONE&#34;)
+    if not E2E_PROJECT:
+        _MISSING.append(&#34;E2E_PROJECT&#34;)
+elif E2E_PROVIDER == &#34;vultr&#34;:
+    if not E2E_VULTR_API_KEY:
+        _MISSING.append(&#34;E2E_VULTR_API_KEY&#34;)
+    if not E2E_VULTR_DNS_ZONE:
+        _MISSING.append(&#34;E2E_VULTR_DNS_ZONE&#34;)</pre></div>
+</div><button class="expand-btn">Show more</button></div>
+</div></div></div>
+<div class="message tool-reply" id="msg-2026-03-16T14-43-35-351Z"><div class="message-header"><span class="role-label">Tool reply</span><a href="#msg-2026-03-16T14-43-35-351Z" class="timestamp-link"><time datetime="2026-03-16T14:43:35.351Z" data-timestamp="2026-03-16T14:43:35.351Z">2026-03-16T14:43:35.351Z</time></a></div><div class="message-content"><div class="tool-result"><div class="truncatable"><div class="truncatable-content"><pre>The file /home/david/projects/stirlingbridge/machine/tests/test_e2e.py has been updated successfully.</pre></div><button class="expand-btn">Show more</button></div></div></div></div>
+<div class="message assistant" id="msg-2026-03-16T14-43-39-476Z"><div class="message-header"><span class="role-label">Assistant</span><a href="#msg-2026-03-16T14-43-39-476Z" class="timestamp-link"><time datetime="2026-03-16T14:43:39.476Z" data-timestamp="2026-03-16T14:43:39.476Z">2026-03-16T14:43:39.476Z</time></a></div><div class="message-content">
+<div class="assistant-text"><p>Now update the E2E docs.</p></div></div></div>
+<div class="message assistant" id="msg-2026-03-16T14-43-39-940Z"><div class="message-header"><span class="role-label">Assistant</span><a href="#msg-2026-03-16T14-43-39-940Z" class="timestamp-link"><time datetime="2026-03-16T14:43:39.940Z" data-timestamp="2026-03-16T14:43:39.940Z">2026-03-16T14:43:39.940Z</time></a></div><div class="message-content">
+<div class="tool-use" data-tool-id="toolu_014ZJYBBHLEwspYeARp2ig7M"><div class="tool-header"><span class="tool-icon">⚙</span> Read</div><div class="truncatable"><div class="truncatable-content"><pre class="json">{
+  &#34;file_path&#34;: &#34;/home/david/projects/stirlingbridge/machine/tests/E2E.md&#34;
+}</pre></div><button class="expand-btn">Show more</button></div></div></div></div>
+<div class="message tool-reply" id="msg-2026-03-16T14-43-39-945Z"><div class="message-header"><span class="role-label">Tool reply</span><a href="#msg-2026-03-16T14-43-39-945Z" class="timestamp-link"><time datetime="2026-03-16T14:43:39.945Z" data-timestamp="2026-03-16T14:43:39.945Z">2026-03-16T14:43:39.945Z</time></a></div><div class="message-content"><div class="tool-result"><div class="truncatable"><div class="truncatable-content"><pre>     1→# End-to-End Tests
+     2→
+     3→These tests verify that `machine` can create and manage real VMs on a cloud provider, including DNS record lifecycle. They are **not** run as part of the normal test suite due to cost and runtime.
+     4→
+     5→Tests can be run against **DigitalOcean** or **Vultr** by setting the `E2E_PROVIDER` environment variable.
+     6→
+     7→## Prerequisites
+     8→
+     9→### DigitalOcean
+    10→
+    11→You need a DigitalOcean account with:
+    12→
+    13→- An API token with the required permissions (see below)
+    14→- An SSH key registered in the account
+    15→- A DNS zone managed by DigitalOcean (e.g. `example.com`). Note that Vultr does not have full DNS hosting functionality: it only supports hosting second-level domains, not subdomains (irrespective of what their documentation states). So `example.com` works but `test.example.com` does not.
+    16→- A project to assign droplets to
+    17→
+    18→#### API Token Permissions
+    19→
+    20→The DigitalOcean API token must be a **custom token** with these scopes enabled:
+    21→
+    22→| Scope | Access | Used for |
+    23→|---|---|---|
+    24→| `droplet` | read, create, delete | Creating, listing, and destroying test droplets |
+    25→| `ssh_key` | read | Looking up SSH keys by name |
+    26→| `domain` | read, create, delete | Creating and removing DNS A records |
+    27→| `project` | read, update | Listing projects and assigning droplets to them |
+    28→| `tag` | read, create | Tagging droplets by type and custom tags |
+    29→
+    30→A full-access read/write token will also work, but a scoped token is recommended.
+    31→
+    32→### Vultr
+    33→
+    34→You need a Vultr account with:
+    35→
+    36→- An API key (from https://my.vultr.com/settings/#settingsapi)
+    37→- An SSH key registered in the account
+    38→- A DNS zone managed by Vultr (e.g. `example.com`)
+    39→
+    40→The Vultr API key has full access by default; there is no scope configuration.
+    41→
+    42→## Environment Variables
+    43→
+    44→### Provider Selection
+    45→
+    46→| Variable | Required | Description |
+    47→|---|---|---|
+    48→| `E2E_PROVIDER` | No | Provider to test: `digital-ocean` (default) or `vultr` |
+    49→
+    50→### Common (all providers)
+    51→
+    52→| Variable | Required | Description |
+    53→|---|---|---|
+    54→| `E2E_SSH_KEY` | Yes | Name of an SSH key registered with the provider |
+    55→| `E2E_DNS_ZONE` | Yes | Provider-managed DNS zone for test records |
+    56→| `E2E_REGION` | No | Region slug (default: provider-specific, see below) |
+    57→| `E2E_IMAGE` | No | Image slug or ID (default: provider-specific, see below) |
+    58→| `E2E_SIZE` | No | Instance size (default: provider-specific, see below) |
+    59→
+    60→### DigitalOcean
+    61→
+    62→| Variable | Required | Description |
+    63→|---|---|---|
+    64→| `E2E_DO_TOKEN` | Yes | DigitalOcean API token |
+    65→| `E2E_PROJECT` | Yes | DO project to assign droplets to |
+    66→
+    67→Defaults: region `nyc1`, image `ubuntu-24-04-x64`, size `s-1vcpu-512mb-10gb`
+    68→
+    69→### Vultr
+    70→
+    71→| Variable | Required | Description |
+    72→|---|---|---|
+    73→| `E2E_VULTR_API_KEY` | Yes | Vultr API key |
+    74→
+    75→Defaults: region `ewr`, image `2136` (Ubuntu 24.04), size `vc2-1c-1gb`
+    76→
+    77→## Running
+    78→
+    79→### DigitalOcean
+    80→
+    81→```bash
+    82→export E2E_DO_TOKEN=&quot;dop_v1_...&quot;
+    83→export E2E_SSH_KEY=&quot;my-ssh-key&quot;
+    84→export E2E_DNS_ZONE=&quot;test.example.com&quot;
+    85→export E2E_PROJECT=&quot;my-project&quot;
+    86→
+    87→make test-e2e
+    88→# Or directly
+    89→uv run pytest tests/test_e2e.py -v -m e2e
+    90→```
+    91→
+    92→### Vultr
+    93→
+    94→```bash
+    95→export E2E_PROVIDER=&quot;vultr&quot;
+    96→export E2E_VULTR_API_KEY=&quot;...&quot;
+    97→export E2E_SSH_KEY=&quot;my-ssh-key&quot;
+    98→export E2E_DNS_ZONE=&quot;example.com&quot;
+    99→
+   100→make test-e2e
+   101→# Or directly
+   102→uv run pytest tests/test_e2e.py -v -m e2e
+   103→```
+   104→
+   105→The normal `make test` (and CI) will **skip** these tests automatically.
+   106→
+   107→## CI
+   108→
+   109→The GitHub Actions workflow (`.github/workflows/e2e-test.yml`) runs e2e tests for both providers in parallel using a matrix strategy. Each provider run requires its own credentials configured in the `e2e` GitHub environment:
+   110→
+   111→| Provider | Secrets | Variables |
+   112→|---|---|---|
+   113→| DigitalOcean | `E2E_DO_TOKEN` | `E2E_SSH_KEY`, `E2E_DNS_ZONE`, `E2E_PROJECT` |
+   114→| Vultr | `E2E_VULTR_API_KEY` | `E2E_SSH_KEY`, `E2E_DNS_ZONE` |
+   115→
+   116→If credentials for a provider are not configured, that provider&#x27;s test run will be skipped automatically.
+   117→
+   118→## What&#x27;s Tested
+   119→
+   120→- **Instance lifecycle** — create, list, destroy
+   121→- **DNS lifecycle** — create with `--update-dns`, verify A record, destroy with `--delete-dns`
+   122→- **Cloud-init initialization** — create with `--type`, verify type tag
+   123→- **Custom tags** — create with `--tag`, verify tag filtering
+   124→
+   125→## Cleanup
+   126→
+   127→Each test cleans up after itself. All test instances use unique names prefixed with `e2etest-` so they are easy to identify.
+   128→
+   129→## Cost
+   130→
+   131→Tests use the smallest available instance size and destroy VMs immediately after verification, so cost is minimal.
+   132→</pre></div><button class="expand-btn">Show more</button></div></div></div></div>
+<div class="message assistant" id="msg-2026-03-16T14-43-49-008Z"><div class="message-header"><span class="role-label">Assistant</span><a href="#msg-2026-03-16T14-43-49-008Z" class="timestamp-link"><time datetime="2026-03-16T14:43:49.008Z" data-timestamp="2026-03-16T14:43:49.008Z">2026-03-16T14:43:49.008Z</time></a></div><div class="message-content"><div class="file-tool edit-tool" data-tool-id="toolu_01EVzY6rfdxJvX3F5Ga4eutr">
+<div class="file-tool-header edit-header"><span class="file-tool-icon">✏️</span> Edit <span class="file-tool-path">E2E.md</span></div>
+<div class="file-tool-fullpath">/home/david/projects/stirlingbridge/machine/tests/E2E.md</div>
+<div class="truncatable"><div class="truncatable-content">
+<div class="edit-section edit-old"><div class="edit-label">−</div><pre class="edit-content">### Common (all providers)
+
+| Variable | Required | Description |
+|---|---|---|
+| `E2E_SSH_KEY` | Yes | Name of an SSH key registered with the provider |
+| `E2E_DNS_ZONE` | Yes | Provider-managed DNS zone for test records |
+| `E2E_REGION` | No | Region slug (default: provider-specific, see below) |
+| `E2E_IMAGE` | No | Image slug or ID (default: provider-specific, see below) |
+| `E2E_SIZE` | No | Instance size (default: provider-specific, see below) |
+
+### DigitalOcean
+
+| Variable | Required | Description |
+|---|---|---|
+| `E2E_DO_TOKEN` | Yes | DigitalOcean API token |
+| `E2E_PROJECT` | Yes | DO project to assign droplets to |
+
+Defaults: region `nyc1`, image `ubuntu-24-04-x64`, size `s-1vcpu-512mb-10gb`
+
+### Vultr
+
+| Variable | Required | Description |
+|---|---|---|
+| `E2E_VULTR_API_KEY` | Yes | Vultr API key |
+
+Defaults: region `ewr`, image `2136` (Ubuntu 24.04), size `vc2-1c-1gb`</pre></div>
+<div class="edit-section edit-new"><div class="edit-label">+</div><pre class="edit-content">### Common (all providers)
+
+| Variable | Required | Description |
+|---|---|---|
+| `E2E_SSH_KEY` | Yes | Name of an SSH key registered with the provider |
+| `E2E_REGION` | No | Region slug (default: provider-specific, see below) |
+| `E2E_IMAGE` | No | Image slug or ID (default: provider-specific, see below) |
+| `E2E_SIZE` | No | Instance size (default: provider-specific, see below) |
+
+### DigitalOcean
+
+| Variable | Required | Description |
+|---|---|---|
+| `E2E_DO_TOKEN` | Yes | DigitalOcean API token |
+| `E2E_DO_DNS_ZONE` | Yes | DNS zone hosted at DigitalOcean (e.g. `do.example.com`) |
+| `E2E_PROJECT` | Yes | DO project to assign droplets to |
+
+Defaults: region `nyc1`, image `ubuntu-24-04-x64`, size `s-1vcpu-512mb-10gb`
+
+### Vultr
+
+| Variable | Required | Description |
+|---|---|---|
+| `E2E_VULTR_API_KEY` | Yes | Vultr API key |
+| `E2E_VULTR_DNS_ZONE` | Yes | DNS zone hosted at Vultr (e.g. `vultr.example.com`) |
+
+Defaults: region `ewr`, image `2136` (Ubuntu 24.04), size `vc2-1c-1gb`</pre></div>
+</div><button class="expand-btn">Show more</button></div>
+</div></div></div>
+<div class="message tool-reply" id="msg-2026-03-16T14-43-59-685Z"><div class="message-header"><span class="role-label">Tool reply</span><a href="#msg-2026-03-16T14-43-59-685Z" class="timestamp-link"><time datetime="2026-03-16T14:43:59.685Z" data-timestamp="2026-03-16T14:43:59.685Z">2026-03-16T14:43:59.685Z</time></a></div><div class="message-content"><div class="tool-result"><div class="truncatable"><div class="truncatable-content"><pre>The file /home/david/projects/stirlingbridge/machine/tests/E2E.md has been updated successfully.</pre></div><button class="expand-btn">Show more</button></div></div></div></div>
+<div class="message assistant" id="msg-2026-03-16T14-44-05-477Z"><div class="message-header"><span class="role-label">Assistant</span><a href="#msg-2026-03-16T14-44-05-477Z" class="timestamp-link"><time datetime="2026-03-16T14:44:05.477Z" data-timestamp="2026-03-16T14:44:05.477Z">2026-03-16T14:44:05.477Z</time></a></div><div class="message-content"><div class="file-tool edit-tool" data-tool-id="toolu_01QQ3g8DLyGwMzrAGVjq9vpr">
+<div class="file-tool-header edit-header"><span class="file-tool-icon">✏️</span> Edit <span class="file-tool-path">E2E.md</span></div>
+<div class="file-tool-fullpath">/home/david/projects/stirlingbridge/machine/tests/E2E.md</div>
+<div class="truncatable"><div class="truncatable-content">
+<div class="edit-section edit-old"><div class="edit-label">−</div><pre class="edit-content">export E2E_DO_TOKEN=&#34;dop_v1_...&#34;
+export E2E_SSH_KEY=&#34;my-ssh-key&#34;
+export E2E_DNS_ZONE=&#34;test.example.com&#34;
+export E2E_PROJECT=&#34;my-project&#34;</pre></div>
+<div class="edit-section edit-new"><div class="edit-label">+</div><pre class="edit-content">export E2E_DO_TOKEN=&#34;dop_v1_...&#34;
+export E2E_SSH_KEY=&#34;my-ssh-key&#34;
+export E2E_DO_DNS_ZONE=&#34;do.example.com&#34;
+export E2E_PROJECT=&#34;my-project&#34;</pre></div>
+</div><button class="expand-btn">Show more</button></div>
+</div></div></div>
+<div class="message tool-reply" id="msg-2026-03-16T14-49-16-475Z"><div class="message-header"><span class="role-label">Tool reply</span><a href="#msg-2026-03-16T14-49-16-475Z" class="timestamp-link"><time datetime="2026-03-16T14:49:16.475Z" data-timestamp="2026-03-16T14:49:16.475Z">2026-03-16T14:49:16.475Z</time></a></div><div class="message-content"><div class="tool-result"><div class="truncatable"><div class="truncatable-content"><pre>The file /home/david/projects/stirlingbridge/machine/tests/E2E.md has been updated successfully.</pre></div><button class="expand-btn">Show more</button></div></div></div></div>
+<div class="message assistant" id="msg-2026-03-16T14-49-21-129Z"><div class="message-header"><span class="role-label">Assistant</span><a href="#msg-2026-03-16T14-49-21-129Z" class="timestamp-link"><time datetime="2026-03-16T14:49:21.129Z" data-timestamp="2026-03-16T14:49:21.129Z">2026-03-16T14:49:21.129Z</time></a></div><div class="message-content"><div class="file-tool edit-tool" data-tool-id="toolu_01NFgHjWHobyrDsaAyfNi287">
+<div class="file-tool-header edit-header"><span class="file-tool-icon">✏️</span> Edit <span class="file-tool-path">E2E.md</span></div>
+<div class="file-tool-fullpath">/home/david/projects/stirlingbridge/machine/tests/E2E.md</div>
+<div class="truncatable"><div class="truncatable-content">
+<div class="edit-section edit-old"><div class="edit-label">−</div><pre class="edit-content">export E2E_PROVIDER=&#34;vultr&#34;
+export E2E_VULTR_API_KEY=&#34;...&#34;
+export E2E_SSH_KEY=&#34;my-ssh-key&#34;
+export E2E_DNS_ZONE=&#34;example.com&#34;</pre></div>
+<div class="edit-section edit-new"><div class="edit-label">+</div><pre class="edit-content">export E2E_PROVIDER=&#34;vultr&#34;
+export E2E_VULTR_API_KEY=&#34;...&#34;
+export E2E_SSH_KEY=&#34;my-ssh-key&#34;
+export E2E_VULTR_DNS_ZONE=&#34;vultr.example.com&#34;</pre></div>
+</div><button class="expand-btn">Show more</button></div>
+</div></div></div>
+<div class="message tool-reply" id="msg-2026-03-16T14-49-28-291Z"><div class="message-header"><span class="role-label">Tool reply</span><a href="#msg-2026-03-16T14-49-28-291Z" class="timestamp-link"><time datetime="2026-03-16T14:49:28.291Z" data-timestamp="2026-03-16T14:49:28.291Z">2026-03-16T14:49:28.291Z</time></a></div><div class="message-content"><div class="tool-result tool-error"><div class="truncatable"><div class="truncatable-content"><pre>The user doesn&#x27;t want to proceed with this tool use. The tool use was rejected (eg. if it was a file edit, the new_string was NOT written to the file). STOP what you are doing and wait for the user to tell you how to proceed.
+
+Note: The user&#x27;s next message may contain a correction or preference. Pay close attention — if they explain what went wrong or how they&#x27;d prefer you to work, consider saving that to memory for future sessions.</pre></div><button class="expand-btn">Show more</button></div></div></div></div>
+<div class="message user" id="msg-2026-03-16T14-49-28-292Z"><div class="message-header"><span class="role-label">User</span><a href="#msg-2026-03-16T14-49-28-292Z" class="timestamp-link"><time datetime="2026-03-16T14:49:28.292Z" data-timestamp="2026-03-16T14:49:28.292Z">2026-03-16T14:49:28.292Z</time></a></div><div class="message-content">
+<div class="assistant-text"><p>[Request interrupted by user for tool use]</p></div></div></div>
+<div class="message user" id="msg-2026-03-16T14-49-43-697Z"><div class="message-header"><span class="role-label">User</span><a href="#msg-2026-03-16T14-49-43-697Z" class="timestamp-link"><time datetime="2026-03-16T14:49:43.697Z" data-timestamp="2026-03-16T14:49:43.697Z">2026-03-16T14:49:43.697Z</time></a></div><div class="message-content">
+<div class="user-content"><p>It has to be "example.com" for Vultr because their DNS hosting is broken for subdomains.</p></div></div></div>
+<div class="message assistant" id="msg-2026-03-16T14-49-48-784Z"><div class="message-header"><span class="role-label">Assistant</span><a href="#msg-2026-03-16T14-49-48-784Z" class="timestamp-link"><time datetime="2026-03-16T14:49:48.784Z" data-timestamp="2026-03-16T14:49:48.784Z">2026-03-16T14:49:48.784Z</time></a></div><div class="message-content">
+<div class="assistant-text"><p>Good point — Vultr only supports second-level domains for DNS hosting (as already noted in the prerequisites section). Let me fix that example.</p></div></div></div>
+<div class="message assistant" id="msg-2026-03-16T14-49-50-837Z"><div class="message-header"><span class="role-label">Assistant</span><a href="#msg-2026-03-16T14-49-50-837Z" class="timestamp-link"><time datetime="2026-03-16T14:49:50.837Z" data-timestamp="2026-03-16T14:49:50.837Z">2026-03-16T14:49:50.837Z</time></a></div><div class="message-content"><div class="file-tool edit-tool" data-tool-id="toolu_01Pu7eAvvyBoTN31CeZf4P1j">
+<div class="file-tool-header edit-header"><span class="file-tool-icon">✏️</span> Edit <span class="file-tool-path">E2E.md</span></div>
+<div class="file-tool-fullpath">/home/david/projects/stirlingbridge/machine/tests/E2E.md</div>
+<div class="truncatable"><div class="truncatable-content">
+<div class="edit-section edit-old"><div class="edit-label">−</div><pre class="edit-content">export E2E_PROVIDER=&#34;vultr&#34;
+export E2E_VULTR_API_KEY=&#34;...&#34;
+export E2E_SSH_KEY=&#34;my-ssh-key&#34;
+export E2E_DNS_ZONE=&#34;example.com&#34;</pre></div>
+<div class="edit-section edit-new"><div class="edit-label">+</div><pre class="edit-content">export E2E_PROVIDER=&#34;vultr&#34;
+export E2E_VULTR_API_KEY=&#34;...&#34;
+export E2E_SSH_KEY=&#34;my-ssh-key&#34;
+export E2E_VULTR_DNS_ZONE=&#34;example.com&#34;</pre></div>
+</div><button class="expand-btn">Show more</button></div>
+</div></div></div>
+<div class="message tool-reply" id="msg-2026-03-16T14-49-56-846Z"><div class="message-header"><span class="role-label">Tool reply</span><a href="#msg-2026-03-16T14-49-56-846Z" class="timestamp-link"><time datetime="2026-03-16T14:49:56.846Z" data-timestamp="2026-03-16T14:49:56.846Z">2026-03-16T14:49:56.846Z</time></a></div><div class="message-content"><div class="tool-result"><div class="truncatable"><div class="truncatable-content"><pre>The file /home/david/projects/stirlingbridge/machine/tests/E2E.md has been updated successfully.</pre></div><button class="expand-btn">Show more</button></div></div></div></div>
+<div class="message assistant" id="msg-2026-03-16T14-49-59-733Z"><div class="message-header"><span class="role-label">Assistant</span><a href="#msg-2026-03-16T14-49-59-733Z" class="timestamp-link"><time datetime="2026-03-16T14:49:59.733Z" data-timestamp="2026-03-16T14:49:59.733Z">2026-03-16T14:49:59.733Z</time></a></div><div class="message-content">
+<div class="assistant-text"><p>Now update the CI table in the docs:</p></div></div></div>
+<div class="message assistant" id="msg-2026-03-16T14-50-01-765Z"><div class="message-header"><span class="role-label">Assistant</span><a href="#msg-2026-03-16T14-50-01-765Z" class="timestamp-link"><time datetime="2026-03-16T14:50:01.765Z" data-timestamp="2026-03-16T14:50:01.765Z">2026-03-16T14:50:01.765Z</time></a></div><div class="message-content"><div class="file-tool edit-tool" data-tool-id="toolu_017XrSyWeummce9g5NaVFkZi">
+<div class="file-tool-header edit-header"><span class="file-tool-icon">✏️</span> Edit <span class="file-tool-path">E2E.md</span></div>
+<div class="file-tool-fullpath">/home/david/projects/stirlingbridge/machine/tests/E2E.md</div>
+<div class="truncatable"><div class="truncatable-content">
+<div class="edit-section edit-old"><div class="edit-label">−</div><pre class="edit-content">| DigitalOcean | `E2E_DO_TOKEN` | `E2E_SSH_KEY`, `E2E_DNS_ZONE`, `E2E_PROJECT` |
+| Vultr | `E2E_VULTR_API_KEY` | `E2E_SSH_KEY`, `E2E_DNS_ZONE` |</pre></div>
+<div class="edit-section edit-new"><div class="edit-label">+</div><pre class="edit-content">| DigitalOcean | `E2E_DO_TOKEN` | `E2E_SSH_KEY`, `E2E_DO_DNS_ZONE`, `E2E_PROJECT` |
+| Vultr | `E2E_VULTR_API_KEY` | `E2E_SSH_KEY`, `E2E_VULTR_DNS_ZONE` |</pre></div>
+</div><button class="expand-btn">Show more</button></div>
+</div></div></div>
+<div class="message tool-reply" id="msg-2026-03-16T14-50-10-458Z"><div class="message-header"><span class="role-label">Tool reply</span><a href="#msg-2026-03-16T14-50-10-458Z" class="timestamp-link"><time datetime="2026-03-16T14:50:10.458Z" data-timestamp="2026-03-16T14:50:10.458Z">2026-03-16T14:50:10.458Z</time></a></div><div class="message-content"><div class="tool-result"><div class="truncatable"><div class="truncatable-content"><pre>The file /home/david/projects/stirlingbridge/machine/tests/E2E.md has been updated successfully.</pre></div><button class="expand-btn">Show more</button></div></div></div></div>
+<div class="message assistant" id="msg-2026-03-16T14-50-14-234Z"><div class="message-header"><span class="role-label">Assistant</span><a href="#msg-2026-03-16T14-50-14-234Z" class="timestamp-link"><time datetime="2026-03-16T14:50:14.234Z" data-timestamp="2026-03-16T14:50:14.234Z">2026-03-16T14:50:14.234Z</time></a></div><div class="message-content">
+<div class="assistant-text"><p>Also update the Vultr variable table example to use <code>example.com</code> (not a subdomain):</p></div></div></div>
+<div class="message assistant" id="msg-2026-03-16T14-50-15-842Z"><div class="message-header"><span class="role-label">Assistant</span><a href="#msg-2026-03-16T14-50-15-842Z" class="timestamp-link"><time datetime="2026-03-16T14:50:15.842Z" data-timestamp="2026-03-16T14:50:15.842Z">2026-03-16T14:50:15.842Z</time></a></div><div class="message-content"><div class="file-tool edit-tool" data-tool-id="toolu_01H3psWV1tKPGDWU1EEAvPsc">
+<div class="file-tool-header edit-header"><span class="file-tool-icon">✏️</span> Edit <span class="file-tool-path">E2E.md</span></div>
+<div class="file-tool-fullpath">/home/david/projects/stirlingbridge/machine/tests/E2E.md</div>
+<div class="truncatable"><div class="truncatable-content">
+<div class="edit-section edit-old"><div class="edit-label">−</div><pre class="edit-content">| `E2E_VULTR_DNS_ZONE` | Yes | DNS zone hosted at Vultr (e.g. `vultr.example.com`) |</pre></div>
+<div class="edit-section edit-new"><div class="edit-label">+</div><pre class="edit-content">| `E2E_VULTR_DNS_ZONE` | Yes | DNS zone hosted at Vultr (e.g. `example.com` — must be a second-level domain) |</pre></div>
+</div><button class="expand-btn">Show more</button></div>
+</div></div></div>
+<div class="message tool-reply" id="msg-2026-03-16T14-50-24-329Z"><div class="message-header"><span class="role-label">Tool reply</span><a href="#msg-2026-03-16T14-50-24-329Z" class="timestamp-link"><time datetime="2026-03-16T14:50:24.329Z" data-timestamp="2026-03-16T14:50:24.329Z">2026-03-16T14:50:24.329Z</time></a></div><div class="message-content"><div class="tool-result"><div class="truncatable"><div class="truncatable-content"><pre>The file /home/david/projects/stirlingbridge/machine/tests/E2E.md has been updated successfully.</pre></div><button class="expand-btn">Show more</button></div></div></div></div>
+<div class="message assistant" id="msg-2026-03-16T14-50-28-750Z"><div class="message-header"><span class="role-label">Assistant</span><a href="#msg-2026-03-16T14-50-28-750Z" class="timestamp-link"><time datetime="2026-03-16T14:50:28.750Z" data-timestamp="2026-03-16T14:50:28.750Z">2026-03-16T14:50:28.750Z</time></a></div><div class="message-content">
+<div class="assistant-text"><p>And fix the same in the test file docstring:</p></div></div></div>
+<div class="message assistant" id="msg-2026-03-16T14-50-30-318Z"><div class="message-header"><span class="role-label">Assistant</span><a href="#msg-2026-03-16T14-50-30-318Z" class="timestamp-link"><time datetime="2026-03-16T14:50:30.318Z" data-timestamp="2026-03-16T14:50:30.318Z">2026-03-16T14:50:30.318Z</time></a></div><div class="message-content"><div class="file-tool edit-tool" data-tool-id="toolu_01L8zVXdHubGyQu8q6day3ak">
+<div class="file-tool-header edit-header"><span class="file-tool-icon">✏️</span> Edit <span class="file-tool-path">test_e2e.py</span></div>
+<div class="file-tool-fullpath">/home/david/projects/stirlingbridge/machine/tests/test_e2e.py</div>
+<div class="truncatable"><div class="truncatable-content">
+<div class="edit-section edit-old"><div class="edit-label">−</div><pre class="edit-content">    E2E_VULTR_DNS_ZONE - DNS zone hosted at Vultr (e.g. &#34;vultr.example.com&#34;)</pre></div>
+<div class="edit-section edit-new"><div class="edit-label">+</div><pre class="edit-content">    E2E_VULTR_DNS_ZONE - DNS zone hosted at Vultr (e.g. &#34;example.com&#34;)</pre></div>
+</div><button class="expand-btn">Show more</button></div>
+</div></div></div>
+<div class="message tool-reply" id="msg-2026-03-16T14-50-44-583Z"><div class="message-header"><span class="role-label">Tool reply</span><a href="#msg-2026-03-16T14-50-44-583Z" class="timestamp-link"><time datetime="2026-03-16T14:50:44.583Z" data-timestamp="2026-03-16T14:50:44.583Z">2026-03-16T14:50:44.583Z</time></a></div><div class="message-content"><div class="tool-result"><div class="truncatable"><div class="truncatable-content"><pre>The file /home/david/projects/stirlingbridge/machine/tests/test_e2e.py has been updated successfully.</pre></div><button class="expand-btn">Show more</button></div></div></div></div>
+<div class="message assistant" id="msg-2026-03-16T14-50-48-066Z"><div class="message-header"><span class="role-label">Assistant</span><a href="#msg-2026-03-16T14-50-48-066Z" class="timestamp-link"><time datetime="2026-03-16T14:50:48.066Z" data-timestamp="2026-03-16T14:50:48.066Z">2026-03-16T14:50:48.066Z</time></a></div><div class="message-content">
+<div class="assistant-text"><p>Now let me run the linter to make sure everything looks good.</p></div></div></div>
+<div class="message assistant" id="msg-2026-03-16T14-50-48-363Z"><div class="message-header"><span class="role-label">Assistant</span><a href="#msg-2026-03-16T14-50-48-363Z" class="timestamp-link"><time datetime="2026-03-16T14:50:48.363Z" data-timestamp="2026-03-16T14:50:48.363Z">2026-03-16T14:50:48.363Z</time></a></div><div class="message-content">
+<div class="tool-use bash-tool" data-tool-id="toolu_0147dzkx9NTssAo6Uf2tKr1h">
+<div class="tool-header"><span class="tool-icon">$</span> Bash</div>
+<div class="tool-description">Lint the test file</div><div class="truncatable"><div class="truncatable-content"><pre class="bash-command">uv run ruff check tests/test_e2e.py</pre></div><button class="expand-btn">Show more</button></div>
+</div></div></div>
+<div class="message tool-reply" id="msg-2026-03-16T14-50-53-321Z"><div class="message-header"><span class="role-label">Tool reply</span><a href="#msg-2026-03-16T14-50-53-321Z" class="timestamp-link"><time datetime="2026-03-16T14:50:53.321Z" data-timestamp="2026-03-16T14:50:53.321Z">2026-03-16T14:50:53.321Z</time></a></div><div class="message-content"><div class="tool-result"><div class="truncatable"><div class="truncatable-content"><pre>   Building machine @ file:///home/david/projects/stirlingbridge/machine
+      Built machine @ file:///home/david/projects/stirlingbridge/machine
+Uninstalled 1 package in 1ms
+Installed 1 package in 1ms
+All checks passed!</pre></div><button class="expand-btn">Show more</button></div></div></div></div>
+<div class="message assistant" id="msg-2026-03-16T14-50-56-777Z"><div class="message-header"><span class="role-label">Assistant</span><a href="#msg-2026-03-16T14-50-56-777Z" class="timestamp-link"><time datetime="2026-03-16T14:50:56.777Z" data-timestamp="2026-03-16T14:50:56.777Z">2026-03-16T14:50:56.777Z</time></a></div><div class="message-content">
+<div class="assistant-text"><p>Let me do a quick review of the final state of all changed files.</p></div></div></div>
+<div class="message assistant" id="msg-2026-03-16T14-50-57-278Z"><div class="message-header"><span class="role-label">Assistant</span><a href="#msg-2026-03-16T14-50-57-278Z" class="timestamp-link"><time datetime="2026-03-16T14:50:57.278Z" data-timestamp="2026-03-16T14:50:57.278Z">2026-03-16T14:50:57.278Z</time></a></div><div class="message-content">
+<div class="tool-use bash-tool" data-tool-id="toolu_01XVADfAwrVfnHiQTHxM26pp">
+<div class="tool-header"><span class="tool-icon">$</span> Bash</div>
+<div class="tool-description">Review all changes</div><div class="truncatable"><div class="truncatable-content"><pre class="bash-command">git -C /home/david/projects/stirlingbridge/machine diff</pre></div><button class="expand-btn">Show more</button></div>
+</div></div></div>
+<div class="message tool-reply" id="msg-2026-03-16T14-51-03-320Z"><div class="message-header"><span class="role-label">Tool reply</span><a href="#msg-2026-03-16T14-51-03-320Z" class="timestamp-link"><time datetime="2026-03-16T14:51:03.320Z" data-timestamp="2026-03-16T14:51:03.320Z">2026-03-16T14:51:03.320Z</time></a></div><div class="message-content"><div class="tool-result"><div class="truncatable"><div class="truncatable-content"><pre>diff --git a/.github/workflows/e2e-test.yml b/.github/workflows/e2e-test.yml
+index 483ed34..9d7561e 100644
+--- a/.github/workflows/e2e-test.yml
++++ b/.github/workflows/e2e-test.yml
+@@ -32,10 +32,11 @@ jobs:
+         env:
+           E2E_PROVIDER: ${{ matrix.provider }}
+           E2E_SSH_KEY: ${{ vars.E2E_SSH_KEY }}
+-          E2E_DNS_ZONE: ${{ vars.E2E_DNS_ZONE }}
+           # DigitalOcean credentials
+           E2E_DO_TOKEN: ${{ secrets.E2E_DO_TOKEN }}
++          E2E_DO_DNS_ZONE: ${{ vars.E2E_DO_DNS_ZONE }}
+           E2E_PROJECT: ${{ vars.E2E_PROJECT }}
+           # Vultr credentials
+           E2E_VULTR_API_KEY: ${{ secrets.E2E_VULTR_API_KEY }}
++          E2E_VULTR_DNS_ZONE: ${{ vars.E2E_VULTR_DNS_ZONE }}
+         run: uv run pytest tests/test_e2e.py -v -m e2e
+diff --git a/tests/E2E.md b/tests/E2E.md
+index 0d58055..711f09d 100644
+--- a/tests/E2E.md
++++ b/tests/E2E.md
+@@ -52,7 +52,6 @@ The Vultr API key has full access by default; there is no scope configuration.
+ | Variable | Required | Description |
+ |---|---|---|
+ | `E2E_SSH_KEY` | Yes | Name of an SSH key registered with the provider |
+-| `E2E_DNS_ZONE` | Yes | Provider-managed DNS zone for test records |
+ | `E2E_REGION` | No | Region slug (default: provider-specific, see below) |
+ | `E2E_IMAGE` | No | Image slug or ID (default: provider-specific, see below) |
+ | `E2E_SIZE` | No | Instance size (default: provider-specific, see below) |
+@@ -62,6 +61,7 @@ The Vultr API key has full access by default; there is no scope configuration.
+ | Variable | Required | Description |
+ |---|---|---|
+ | `E2E_DO_TOKEN` | Yes | DigitalOcean API token |
++| `E2E_DO_DNS_ZONE` | Yes | DNS zone hosted at DigitalOcean (e.g. `do.example.com`) |
+ | `E2E_PROJECT` | Yes | DO project to assign droplets to |
+ 
+ Defaults: region `nyc1`, image `ubuntu-24-04-x64`, size `s-1vcpu-512mb-10gb`
+@@ -71,6 +71,7 @@ Defaults: region `nyc1`, image `ubuntu-24-04-x64`, size `s-1vcpu-512mb-10gb`
+ | Variable | Required | Description |
+ |---|---|---|
+ | `E2E_VULTR_API_KEY` | Yes | Vultr API key |
++| `E2E_VULTR_DNS_ZONE` | Yes | DNS zone hosted at Vultr (e.g. `example.com` — must be a second-level domain) |
+ 
+ Defaults: region `ewr`, image `2136` (Ubuntu 24.04), size `vc2-1c-1gb`
+ 
+@@ -81,7 +82,7 @@ Defaults: region `ewr`, image `2136` (Ubuntu 24.04), size `vc2-1c-1gb`
+ ```bash
+ export E2E_DO_TOKEN=&quot;dop_v1_...&quot;
+ export E2E_SSH_KEY=&quot;my-ssh-key&quot;
+-export E2E_DNS_ZONE=&quot;test.example.com&quot;
++export E2E_DO_DNS_ZONE=&quot;do.example.com&quot;
+ export E2E_PROJECT=&quot;my-project&quot;
+ 
+ make test-e2e
+@@ -95,7 +96,7 @@ uv run pytest tests/test_e2e.py -v -m e2e
+ export E2E_PROVIDER=&quot;vultr&quot;
+ export E2E_VULTR_API_KEY=&quot;...&quot;
+ export E2E_SSH_KEY=&quot;my-ssh-key&quot;
+-export E2E_DNS_ZONE=&quot;example.com&quot;
++export E2E_VULTR_DNS_ZONE=&quot;example.com&quot;
+ 
+ make test-e2e
+ # Or directly
+@@ -110,8 +111,8 @@ The GitHub Actions workflow (`.github/workflows/e2e-test.yml`) runs e2e tests fo
+ 
+ | Provider | Secrets | Variables |
+ |---|---|---|
+-| DigitalOcean | `E2E_DO_TOKEN` | `E2E_SSH_KEY`, `E2E_DNS_ZONE`, `E2E_PROJECT` |
+-| Vultr | `E2E_VULTR_API_KEY` | `E2E_SSH_KEY`, `E2E_DNS_ZONE` |
++| DigitalOcean | `E2E_DO_TOKEN` | `E2E_SSH_KEY`, `E2E_DO_DNS_ZONE`, `E2E_PROJECT` |
++| Vultr | `E2E_VULTR_API_KEY` | `E2E_SSH_KEY`, `E2E_VULTR_DNS_ZONE` |
+ 
+ If credentials for a provider are not configured, that provider&#x27;s test run will be skipped automatically.
+ 
+diff --git a/tests/test_e2e.py b/tests/test_e2e.py
+index 903a522..8a5915a 100644
+--- a/tests/test_e2e.py
++++ b/tests/test_e2e.py
+@@ -10,14 +10,14 @@ Provider selection:
+ 
+ Required environment variables (all providers):
+     E2E_SSH_KEY     - Name of an SSH key already registered with the provider
+-    E2E_DNS_ZONE    - DNS zone managed by the provider (e.g. &quot;test.example.com&quot;)
+-
+ Required environment variables (DigitalOcean):
+     E2E_DO_TOKEN    - DigitalOcean API token
++    E2E_DO_DNS_ZONE - DNS zone hosted at DigitalOcean (e.g. &quot;do.example.com&quot;)
+     E2E_PROJECT     - DO project name to assign droplets to
+ 
+ Required environment variables (Vultr):
+-    E2E_VULTR_API_KEY - Vultr API key
++    E2E_VULTR_API_KEY  - Vultr API key
++    E2E_VULTR_DNS_ZONE - DNS zone hosted at Vultr (e.g. &quot;example.com&quot;)
+ 
+ Optional environment variables:
+     E2E_REGION      - Region slug (default: provider-specific)
+@@ -55,7 +55,18 @@ _PROVIDER_DEFAULTS = {
+ _defaults = _PROVIDER_DEFAULTS.get(E2E_PROVIDER, _PROVIDER_DEFAULTS[&quot;digital-ocean&quot;])
+ 
+ E2E_SSH_KEY = os.environ.get(&quot;E2E_SSH_KEY&quot;)
+-E2E_DNS_ZONE = os.environ.get(&quot;E2E_DNS_ZONE&quot;)
++
++# Per-provider DNS zones
++E2E_DO_DNS_ZONE = os.environ.get(&quot;E2E_DO_DNS_ZONE&quot;)
++E2E_VULTR_DNS_ZONE = os.environ.get(&quot;E2E_VULTR_DNS_ZONE&quot;)
++
++# Select the DNS zone for the active provider
++if E2E_PROVIDER == &quot;digital-ocean&quot;:
++    E2E_DNS_ZONE = E2E_DO_DNS_ZONE
++elif E2E_PROVIDER == &quot;vultr&quot;:
++    E2E_DNS_ZONE = E2E_VULTR_DNS_ZONE
++else:
++    E2E_DNS_ZONE = None
+ E2E_REGION = os.environ.get(&quot;E2E_REGION&quot;, _defaults[&quot;region&quot;])
+ E2E_IMAGE = os.environ.get(&quot;E2E_IMAGE&quot;, _defaults[&quot;image&quot;])
+ E2E_SIZE = os.environ.get(&quot;E2E_SIZE&quot;, _defaults[&quot;size&quot;])
+@@ -75,17 +86,18 @@ pytestmark = pytest.mark.e2e
+ _MISSING = []
+ if not E2E_SSH_KEY:
+     _MISSING.append(&quot;E2E_SSH_KEY&quot;)
+-if not E2E_DNS_ZONE:
+-    _MISSING.append(&quot;E2E_DNS_ZONE&quot;)
+-
+ if E2E_PROVIDER == &quot;digital-ocean&quot;:
+     if not E2E_DO_TOKEN:
+         _MISSING.append(&quot;E2E_DO_TOKEN&quot;)
++    if not E2E_DO_DNS_ZONE:
++        _MISSING.append(&quot;E2E_DO_DNS_ZONE&quot;)
+     if not E2E_PROJECT:
+         _MISSING.append(&quot;E2E_PROJECT&quot;)
+ elif E2E_PROVIDER == &quot;vultr&quot;:
+     if not E2E_VULTR_API_KEY:
+         _MISSING.append(&quot;E2E_VULTR_API_KEY&quot;)
++    if not E2E_VULTR_DNS_ZONE:
++        _MISSING.append(&quot;E2E_VULTR_DNS_ZONE&quot;)
+ else:
+     _MISSING.append(f&quot;E2E_PROVIDER (unknown provider: {E2E_PROVIDER})&quot;)</pre></div><button class="expand-btn">Show more</button></div></div></div></div>
+<div class="message assistant" id="msg-2026-03-16T14-51-12-523Z"><div class="message-header"><span class="role-label">Assistant</span><a href="#msg-2026-03-16T14-51-12-523Z" class="timestamp-link"><time datetime="2026-03-16T14:51:12.523Z" data-timestamp="2026-03-16T14:51:12.523Z">2026-03-16T14:51:12.523Z</time></a></div><div class="message-content">
+<div class="assistant-text"><p>Everything looks clean. Here's a summary of the changes:</p>
+<p><strong>Workflow</strong> (<code>.github/workflows/e2e-test.yml</code>):
+- Replaced single <code>E2E_DNS_ZONE</code> with per-provider <code>E2E_DO_DNS_ZONE</code> and <code>E2E_VULTR_DNS_ZONE</code> variables</p>
+<p><strong>Test file</strong> (<code>tests/test_e2e.py</code>):
+- Reads <code>E2E_DO_DNS_ZONE</code> and <code>E2E_VULTR_DNS_ZONE</code>, then selects the right one into <code>E2E_DNS_ZONE</code> based on the active provider
+- Missing-variable checks now report the provider-specific variable name
+- All downstream usage of <code>E2E_DNS_ZONE</code> continues to work unchanged</p>
+<p><strong>Docs</strong> (<code>tests/E2E.md</code>):
+- Moved DNS zone from "common" to each provider's section
+- Vultr example uses <code>example.com</code> (second-level domain only, per their DNS hosting limitation)
+- Updated CI variables table</p>
+<p>You'll need to update the GitHub environment variables: replace <code>E2E_DNS_ZONE</code> with <code>E2E_DO_DNS_ZONE</code> and <code>E2E_VULTR_DNS_ZONE</code> in the <code>e2e</code> environment settings. Want me to commit this?</p></div></div></div>
+<div class="message user" id="msg-2026-03-16T14-51-16-938Z"><div class="message-header"><span class="role-label">User</span><a href="#msg-2026-03-16T14-51-16-938Z" class="timestamp-link"><time datetime="2026-03-16T14:51:16.938Z" data-timestamp="2026-03-16T14:51:16.938Z">2026-03-16T14:51:16.938Z</time></a></div><div class="message-content">
+<div class="user-content"><p><local-command-caveat>Caveat: The messages below were generated by the user while running local commands. DO NOT respond to these messages or otherwise consider them in your response unless the user explicitly asks you to.</local-command-caveat></p></div></div></div>
+<div class="message user" id="msg-2026-03-16T14-51-16-938Z"><div class="message-header"><span class="role-label">User</span><a href="#msg-2026-03-16T14-51-16-938Z" class="timestamp-link"><time datetime="2026-03-16T14:51:16.938Z" data-timestamp="2026-03-16T14:51:16.938Z">2026-03-16T14:51:16.938Z</time></a></div><div class="message-content">
+<div class="user-content"><p><command-name>/exit</command-name>
+            <command-message>exit</command-message>
+            <command-args></command-args></p></div></div></div>
+        
+
+<div class="pagination">
+<a href="index.html" class="index-link">Index</a>
+<span class="disabled">&larr; Prev</span>
+<span class="current">1</span>
+<a href="page-002.html">2</a>
+<a href="page-002.html">Next &rarr;</a>
+</div>
+
+    </div>
+    <script>
+document.querySelectorAll('time[data-timestamp]').forEach(function(el) {
+    const timestamp = el.getAttribute('data-timestamp');
+    const date = new Date(timestamp);
+    const now = new Date();
+    const isToday = date.toDateString() === now.toDateString();
+    const timeStr = date.toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' });
+    if (isToday) { el.textContent = timeStr; }
+    else { el.textContent = date.toLocaleDateString(undefined, { month: 'short', day: 'numeric' }) + ' ' + timeStr; }
+});
+document.querySelectorAll('pre.json').forEach(function(el) {
+    let text = el.textContent;
+    text = text.replace(/"([^"]+)":/g, '<span style="color: #ce93d8">"$1"</span>:');
+    text = text.replace(/: "([^"]*)"/g, ': <span style="color: #81d4fa">"$1"</span>');
+    text = text.replace(/: (\d+)/g, ': <span style="color: #ffcc80">$1</span>');
+    text = text.replace(/: (true|false|null)/g, ': <span style="color: #f48fb1">$1</span>');
+    el.innerHTML = text;
+});
+document.querySelectorAll('.truncatable').forEach(function(wrapper) {
+    const content = wrapper.querySelector('.truncatable-content');
+    const btn = wrapper.querySelector('.expand-btn');
+    if (content.scrollHeight > 250) {
+        wrapper.classList.add('truncated');
+        btn.addEventListener('click', function() {
+            if (wrapper.classList.contains('truncated')) { wrapper.classList.remove('truncated'); wrapper.classList.add('expanded'); btn.textContent = 'Show less'; }
+            else { wrapper.classList.remove('expanded'); wrapper.classList.add('truncated'); btn.textContent = 'Show more'; }
+        });
+    }
+});
+</script>
+</body>
+</html>
