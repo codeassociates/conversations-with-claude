@@ -1,0 +1,2173 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Claude Code transcript - page 1</title>
+    <style>
+:root { --bg-color: #f5f5f5; --card-bg: #ffffff; --user-bg: #e3f2fd; --user-border: #1976d2; --assistant-bg: #f5f5f5; --assistant-border: #9e9e9e; --thinking-bg: #fff8e1; --thinking-border: #ffc107; --thinking-text: #666; --tool-bg: #f3e5f5; --tool-border: #9c27b0; --tool-result-bg: #e8f5e9; --tool-error-bg: #ffebee; --text-color: #212121; --text-muted: #757575; --code-bg: #263238; --code-text: #aed581; }
+* { box-sizing: border-box; }
+body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: var(--bg-color); color: var(--text-color); margin: 0; padding: 16px; line-height: 1.6; }
+.container { max-width: 800px; margin: 0 auto; }
+h1 { font-size: 1.5rem; margin-bottom: 24px; padding-bottom: 8px; border-bottom: 2px solid var(--user-border); }
+.header-row { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; border-bottom: 2px solid var(--user-border); padding-bottom: 8px; margin-bottom: 24px; }
+.header-row h1 { border-bottom: none; padding-bottom: 0; margin-bottom: 0; flex: 1; min-width: 200px; }
+.message { margin-bottom: 16px; border-radius: 12px; overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+.message.user { background: var(--user-bg); border-left: 4px solid var(--user-border); }
+.message.assistant { background: var(--card-bg); border-left: 4px solid var(--assistant-border); }
+.message.tool-reply { background: #fff8e1; border-left: 4px solid #ff9800; }
+.tool-reply .role-label { color: #e65100; }
+.tool-reply .tool-result { background: transparent; padding: 0; margin: 0; }
+.tool-reply .tool-result .truncatable.truncated::after { background: linear-gradient(to bottom, transparent, #fff8e1); }
+.message-header { display: flex; justify-content: space-between; align-items: center; padding: 8px 16px; background: rgba(0,0,0,0.03); font-size: 0.85rem; }
+.role-label { font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; }
+.user .role-label { color: var(--user-border); }
+time { color: var(--text-muted); font-size: 0.8rem; }
+.timestamp-link { color: inherit; text-decoration: none; }
+.timestamp-link:hover { text-decoration: underline; }
+.message:target { animation: highlight 2s ease-out; }
+@keyframes highlight { 0% { background-color: rgba(25, 118, 210, 0.2); } 100% { background-color: transparent; } }
+.message-content { padding: 16px; }
+.message-content p { margin: 0 0 12px 0; }
+.message-content p:last-child { margin-bottom: 0; }
+.thinking { background: var(--thinking-bg); border: 1px solid var(--thinking-border); border-radius: 8px; padding: 12px; margin: 12px 0; font-size: 0.9rem; color: var(--thinking-text); }
+.thinking-label { font-size: 0.75rem; font-weight: 600; text-transform: uppercase; color: #f57c00; margin-bottom: 8px; }
+.thinking p { margin: 8px 0; }
+.assistant-text { margin: 8px 0; }
+.tool-use { background: var(--tool-bg); border: 1px solid var(--tool-border); border-radius: 8px; padding: 12px; margin: 12px 0; }
+.tool-header { font-weight: 600; color: var(--tool-border); margin-bottom: 8px; display: flex; align-items: center; gap: 8px; }
+.tool-icon { font-size: 1.1rem; }
+.tool-description { font-size: 0.9rem; color: var(--text-muted); margin-bottom: 8px; font-style: italic; }
+.tool-result { background: var(--tool-result-bg); border-radius: 8px; padding: 12px; margin: 12px 0; }
+.tool-result.tool-error { background: var(--tool-error-bg); }
+.file-tool { border-radius: 8px; padding: 12px; margin: 12px 0; }
+.write-tool { background: linear-gradient(135deg, #e3f2fd 0%, #e8f5e9 100%); border: 1px solid #4caf50; }
+.edit-tool { background: linear-gradient(135deg, #fff3e0 0%, #fce4ec 100%); border: 1px solid #ff9800; }
+.file-tool-header { font-weight: 600; margin-bottom: 4px; display: flex; align-items: center; gap: 8px; font-size: 0.95rem; }
+.write-header { color: #2e7d32; }
+.edit-header { color: #e65100; }
+.file-tool-icon { font-size: 1rem; }
+.file-tool-path { font-family: monospace; background: rgba(0,0,0,0.08); padding: 2px 8px; border-radius: 4px; }
+.file-tool-fullpath { font-family: monospace; font-size: 0.8rem; color: var(--text-muted); margin-bottom: 8px; word-break: break-all; }
+.file-content { margin: 0; }
+.edit-section { display: flex; margin: 4px 0; border-radius: 4px; overflow: hidden; }
+.edit-label { padding: 8px 12px; font-weight: bold; font-family: monospace; display: flex; align-items: flex-start; }
+.edit-old { background: #fce4ec; }
+.edit-old .edit-label { color: #b71c1c; background: #f8bbd9; }
+.edit-old .edit-content { color: #880e4f; }
+.edit-new { background: #e8f5e9; }
+.edit-new .edit-label { color: #1b5e20; background: #a5d6a7; }
+.edit-new .edit-content { color: #1b5e20; }
+.edit-content { margin: 0; flex: 1; background: transparent; font-size: 0.85rem; }
+.edit-replace-all { font-size: 0.75rem; font-weight: normal; color: var(--text-muted); }
+.write-tool .truncatable.truncated::after { background: linear-gradient(to bottom, transparent, #e6f4ea); }
+.edit-tool .truncatable.truncated::after { background: linear-gradient(to bottom, transparent, #fff0e5); }
+.todo-list { background: linear-gradient(135deg, #e8f5e9 0%, #f1f8e9 100%); border: 1px solid #81c784; border-radius: 8px; padding: 12px; margin: 12px 0; }
+.todo-header { font-weight: 600; color: #2e7d32; margin-bottom: 10px; display: flex; align-items: center; gap: 8px; font-size: 0.95rem; }
+.todo-items { list-style: none; margin: 0; padding: 0; }
+.todo-item { display: flex; align-items: flex-start; gap: 10px; padding: 6px 0; border-bottom: 1px solid rgba(0,0,0,0.06); font-size: 0.9rem; }
+.todo-item:last-child { border-bottom: none; }
+.todo-icon { flex-shrink: 0; width: 20px; height: 20px; display: flex; align-items: center; justify-content: center; font-weight: bold; border-radius: 50%; }
+.todo-completed .todo-icon { color: #2e7d32; background: rgba(46, 125, 50, 0.15); }
+.todo-completed .todo-content { color: #558b2f; text-decoration: line-through; }
+.todo-in-progress .todo-icon { color: #f57c00; background: rgba(245, 124, 0, 0.15); }
+.todo-in-progress .todo-content { color: #e65100; font-weight: 500; }
+.todo-pending .todo-icon { color: #757575; background: rgba(0,0,0,0.05); }
+.todo-pending .todo-content { color: #616161; }
+pre { background: var(--code-bg); color: var(--code-text); padding: 12px; border-radius: 6px; overflow-x: auto; font-size: 0.85rem; line-height: 1.5; margin: 8px 0; white-space: pre-wrap; word-wrap: break-word; }
+pre.json { color: #e0e0e0; }
+code { background: rgba(0,0,0,0.08); padding: 2px 6px; border-radius: 4px; font-size: 0.9em; }
+pre code { background: none; padding: 0; }
+.user-content { margin: 0; }
+.truncatable { position: relative; }
+.truncatable.truncated .truncatable-content { max-height: 200px; overflow: hidden; }
+.truncatable.truncated::after { content: ''; position: absolute; bottom: 32px; left: 0; right: 0; height: 60px; background: linear-gradient(to bottom, transparent, var(--card-bg)); pointer-events: none; }
+.message.user .truncatable.truncated::after { background: linear-gradient(to bottom, transparent, var(--user-bg)); }
+.message.tool-reply .truncatable.truncated::after { background: linear-gradient(to bottom, transparent, #fff8e1); }
+.tool-use .truncatable.truncated::after { background: linear-gradient(to bottom, transparent, var(--tool-bg)); }
+.tool-result .truncatable.truncated::after { background: linear-gradient(to bottom, transparent, var(--tool-result-bg)); }
+.expand-btn { display: none; width: 100%; padding: 8px 16px; margin-top: 4px; background: rgba(0,0,0,0.05); border: 1px solid rgba(0,0,0,0.1); border-radius: 6px; cursor: pointer; font-size: 0.85rem; color: var(--text-muted); }
+.expand-btn:hover { background: rgba(0,0,0,0.1); }
+.truncatable.truncated .expand-btn, .truncatable.expanded .expand-btn { display: block; }
+.pagination { display: flex; justify-content: center; gap: 8px; margin: 24px 0; flex-wrap: wrap; }
+.pagination a, .pagination span { padding: 5px 10px; border-radius: 6px; text-decoration: none; font-size: 0.85rem; }
+.pagination a { background: var(--card-bg); color: var(--user-border); border: 1px solid var(--user-border); }
+.pagination a:hover { background: var(--user-bg); }
+.pagination .current { background: var(--user-border); color: white; }
+.pagination .disabled { color: var(--text-muted); border: 1px solid #ddd; }
+.pagination .index-link { background: var(--user-border); color: white; }
+details.continuation { margin-bottom: 16px; }
+details.continuation summary { cursor: pointer; padding: 12px 16px; background: var(--user-bg); border-left: 4px solid var(--user-border); border-radius: 12px; font-weight: 500; color: var(--text-muted); }
+details.continuation summary:hover { background: rgba(25, 118, 210, 0.15); }
+details.continuation[open] summary { border-radius: 12px 12px 0 0; margin-bottom: 0; }
+.index-item { margin-bottom: 16px; border-radius: 12px; overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,0.1); background: var(--user-bg); border-left: 4px solid var(--user-border); }
+.index-item a { display: block; text-decoration: none; color: inherit; }
+.index-item a:hover { background: rgba(25, 118, 210, 0.1); }
+.index-item-header { display: flex; justify-content: space-between; align-items: center; padding: 8px 16px; background: rgba(0,0,0,0.03); font-size: 0.85rem; }
+.index-item-number { font-weight: 600; color: var(--user-border); }
+.index-item-content { padding: 16px; }
+.index-item-stats { padding: 8px 16px 12px 32px; font-size: 0.85rem; color: var(--text-muted); border-top: 1px solid rgba(0,0,0,0.06); }
+.index-item-commit { margin-top: 6px; padding: 4px 8px; background: #fff3e0; border-radius: 4px; font-size: 0.85rem; color: #e65100; }
+.index-item-commit code { background: rgba(0,0,0,0.08); padding: 1px 4px; border-radius: 3px; font-size: 0.8rem; margin-right: 6px; }
+.commit-card { margin: 8px 0; padding: 10px 14px; background: #fff3e0; border-left: 4px solid #ff9800; border-radius: 6px; }
+.commit-card a { text-decoration: none; color: #5d4037; display: block; }
+.commit-card a:hover { color: #e65100; }
+.commit-card-hash { font-family: monospace; color: #e65100; font-weight: 600; margin-right: 8px; }
+.index-commit { margin-bottom: 12px; padding: 10px 16px; background: #fff3e0; border-left: 4px solid #ff9800; border-radius: 8px; box-shadow: 0 1px 2px rgba(0,0,0,0.05); }
+.index-commit a { display: block; text-decoration: none; color: inherit; }
+.index-commit a:hover { background: rgba(255, 152, 0, 0.1); margin: -10px -16px; padding: 10px 16px; border-radius: 8px; }
+.index-commit-header { display: flex; justify-content: space-between; align-items: center; font-size: 0.85rem; margin-bottom: 4px; }
+.index-commit-hash { font-family: monospace; color: #e65100; font-weight: 600; }
+.index-commit-msg { color: #5d4037; }
+.index-item-long-text { margin-top: 8px; padding: 12px; background: var(--card-bg); border-radius: 8px; border-left: 3px solid var(--assistant-border); }
+.index-item-long-text .truncatable.truncated::after { background: linear-gradient(to bottom, transparent, var(--card-bg)); }
+.index-item-long-text-content { color: var(--text-color); }
+#search-box { display: none; align-items: center; gap: 8px; }
+#search-box input { padding: 6px 12px; border: 1px solid var(--assistant-border); border-radius: 6px; font-size: 16px; width: 180px; }
+#search-box button, #modal-search-btn, #modal-close-btn { background: var(--user-border); color: white; border: none; border-radius: 6px; padding: 6px 10px; cursor: pointer; display: flex; align-items: center; justify-content: center; }
+#search-box button:hover, #modal-search-btn:hover { background: #1565c0; }
+#modal-close-btn { background: var(--text-muted); margin-left: 8px; }
+#modal-close-btn:hover { background: #616161; }
+#search-modal[open] { border: none; border-radius: 12px; box-shadow: 0 4px 24px rgba(0,0,0,0.2); padding: 0; width: 90vw; max-width: 900px; height: 80vh; max-height: 80vh; display: flex; flex-direction: column; }
+#search-modal::backdrop { background: rgba(0,0,0,0.5); }
+.search-modal-header { display: flex; align-items: center; gap: 8px; padding: 16px; border-bottom: 1px solid var(--assistant-border); background: var(--bg-color); border-radius: 12px 12px 0 0; }
+.search-modal-header input { flex: 1; padding: 8px 12px; border: 1px solid var(--assistant-border); border-radius: 6px; font-size: 16px; }
+#search-status { padding: 8px 16px; font-size: 0.85rem; color: var(--text-muted); border-bottom: 1px solid rgba(0,0,0,0.06); }
+#search-results { flex: 1; overflow-y: auto; padding: 16px; }
+.search-result { margin-bottom: 16px; border-radius: 8px; overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+.search-result a { display: block; text-decoration: none; color: inherit; }
+.search-result a:hover { background: rgba(25, 118, 210, 0.05); }
+.search-result-page { padding: 6px 12px; background: rgba(0,0,0,0.03); font-size: 0.8rem; color: var(--text-muted); border-bottom: 1px solid rgba(0,0,0,0.06); }
+.search-result-content { padding: 12px; }
+.search-result mark { background: #fff59d; padding: 1px 2px; border-radius: 2px; }
+@media (max-width: 600px) { body { padding: 8px; } .message, .index-item { border-radius: 8px; } .message-content, .index-item-content { padding: 12px; } pre { font-size: 0.8rem; padding: 8px; } #search-box input { width: 120px; } #search-modal[open] { width: 95vw; height: 90vh; } }
+</style>
+</head>
+<body>
+    <div class="container">
+        <h1><a href="index.html" style="color: inherit; text-decoration: none;">Claude Code transcript</a> - page 1/5</h1>
+        
+
+<div class="pagination">
+<a href="index.html" class="index-link">Index</a>
+<span class="disabled">&larr; Prev</span>
+<span class="current">1</span>
+<a href="page-002.html">2</a>
+<a href="page-003.html">3</a>
+<a href="page-004.html">4</a>
+<a href="page-005.html">5</a>
+<a href="page-002.html">Next &rarr;</a>
+</div>
+
+        
+<div class="message user" id="msg-2026-03-27T16-38-29-720Z"><div class="message-header"><span class="role-label">User</span><a href="#msg-2026-03-27T16-38-29-720Z" class="timestamp-link"><time datetime="2026-03-27T16:38:29.720Z" data-timestamp="2026-03-27T16:38:29.720Z">2026-03-27T16:38:29.720Z</time></a></div><div class="message-content">
+<div class="user-content"><p>I'd like to discuss a project that would demo some ideas I have for hosting applications in the browser environment.</p></div></div></div>
+<div class="message assistant" id="msg-2026-03-27T16-38-33-657Z"><div class="message-header"><span class="role-label">Assistant</span><a href="#msg-2026-03-27T16-38-33-657Z" class="timestamp-link"><time datetime="2026-03-27T16:38:33.657Z" data-timestamp="2026-03-27T16:38:33.657Z">2026-03-27T16:38:33.657Z</time></a></div><div class="message-content">
+<div class="thinking"><div class="thinking-label">Thinking</div></div></div></div>
+<div class="message assistant" id="msg-2026-03-27T16-38-34-194Z"><div class="message-header"><span class="role-label">Assistant</span><a href="#msg-2026-03-27T16-38-34-194Z" class="timestamp-link"><time datetime="2026-03-27T16:38:34.194Z" data-timestamp="2026-03-27T16:38:34.194Z">2026-03-27T16:38:34.194Z</time></a></div><div class="message-content">
+<div class="assistant-text"><p>I'd be happy to discuss your ideas! Let me first see what's already in the repo.</p></div></div></div>
+<div class="message assistant" id="msg-2026-03-27T16-38-35-118Z"><div class="message-header"><span class="role-label">Assistant</span><a href="#msg-2026-03-27T16-38-35-118Z" class="timestamp-link"><time datetime="2026-03-27T16:38:35.118Z" data-timestamp="2026-03-27T16:38:35.118Z">2026-03-27T16:38:35.118Z</time></a></div><div class="message-content">
+<div class="tool-use bash-tool" data-tool-id="toolu_01PrEqCCtPQxt6jmbexcp1pi">
+<div class="tool-header"><span class="tool-icon">$</span> Bash</div>
+<div class="tool-description">List repo contents</div><div class="truncatable"><div class="truncatable-content"><pre class="bash-command">ls -la /home/david/projects/stirlingbridge/localfirst-demo</pre></div><button class="expand-btn">Show more</button></div>
+</div></div></div>
+<div class="message tool-reply" id="msg-2026-03-27T16-38-35-276Z"><div class="message-header"><span class="role-label">Tool reply</span><a href="#msg-2026-03-27T16-38-35-276Z" class="timestamp-link"><time datetime="2026-03-27T16:38:35.276Z" data-timestamp="2026-03-27T16:38:35.276Z">2026-03-27T16:38:35.276Z</time></a></div><div class="message-content"><div class="tool-result"><div class="truncatable"><div class="truncatable-content"><pre>total 16
+drwxr-xr-x 3 david david 4096 Mar 27 10:27 .
+drwxr-xr-x 4 david david 4096 Mar 27 10:27 ..
+drwxr-xr-x 8 david david 4096 Mar 27 10:28 .git
+-rw-r--r-- 1 david david   52 Mar 27 10:27 README.md</pre></div><button class="expand-btn">Show more</button></div></div></div></div>
+<div class="message assistant" id="msg-2026-03-27T16-38-35-633Z"><div class="message-header"><span class="role-label">Assistant</span><a href="#msg-2026-03-27T16-38-35-633Z" class="timestamp-link"><time datetime="2026-03-27T16:38:35.633Z" data-timestamp="2026-03-27T16:38:35.633Z">2026-03-27T16:38:35.633Z</time></a></div><div class="message-content">
+<div class="tool-use" data-tool-id="toolu_01QbdDSq1J4crLdMhLoUABFB"><div class="tool-header"><span class="tool-icon">⚙</span> Read</div><div class="truncatable"><div class="truncatable-content"><pre class="json">{
+  &#34;file_path&#34;: &#34;/home/david/.claude/projects/-home-david-projects-stirlingbridge-localfirst-demo/memory/MEMORY.md&#34;
+}</pre></div><button class="expand-btn">Show more</button></div></div></div></div>
+<div class="message tool-reply" id="msg-2026-03-27T16-38-35-649Z"><div class="message-header"><span class="role-label">Tool reply</span><a href="#msg-2026-03-27T16-38-35-649Z" class="timestamp-link"><time datetime="2026-03-27T16:38:35.649Z" data-timestamp="2026-03-27T16:38:35.649Z">2026-03-27T16:38:35.649Z</time></a></div><div class="message-content"><div class="tool-result tool-error"><div class="truncatable"><div class="truncatable-content"><pre>File does not exist. Note: your current working directory is /home/david/projects/stirlingbridge/localfirst-demo.</pre></div><button class="expand-btn">Show more</button></div></div></div></div>
+<div class="message assistant" id="msg-2026-03-27T16-38-39-075Z"><div class="message-header"><span class="role-label">Assistant</span><a href="#msg-2026-03-27T16-38-39-075Z" class="timestamp-link"><time datetime="2026-03-27T16:38:39.075Z" data-timestamp="2026-03-27T16:38:39.075Z">2026-03-27T16:38:39.075Z</time></a></div><div class="message-content">
+<div class="tool-use" data-tool-id="toolu_01Ads1McBAGtMkaeAgXXUdp2"><div class="tool-header"><span class="tool-icon">⚙</span> Read</div><div class="truncatable"><div class="truncatable-content"><pre class="json">{
+  &#34;file_path&#34;: &#34;/home/david/projects/stirlingbridge/localfirst-demo/README.md&#34;
+}</pre></div><button class="expand-btn">Show more</button></div></div></div></div>
+<div class="message tool-reply" id="msg-2026-03-27T16-38-39-081Z"><div class="message-header"><span class="role-label">Tool reply</span><a href="#msg-2026-03-27T16-38-39-081Z" class="timestamp-link"><time datetime="2026-03-27T16:38:39.081Z" data-timestamp="2026-03-27T16:38:39.081Z">2026-03-27T16:38:39.081Z</time></a></div><div class="message-content"><div class="tool-result"><div class="truncatable"><div class="truncatable-content"><pre>     1→# localfirst-demo
+     2→Demonstrate local first framework
+     3→</pre></div><button class="expand-btn">Show more</button></div></div></div></div>
+<div class="message assistant" id="msg-2026-03-27T16-38-43-166Z"><div class="message-header"><span class="role-label">Assistant</span><a href="#msg-2026-03-27T16-38-43-166Z" class="timestamp-link"><time datetime="2026-03-27T16:38:43.166Z" data-timestamp="2026-03-27T16:38:43.166Z">2026-03-27T16:38:43.166Z</time></a></div><div class="message-content">
+<div class="assistant-text"><p>Fresh repo with just a README. Go ahead — what are you thinking for hosting applications in the browser? I'm curious about the local-first angle and what you'd like to demonstrate.</p></div></div></div>
+<div class="message user" id="msg-2026-03-27T16-48-02-523Z"><div class="message-header"><span class="role-label">User</span><a href="#msg-2026-03-27T16-48-02-523Z" class="timestamp-link"><time datetime="2026-03-27T16:48:02.523Z" data-timestamp="2026-03-27T16:48:02.523Z">2026-03-27T16:48:02.523Z</time></a></div><div class="message-content">
+<div class="user-content"><p>The basic idea is this: create a framework that allows a fairly simple web app (written in JS or TS) to run "commands" as if it had access to a regular desktop/server CLI environment. So the web app would have an interface that looks like a typical exec/spawn API where a command and arguments is specified, and stdout/err can be captured. Obviously the "commands" would run in a WASM environment within the same browser. A full blown version of this would obviously require something like a Linux distribution with kernel running in the browser. I think I have seen demos like that. However that's not what I'm thinking of. I want to create a much more limited environment where the commands are always Python CLI programs. They need to have access to a filesystem, but that can be temporary in-memory. I don't even need to allow full generality as far as Python support. We can lock down the Python version and perhaps limit dependency fetching to a simple implementation. Or perhaps it is possible to run code from the uv tool in a wasm environment. Anyway the basic idea is to be able to host CLI tools in the browser, invoked by a simple orchestrating web app. Those tools only need to be Python and perhaps limited to Python code fetched from GitHub (uv can do this, bypassing PyPl). The goal for this demo would be only to show that this sort of framework can be built. It doesn't need to have absolutely every feature required for a production release.</p></div></div></div>
+<div class="message assistant" id="msg-2026-03-27T16-48-17-339Z"><div class="message-header"><span class="role-label">Assistant</span><a href="#msg-2026-03-27T16-48-17-339Z" class="timestamp-link"><time datetime="2026-03-27T16:48:17.339Z" data-timestamp="2026-03-27T16:48:17.339Z">2026-03-27T16:48:17.339Z</time></a></div><div class="message-content">
+<div class="thinking"><div class="thinking-label">Thinking</div></div></div></div>
+<div class="message assistant" id="msg-2026-03-27T16-48-32-530Z"><div class="message-header"><span class="role-label">Assistant</span><a href="#msg-2026-03-27T16-48-32-530Z" class="timestamp-link"><time datetime="2026-03-27T16:48:32.530Z" data-timestamp="2026-03-27T16:48:32.530Z">2026-03-27T16:48:32.530Z</time></a></div><div class="message-content">
+<div class="assistant-text"><p>This is a compelling idea. The core insight — providing a familiar <code>exec</code>/<code>spawn</code> API backed by WASM-hosted Python rather than emulating a full OS — keeps the scope tractable while still being genuinely useful.</p>
+<p><strong>Pyodide</strong> is the obvious foundation here. It's CPython 3.12 compiled to WebAssembly via Emscripten, and it gives you:</p>
+<ul>
+<li>A real Python interpreter in the browser</li>
+<li>An in-memory virtual filesystem (Emscripten FS)</li>
+<li><code>micropip</code> for installing pure-Python packages at runtime</li>
+<li>The ability to capture <code>sys.stdout</code> / <code>sys.stderr</code> programmatically</li>
+</ul>
+<p><strong>For the architecture, I'd think of three layers:</strong></p>
+<ol>
+<li>
+<p><strong>Runtime layer</strong> — Pyodide loaded in a Web Worker (keeps the UI responsive). Manages the virtual filesystem and Python interpreter lifecycle.</p>
+</li>
+<li>
+<p><strong>Process abstraction</strong> — A JS/TS API like <code>exec("tool-name", ["--flag", "arg"])</code> that returns <code>{ stdout, stderr, exitCode }</code>. Under the hood it would: fetch the Python script (from GitHub or a bundled location), write it to the virtual FS, redirect <code>sys.stdout</code>/<code>sys.stderr</code> to capture buffers, and run it via <code>pyodide.runPythonAsync</code>.</p>
+</li>
+<li>
+<p><strong>Orchestrator</strong> — The web app that composes these "commands" into workflows, pipes output between them, etc.</p>
+</li>
+</ol>
+<p><strong>On the dependency question:</strong> Pyodide's <code>micropip</code> can install any pure-Python wheel from PyPI (or a custom URL). For the GitHub-fetching angle, you could fetch raw <code>.py</code> files or even tarballs directly and unpack them onto the virtual FS — that sidesteps PyPI entirely, similar to how <code>uv run --from git+https://...</code> works. You wouldn't run <code>uv</code> itself in WASM, but you could replicate that specific fetch-and-run pattern fairly simply.</p>
+<p><strong>The main limitations to be upfront about:</strong></p>
+<ul>
+<li>No real <code>subprocess</code> — if a Python tool shells out to another process, that won't work natively. Your framework would need to intercept/shim that.</li>
+<li>C-extension packages only work if Pyodide has pre-built them (numpy, etc. are available, but not everything).</li>
+<li>No network access from Python itself (no <code>requests.get()</code> to external APIs) unless proxied through the browser's fetch.</li>
+</ul>
+<p>For a demo, none of these are blockers — you just pick tools that are pure Python and don't shell out.</p>
+<p>Want to start sketching out the API design and project structure, or would you prefer to dig deeper into any of these areas first?</p></div></div></div>
+<div class="message user" id="msg-2026-03-27T16-51-47-241Z"><div class="message-header"><span class="role-label">User</span><a href="#msg-2026-03-27T16-51-47-241Z" class="timestamp-link"><time datetime="2026-03-27T16:51:47.241Z" data-timestamp="2026-03-27T16:51:47.241Z">2026-03-27T16:51:47.241Z</time></a></div><div class="message-content">
+<div class="user-content"><p>Ok thanks for the list of limitations. I do not need to have subprocess support. However, I had not thought about the lack of network access from WASM. Presumably there is some sort of workaround for that given that you mentioned Python dependency fetching, which itself does require network access. Is there a way to hook/shim Python http requests such that they are proxied through the browser's network stack? I only need http support, not general purpose networking.</p></div></div></div>
+<div class="message assistant" id="msg-2026-03-27T16-52-01-908Z"><div class="message-header"><span class="role-label">Assistant</span><a href="#msg-2026-03-27T16-52-01-908Z" class="timestamp-link"><time datetime="2026-03-27T16:52:01.908Z" data-timestamp="2026-03-27T16:52:01.908Z">2026-03-27T16:52:01.908Z</time></a></div><div class="message-content">
+<div class="assistant-text"><p>Yes, and this is actually a well-trodden path in the Pyodide ecosystem. There are a couple of layers to it:</p>
+<p><strong>Pyodide's built-in solution:</strong> Pyodide already patches <code>urllib.request</code> (Python's standard lib HTTP client) to route through the browser's <code>fetch</code> API via its <code>pyodide.http</code> module. So code using <code>urllib.request.urlopen()</code> works out of the box in recent Pyodide versions.</p>
+<p><strong>For <code>requests</code> (the popular library):</strong> This is where it gets more interesting. There's a package called <code>pyodide-http</code> that monkey-patches both <code>urllib</code> and <code>requests</code> to use <code>XMLHttpRequest</code> or <code>fetch</code> under the hood. You'd install it with <code>micropip</code> and call <code>pyodide_http.patch_all()</code> before the target tool imports <code>requests</code>. After that, <code>requests.get()</code>/<code>requests.post()</code> etc. just work — the Python code doesn't need to know it's in a browser.</p>
+<p><strong>For <code>httpx</code>:</strong> Similar story — <code>pyodide-http</code> supports patching it as well.</p>
+<p><strong>The practical flow would be:</strong></p>
+<pre><code class="language-python"># In your runtime layer, before running any user tool:
+import micropip
+await micropip.install(&quot;pyodide-http&quot;)
+import pyodide_http
+pyodide_http.patch_all()
+
+# Now any Python tool that does:
+import requests
+resp = requests.get(&quot;https://api.example.com/data&quot;)
+# ...will route through browser fetch transparently
+</code></pre>
+<p><strong>The main caveat</strong> is CORS — the browser's fetch is still subject to same-origin policy. So the Python tool can only hit APIs that allow cross-origin requests (or your own backend/proxy). But that's a browser constraint, not a Pyodide one, and for a demo you can work around it with a simple CORS proxy or by targeting APIs that already send permissive headers.</p>
+<p>So HTTP support is quite viable without any heavy custom shimming. Would you like to start laying out the project structure?</p></div></div></div>
+<div class="message user" id="msg-2026-03-27T16-53-16-354Z"><div class="message-header"><span class="role-label">User</span><a href="#msg-2026-03-27T16-53-16-354Z" class="timestamp-link"><time datetime="2026-03-27T16:53:16.354Z" data-timestamp="2026-03-27T16:53:16.354Z">2026-03-27T16:53:16.354Z</time></a></div><div class="message-content">
+<div class="user-content"><p>Ok I am aware of the CORS issue. Since CORS is pretty much useless these days I expect to only need to work with services that white list all CORS traffic. Please go ahead and get cracking!</p></div></div></div>
+<div class="message assistant" id="msg-2026-03-27T16-54-37-074Z"><div class="message-header"><span class="role-label">Assistant</span><a href="#msg-2026-03-27T16-54-37-074Z" class="timestamp-link"><time datetime="2026-03-27T16:54:37.074Z" data-timestamp="2026-03-27T16:54:37.074Z">2026-03-27T16:54:37.074Z</time></a></div><div class="message-content">
+<div class="thinking"><div class="thinking-label">Thinking</div></div></div></div>
+<div class="message assistant" id="msg-2026-03-27T16-54-37-612Z"><div class="message-header"><span class="role-label">Assistant</span><a href="#msg-2026-03-27T16-54-37-612Z" class="timestamp-link"><time datetime="2026-03-27T16:54:37.612Z" data-timestamp="2026-03-27T16:54:37.612Z">2026-03-27T16:54:37.612Z</time></a></div><div class="message-content">
+<div class="tool-use" data-tool-id="toolu_01TiKS7FLCskGtBgjAJGqiL1"><div class="tool-header"><span class="tool-icon">⚙</span> ToolSearch</div><div class="truncatable"><div class="truncatable-content"><pre class="json">{
+  &#34;query&#34;: &#34;select:TaskCreate&#34;,
+  &#34;max_results&#34;: 1
+}</pre></div><button class="expand-btn">Show more</button></div></div></div></div>
+<div class="message tool-reply" id="msg-2026-03-27T16-54-37-614Z"><div class="message-header"><span class="role-label">Tool reply</span><a href="#msg-2026-03-27T16-54-37-614Z" class="timestamp-link"><time datetime="2026-03-27T16:54:37.614Z" data-timestamp="2026-03-27T16:54:37.614Z">2026-03-27T16:54:37.614Z</time></a></div><div class="message-content"><div class="tool-result"><div class="truncatable"><div class="truncatable-content"><pre class="json">{
+  &quot;type&quot;: &quot;tool_reference&quot;,
+  &quot;tool_name&quot;: &quot;TaskCreate&quot;
+}</pre></div><button class="expand-btn">Show more</button></div></div></div></div>
+<div class="message assistant" id="msg-2026-03-27T16-54-42-103Z"><div class="message-header"><span class="role-label">Assistant</span><a href="#msg-2026-03-27T16-54-42-103Z" class="timestamp-link"><time datetime="2026-03-27T16:54:42.103Z" data-timestamp="2026-03-27T16:54:42.103Z">2026-03-27T16:54:42.103Z</time></a></div><div class="message-content">
+<div class="thinking"><div class="thinking-label">Thinking</div></div></div></div>
+<div class="message assistant" id="msg-2026-03-27T16-54-43-307Z"><div class="message-header"><span class="role-label">Assistant</span><a href="#msg-2026-03-27T16-54-43-307Z" class="timestamp-link"><time datetime="2026-03-27T16:54:43.307Z" data-timestamp="2026-03-27T16:54:43.307Z">2026-03-27T16:54:43.307Z</time></a></div><div class="message-content">
+<div class="tool-use" data-tool-id="toolu_01NU51MReRaQu1J5wKeMDGHN"><div class="tool-header"><span class="tool-icon">⚙</span> TaskCreate</div><div class="tool-description">package.json, tsconfig.json, vite.config.ts, index.html</div><div class="truncatable"><div class="truncatable-content"><pre class="json">{
+  &#34;subject&#34;: &#34;Set up project scaffolding&#34;,
+  &#34;activeForm&#34;: &#34;Setting up project scaffolding&#34;
+}</pre></div><button class="expand-btn">Show more</button></div></div></div></div>
+<div class="message tool-reply" id="msg-2026-03-27T16-54-43-339Z"><div class="message-header"><span class="role-label">Tool reply</span><a href="#msg-2026-03-27T16-54-43-339Z" class="timestamp-link"><time datetime="2026-03-27T16:54:43.339Z" data-timestamp="2026-03-27T16:54:43.339Z">2026-03-27T16:54:43.339Z</time></a></div><div class="message-content"><div class="tool-result"><div class="truncatable"><div class="truncatable-content"><pre>Task #1 created successfully: Set up project scaffolding</pre></div><button class="expand-btn">Show more</button></div></div></div></div>
+<div class="message assistant" id="msg-2026-03-27T16-54-43-885Z"><div class="message-header"><span class="role-label">Assistant</span><a href="#msg-2026-03-27T16-54-43-885Z" class="timestamp-link"><time datetime="2026-03-27T16:54:43.885Z" data-timestamp="2026-03-27T16:54:43.885Z">2026-03-27T16:54:43.885Z</time></a></div><div class="message-content">
+<div class="tool-use" data-tool-id="toolu_01VxUWdHhaeQEa1hp8UA8aD2"><div class="tool-header"><span class="tool-icon">⚙</span> TaskCreate</div><div class="tool-description">Worker message protocol, ExecOptions, ProcessResult, command registry types</div><div class="truncatable"><div class="truncatable-content"><pre class="json">{
+  &#34;subject&#34;: &#34;Create shared types&#34;,
+  &#34;activeForm&#34;: &#34;Creating shared types&#34;
+}</pre></div><button class="expand-btn">Show more</button></div></div></div></div>
+<div class="message tool-reply" id="msg-2026-03-27T16-54-43-906Z"><div class="message-header"><span class="role-label">Tool reply</span><a href="#msg-2026-03-27T16-54-43-906Z" class="timestamp-link"><time datetime="2026-03-27T16:54:43.906Z" data-timestamp="2026-03-27T16:54:43.906Z">2026-03-27T16:54:43.906Z</time></a></div><div class="message-content"><div class="tool-result"><div class="truncatable"><div class="truncatable-content"><pre>Task #2 created successfully: Create shared types</pre></div><button class="expand-btn">Show more</button></div></div></div></div>
+<div class="message assistant" id="msg-2026-03-27T16-54-45-152Z"><div class="message-header"><span class="role-label">Assistant</span><a href="#msg-2026-03-27T16-54-45-152Z" class="timestamp-link"><time datetime="2026-03-27T16:54:45.152Z" data-timestamp="2026-03-27T16:54:45.152Z">2026-03-27T16:54:45.152Z</time></a></div><div class="message-content">
+<div class="tool-use" data-tool-id="toolu_012dpBgJ68knFm8YS3Y42DAx"><div class="tool-header"><span class="tool-icon">⚙</span> TaskCreate</div><div class="tool-description">Worker that loads Pyodide, bootstraps Python runtime with stdout/stderr capture and run_command, handles exec/install/write-file messages</div><div class="truncatable"><div class="truncatable-content"><pre class="json">{
+  &#34;subject&#34;: &#34;Implement Pyodide Web Worker&#34;,
+  &#34;activeForm&#34;: &#34;Implementing Pyodide Web Worker&#34;
+}</pre></div><button class="expand-btn">Show more</button></div></div></div></div>
+<div class="message tool-reply" id="msg-2026-03-27T16-54-45-165Z"><div class="message-header"><span class="role-label">Tool reply</span><a href="#msg-2026-03-27T16-54-45-165Z" class="timestamp-link"><time datetime="2026-03-27T16:54:45.165Z" data-timestamp="2026-03-27T16:54:45.165Z">2026-03-27T16:54:45.165Z</time></a></div><div class="message-content"><div class="tool-result"><div class="truncatable"><div class="truncatable-content"><pre>Task #3 created successfully: Implement Pyodide Web Worker</pre></div><button class="expand-btn">Show more</button></div></div></div></div>
+<div class="message assistant" id="msg-2026-03-27T16-54-46-046Z"><div class="message-header"><span class="role-label">Assistant</span><a href="#msg-2026-03-27T16-54-46-046Z" class="timestamp-link"><time datetime="2026-03-27T16:54:46.046Z" data-timestamp="2026-03-27T16:54:46.046Z">2026-03-27T16:54:46.046Z</time></a></div><div class="message-content">
+<div class="tool-use" data-tool-id="toolu_01PxanPEk89V1vdrubvE2EZz"><div class="tool-header"><span class="tool-icon">⚙</span> TaskCreate</div><div class="tool-description">BrowserRuntime class with exec(), registerCommand(), fetchFromGitHub(), installPackages() wrapping worker communication</div><div class="truncatable"><div class="truncatable-content"><pre class="json">{
+  &#34;subject&#34;: &#34;Implement main-thread runtime API&#34;,
+  &#34;activeForm&#34;: &#34;Implementing runtime API&#34;
+}</pre></div><button class="expand-btn">Show more</button></div></div></div></div>
+<div class="message tool-reply" id="msg-2026-03-27T16-54-46-067Z"><div class="message-header"><span class="role-label">Tool reply</span><a href="#msg-2026-03-27T16-54-46-067Z" class="timestamp-link"><time datetime="2026-03-27T16:54:46.067Z" data-timestamp="2026-03-27T16:54:46.067Z">2026-03-27T16:54:46.067Z</time></a></div><div class="message-content"><div class="tool-result"><div class="truncatable"><div class="truncatable-content"><pre>Task #4 created successfully: Implement main-thread runtime API</pre></div><button class="expand-btn">Show more</button></div></div></div></div>
+<div class="message assistant" id="msg-2026-03-27T16-54-47-318Z"><div class="message-header"><span class="role-label">Assistant</span><a href="#msg-2026-03-27T16-54-47-318Z" class="timestamp-link"><time datetime="2026-03-27T16:54:47.318Z" data-timestamp="2026-03-27T16:54:47.318Z">2026-03-27T16:54:47.318Z</time></a></div><div class="message-content">
+<div class="tool-use" data-tool-id="toolu_01HUQTZTAMvsoPNzMw595uQ4"><div class="tool-header"><span class="tool-icon">⚙</span> TaskCreate</div><div class="tool-description">Terminal-like interface with command input, output display, and example commands demonstrating the framework</div><div class="truncatable"><div class="truncatable-content"><pre class="json">{
+  &#34;subject&#34;: &#34;Build demo UI and orchestrator&#34;,
+  &#34;activeForm&#34;: &#34;Building demo UI&#34;
+}</pre></div><button class="expand-btn">Show more</button></div></div></div></div>
+<div class="message tool-reply" id="msg-2026-03-27T16-54-47-348Z"><div class="message-header"><span class="role-label">Tool reply</span><a href="#msg-2026-03-27T16-54-47-348Z" class="timestamp-link"><time datetime="2026-03-27T16:54:47.348Z" data-timestamp="2026-03-27T16:54:47.348Z">2026-03-27T16:54:47.348Z</time></a></div><div class="message-content"><div class="tool-result"><div class="truncatable"><div class="truncatable-content"><pre>Task #5 created successfully: Build demo UI and orchestrator</pre></div><button class="expand-btn">Show more</button></div></div></div></div>
+<div class="message assistant" id="msg-2026-03-27T16-54-47-855Z"><div class="message-header"><span class="role-label">Assistant</span><a href="#msg-2026-03-27T16-54-47-855Z" class="timestamp-link"><time datetime="2026-03-27T16:54:47.855Z" data-timestamp="2026-03-27T16:54:47.855Z">2026-03-27T16:54:47.855Z</time></a></div><div class="message-content">
+<div class="tool-use" data-tool-id="toolu_01PzZ9tahqMwW3beEfiny1P8"><div class="tool-header"><span class="tool-icon">⚙</span> TaskCreate</div><div class="tool-description">npm install, npm run build, smoke test</div><div class="truncatable"><div class="truncatable-content"><pre class="json">{
+  &#34;subject&#34;: &#34;Verify the project builds and runs&#34;,
+  &#34;activeForm&#34;: &#34;Verifying build&#34;
+}</pre></div><button class="expand-btn">Show more</button></div></div></div></div>
+<div class="message tool-reply" id="msg-2026-03-27T16-54-47-889Z"><div class="message-header"><span class="role-label">Tool reply</span><a href="#msg-2026-03-27T16-54-47-889Z" class="timestamp-link"><time datetime="2026-03-27T16:54:47.889Z" data-timestamp="2026-03-27T16:54:47.889Z">2026-03-27T16:54:47.889Z</time></a></div><div class="message-content"><div class="tool-result"><div class="truncatable"><div class="truncatable-content"><pre>Task #6 created successfully: Verify the project builds and runs</pre></div><button class="expand-btn">Show more</button></div></div></div></div>
+<div class="message assistant" id="msg-2026-03-27T16-54-51-661Z"><div class="message-header"><span class="role-label">Assistant</span><a href="#msg-2026-03-27T16-54-51-661Z" class="timestamp-link"><time datetime="2026-03-27T16:54:51.661Z" data-timestamp="2026-03-27T16:54:51.661Z">2026-03-27T16:54:51.661Z</time></a></div><div class="message-content">
+<div class="tool-use" data-tool-id="toolu_01ANtH17JQwGReXxgbHv8yRu"><div class="tool-header"><span class="tool-icon">⚙</span> ToolSearch</div><div class="truncatable"><div class="truncatable-content"><pre class="json">{
+  &#34;query&#34;: &#34;select:TaskUpdate&#34;,
+  &#34;max_results&#34;: 1
+}</pre></div><button class="expand-btn">Show more</button></div></div></div></div>
+<div class="message tool-reply" id="msg-2026-03-27T16-54-51-663Z"><div class="message-header"><span class="role-label">Tool reply</span><a href="#msg-2026-03-27T16-54-51-663Z" class="timestamp-link"><time datetime="2026-03-27T16:54:51.663Z" data-timestamp="2026-03-27T16:54:51.663Z">2026-03-27T16:54:51.663Z</time></a></div><div class="message-content"><div class="tool-result"><div class="truncatable"><div class="truncatable-content"><pre class="json">{
+  &quot;type&quot;: &quot;tool_reference&quot;,
+  &quot;tool_name&quot;: &quot;TaskUpdate&quot;
+}</pre></div><button class="expand-btn">Show more</button></div></div></div></div>
+<div class="message assistant" id="msg-2026-03-27T16-54-55-392Z"><div class="message-header"><span class="role-label">Assistant</span><a href="#msg-2026-03-27T16-54-55-392Z" class="timestamp-link"><time datetime="2026-03-27T16:54:55.392Z" data-timestamp="2026-03-27T16:54:55.392Z">2026-03-27T16:54:55.392Z</time></a></div><div class="message-content">
+<div class="tool-use" data-tool-id="toolu_01FPzNckjq3Rv8PpoTc5Nviy"><div class="tool-header"><span class="tool-icon">⚙</span> TaskUpdate</div><div class="truncatable"><div class="truncatable-content"><pre class="json">{
+  &#34;taskId&#34;: &#34;1&#34;,
+  &#34;status&#34;: &#34;in_progress&#34;
+}</pre></div><button class="expand-btn">Show more</button></div></div></div></div>
+<div class="message tool-reply" id="msg-2026-03-27T16-54-55-406Z"><div class="message-header"><span class="role-label">Tool reply</span><a href="#msg-2026-03-27T16-54-55-406Z" class="timestamp-link"><time datetime="2026-03-27T16:54:55.406Z" data-timestamp="2026-03-27T16:54:55.406Z">2026-03-27T16:54:55.406Z</time></a></div><div class="message-content"><div class="tool-result"><div class="truncatable"><div class="truncatable-content"><pre>Updated task #1 status</pre></div><button class="expand-btn">Show more</button></div></div></div></div>
+<div class="message assistant" id="msg-2026-03-27T16-55-01-228Z"><div class="message-header"><span class="role-label">Assistant</span><a href="#msg-2026-03-27T16-55-01-228Z" class="timestamp-link"><time datetime="2026-03-27T16:55:01.228Z" data-timestamp="2026-03-27T16:55:01.228Z">2026-03-27T16:55:01.228Z</time></a></div><div class="message-content"><div class="file-tool write-tool" data-tool-id="toolu_01Tp7Lc996WtNLpWbppCpkda">
+<div class="file-tool-header write-header"><span class="file-tool-icon">📝</span> Write <span class="file-tool-path">package.json</span></div>
+<div class="file-tool-fullpath">/home/david/projects/stirlingbridge/localfirst-demo/package.json</div>
+<div class="truncatable"><div class="truncatable-content"><pre class="file-content">{
+  &#34;name&#34;: &#34;localfirst-demo&#34;,
+  &#34;version&#34;: &#34;0.1.0&#34;,
+  &#34;private&#34;: true,
+  &#34;type&#34;: &#34;module&#34;,
+  &#34;scripts&#34;: {
+    &#34;dev&#34;: &#34;vite&#34;,
+    &#34;build&#34;: &#34;tsc &amp;&amp; vite build&#34;,
+    &#34;preview&#34;: &#34;vite preview&#34;
+  },
+  &#34;devDependencies&#34;: {
+    &#34;typescript&#34;: &#34;^5.7.0&#34;,
+    &#34;vite&#34;: &#34;^6.0.0&#34;
+  }
+}
+</pre></div><button class="expand-btn">Show more</button></div>
+</div></div></div>
+<div class="message assistant" id="msg-2026-03-27T16-55-02-971Z"><div class="message-header"><span class="role-label">Assistant</span><a href="#msg-2026-03-27T16-55-02-971Z" class="timestamp-link"><time datetime="2026-03-27T16:55:02.971Z" data-timestamp="2026-03-27T16:55:02.971Z">2026-03-27T16:55:02.971Z</time></a></div><div class="message-content"><div class="file-tool write-tool" data-tool-id="toolu_01TdSJrakDDQYpNMj4beRvni">
+<div class="file-tool-header write-header"><span class="file-tool-icon">📝</span> Write <span class="file-tool-path">tsconfig.json</span></div>
+<div class="file-tool-fullpath">/home/david/projects/stirlingbridge/localfirst-demo/tsconfig.json</div>
+<div class="truncatable"><div class="truncatable-content"><pre class="file-content">{
+  &#34;compilerOptions&#34;: {
+    &#34;target&#34;: &#34;ES2022&#34;,
+    &#34;module&#34;: &#34;ES2022&#34;,
+    &#34;moduleResolution&#34;: &#34;bundler&#34;,
+    &#34;strict&#34;: true,
+    &#34;esModuleInterop&#34;: true,
+    &#34;skipLibCheck&#34;: true,
+    &#34;forceConsistentCasingInFileNames&#34;: true,
+    &#34;lib&#34;: [&#34;ES2022&#34;, &#34;DOM&#34;, &#34;DOM.Iterable&#34;, &#34;WebWorker&#34;],
+    &#34;outDir&#34;: &#34;./dist&#34;,
+    &#34;rootDir&#34;: &#34;.&#34;,
+    &#34;declaration&#34;: true
+  },
+  &#34;include&#34;: [&#34;src&#34;]
+}
+</pre></div><button class="expand-btn">Show more</button></div>
+</div></div></div>
+<div class="message assistant" id="msg-2026-03-27T16-55-03-841Z"><div class="message-header"><span class="role-label">Assistant</span><a href="#msg-2026-03-27T16-55-03-841Z" class="timestamp-link"><time datetime="2026-03-27T16:55:03.841Z" data-timestamp="2026-03-27T16:55:03.841Z">2026-03-27T16:55:03.841Z</time></a></div><div class="message-content"><div class="file-tool write-tool" data-tool-id="toolu_011Vbevnz6sS68rCYKRyADLj">
+<div class="file-tool-header write-header"><span class="file-tool-icon">📝</span> Write <span class="file-tool-path">vite.config.ts</span></div>
+<div class="file-tool-fullpath">/home/david/projects/stirlingbridge/localfirst-demo/vite.config.ts</div>
+<div class="truncatable"><div class="truncatable-content"><pre class="file-content">import { defineConfig } from &#34;vite&#34;;
+
+export default defineConfig({
+  worker: {
+    format: &#34;es&#34;,
+  },
+});
+</pre></div><button class="expand-btn">Show more</button></div>
+</div></div></div>
+<div class="message assistant" id="msg-2026-03-27T16-55-18-498Z"><div class="message-header"><span class="role-label">Assistant</span><a href="#msg-2026-03-27T16-55-18-498Z" class="timestamp-link"><time datetime="2026-03-27T16:55:18.498Z" data-timestamp="2026-03-27T16:55:18.498Z">2026-03-27T16:55:18.498Z</time></a></div><div class="message-content"><div class="file-tool write-tool" data-tool-id="toolu_01QqW6DNgBj8PwmmEJUTwKoz">
+<div class="file-tool-header write-header"><span class="file-tool-icon">📝</span> Write <span class="file-tool-path">index.html</span></div>
+<div class="file-tool-fullpath">/home/david/projects/stirlingbridge/localfirst-demo/index.html</div>
+<div class="truncatable"><div class="truncatable-content"><pre class="file-content">&lt;!DOCTYPE html&gt;
+&lt;html lang=&#34;en&#34;&gt;
+&lt;head&gt;
+  &lt;meta charset=&#34;UTF-8&#34; /&gt;
+  &lt;meta name=&#34;viewport&#34; content=&#34;width=device-width, initial-scale=1.0&#34; /&gt;
+  &lt;title&gt;Local-First Python Runtime&lt;/title&gt;
+  &lt;style&gt;
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: &#34;SF Mono&#34;, &#34;Cascadia Code&#34;, &#34;Fira Code&#34;, monospace;
+      background: #1a1b26;
+      color: #a9b1d6;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    header {
+      padding: 16px 24px;
+      border-bottom: 1px solid #33384d;
+      background: #1f2030;
+    }
+
+    header h1 {
+      font-size: 16px;
+      color: #7aa2f7;
+      font-weight: 600;
+    }
+
+    header p {
+      font-size: 12px;
+      color: #565f89;
+      margin-top: 4px;
+    }
+
+    #status-bar {
+      padding: 8px 24px;
+      font-size: 12px;
+      background: #1f2030;
+      border-bottom: 1px solid #33384d;
+      color: #565f89;
+    }
+
+    #status-bar.ready { color: #9ece6a; }
+    #status-bar.error { color: #f7768e; }
+
+    #output {
+      flex: 1;
+      overflow-y: auto;
+      padding: 16px 24px;
+      white-space: pre-wrap;
+      word-wrap: break-word;
+      font-size: 13px;
+      line-height: 1.5;
+    }
+
+    .line-stdout { color: #a9b1d6; }
+    .line-stderr { color: #f7768e; }
+    .line-info   { color: #7aa2f7; }
+    .line-cmd    { color: #9ece6a; }
+    .line-exit-ok   { color: #565f89; }
+    .line-exit-err  { color: #f7768e; }
+
+    #input-bar {
+      display: flex;
+      align-items: center;
+      padding: 12px 24px;
+      border-top: 1px solid #33384d;
+      background: #1f2030;
+    }
+
+    #input-bar .prompt {
+      color: #9ece6a;
+      margin-right: 8px;
+      font-size: 14px;
+      user-select: none;
+    }
+
+    #input-bar input {
+      flex: 1;
+      background: transparent;
+      border: none;
+      outline: none;
+      color: #a9b1d6;
+      font-family: inherit;
+      font-size: 14px;
+    }
+
+    #examples {
+      padding: 8px 24px;
+      border-top: 1px solid #33384d;
+      background: #1a1b26;
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    #examples button {
+      background: #292e42;
+      border: 1px solid #33384d;
+      color: #7aa2f7;
+      padding: 4px 12px;
+      border-radius: 4px;
+      font-family: inherit;
+      font-size: 12px;
+      cursor: pointer;
+    }
+
+    #examples button:hover {
+      background: #33384d;
+    }
+  &lt;/style&gt;
+&lt;/head&gt;
+&lt;body&gt;
+  &lt;header&gt;
+    &lt;h1&gt;localfirst-demo&lt;/h1&gt;
+    &lt;p&gt;Python CLI tools running in the browser via Pyodide/WASM&lt;/p&gt;
+  &lt;/header&gt;
+  &lt;div id=&#34;status-bar&#34;&gt;Initializing...&lt;/div&gt;
+  &lt;div id=&#34;output&#34;&gt;&lt;/div&gt;
+  &lt;div id=&#34;examples&#34;&gt;
+    &lt;button data-cmd=&#34;hello&#34;&gt;hello&lt;/button&gt;
+    &lt;button data-cmd=&#34;sysinfo&#34;&gt;sysinfo&lt;/button&gt;
+    &lt;button data-cmd=&#34;fetch https://httpbin.org/get&#34;&gt;fetch url&lt;/button&gt;
+    &lt;button data-cmd=&#34;files&#34;&gt;files&lt;/button&gt;
+  &lt;/div&gt;
+  &lt;div id=&#34;input-bar&#34;&gt;
+    &lt;span class=&#34;prompt&#34;&gt;$&lt;/span&gt;
+    &lt;input id=&#34;cmd-input&#34; type=&#34;text&#34; placeholder=&#34;Type a command... (e.g. hello --name World)&#34; autofocus /&gt;
+  &lt;/div&gt;
+  &lt;script type=&#34;module&#34; src=&#34;/src/main.ts&#34;&gt;&lt;/script&gt;
+&lt;/body&gt;
+&lt;/html&gt;
+</pre></div><button class="expand-btn">Show more</button></div>
+</div></div></div>
+<div class="message tool-reply" id="msg-2026-03-27T16-57-33-828Z"><div class="message-header"><span class="role-label">Tool reply</span><a href="#msg-2026-03-27T16-57-33-828Z" class="timestamp-link"><time datetime="2026-03-27T16:57:33.828Z" data-timestamp="2026-03-27T16:57:33.828Z">2026-03-27T16:57:33.828Z</time></a></div><div class="message-content"><div class="tool-result"><div class="truncatable"><div class="truncatable-content"><pre>File created successfully at: /home/david/projects/stirlingbridge/localfirst-demo/package.json</pre></div><button class="expand-btn">Show more</button></div></div></div></div>
+<div class="message tool-reply" id="msg-2026-03-27T16-57-33-862Z"><div class="message-header"><span class="role-label">Tool reply</span><a href="#msg-2026-03-27T16-57-33-862Z" class="timestamp-link"><time datetime="2026-03-27T16:57:33.862Z" data-timestamp="2026-03-27T16:57:33.862Z">2026-03-27T16:57:33.862Z</time></a></div><div class="message-content"><div class="tool-result"><div class="truncatable"><div class="truncatable-content"><pre>File created successfully at: /home/david/projects/stirlingbridge/localfirst-demo/tsconfig.json</pre></div><button class="expand-btn">Show more</button></div></div></div></div>
+<div class="message tool-reply" id="msg-2026-03-27T16-57-33-891Z"><div class="message-header"><span class="role-label">Tool reply</span><a href="#msg-2026-03-27T16-57-33-891Z" class="timestamp-link"><time datetime="2026-03-27T16:57:33.891Z" data-timestamp="2026-03-27T16:57:33.891Z">2026-03-27T16:57:33.891Z</time></a></div><div class="message-content"><div class="tool-result"><div class="truncatable"><div class="truncatable-content"><pre>File created successfully at: /home/david/projects/stirlingbridge/localfirst-demo/vite.config.ts</pre></div><button class="expand-btn">Show more</button></div></div></div></div>
+<div class="message tool-reply" id="msg-2026-03-27T16-57-33-922Z"><div class="message-header"><span class="role-label">Tool reply</span><a href="#msg-2026-03-27T16-57-33-922Z" class="timestamp-link"><time datetime="2026-03-27T16:57:33.922Z" data-timestamp="2026-03-27T16:57:33.922Z">2026-03-27T16:57:33.922Z</time></a></div><div class="message-content"><div class="tool-result"><div class="truncatable"><div class="truncatable-content"><pre>File created successfully at: /home/david/projects/stirlingbridge/localfirst-demo/index.html</pre></div><button class="expand-btn">Show more</button></div></div></div></div>
+<div class="message assistant" id="msg-2026-03-27T16-57-38-889Z"><div class="message-header"><span class="role-label">Assistant</span><a href="#msg-2026-03-27T16-57-38-889Z" class="timestamp-link"><time datetime="2026-03-27T16:57:38.889Z" data-timestamp="2026-03-27T16:57:38.889Z">2026-03-27T16:57:38.889Z</time></a></div><div class="message-content">
+<div class="tool-use" data-tool-id="toolu_01YaNPrETrVsue4qKoAg31M4"><div class="tool-header"><span class="tool-icon">⚙</span> TaskUpdate</div><div class="truncatable"><div class="truncatable-content"><pre class="json">{
+  &#34;taskId&#34;: &#34;1&#34;,
+  &#34;status&#34;: &#34;completed&#34;
+}</pre></div><button class="expand-btn">Show more</button></div></div></div></div>
+<div class="message assistant" id="msg-2026-03-27T16-57-38-891Z"><div class="message-header"><span class="role-label">Assistant</span><a href="#msg-2026-03-27T16-57-38-891Z" class="timestamp-link"><time datetime="2026-03-27T16:57:38.891Z" data-timestamp="2026-03-27T16:57:38.891Z">2026-03-27T16:57:38.891Z</time></a></div><div class="message-content">
+<div class="tool-use" data-tool-id="toolu_016ZKbtrhAgggmuTDG7LHtKB"><div class="tool-header"><span class="tool-icon">⚙</span> TaskUpdate</div><div class="truncatable"><div class="truncatable-content"><pre class="json">{
+  &#34;taskId&#34;: &#34;2&#34;,
+  &#34;status&#34;: &#34;in_progress&#34;
+}</pre></div><button class="expand-btn">Show more</button></div></div></div></div>
+<div class="message tool-reply" id="msg-2026-03-27T16-57-38-911Z"><div class="message-header"><span class="role-label">Tool reply</span><a href="#msg-2026-03-27T16-57-38-911Z" class="timestamp-link"><time datetime="2026-03-27T16:57:38.911Z" data-timestamp="2026-03-27T16:57:38.911Z">2026-03-27T16:57:38.911Z</time></a></div><div class="message-content"><div class="tool-result"><div class="truncatable"><div class="truncatable-content"><pre>Updated task #1 status</pre></div><button class="expand-btn">Show more</button></div></div></div></div>
+<div class="message tool-reply" id="msg-2026-03-27T16-57-38-912Z"><div class="message-header"><span class="role-label">Tool reply</span><a href="#msg-2026-03-27T16-57-38-912Z" class="timestamp-link"><time datetime="2026-03-27T16:57:38.912Z" data-timestamp="2026-03-27T16:57:38.912Z">2026-03-27T16:57:38.912Z</time></a></div><div class="message-content"><div class="tool-result"><div class="truncatable"><div class="truncatable-content"><pre>Updated task #2 status</pre></div><button class="expand-btn">Show more</button></div></div></div></div>
+<div class="message assistant" id="msg-2026-03-27T16-57-42-552Z"><div class="message-header"><span class="role-label">Assistant</span><a href="#msg-2026-03-27T16-57-42-552Z" class="timestamp-link"><time datetime="2026-03-27T16:57:42.552Z" data-timestamp="2026-03-27T16:57:42.552Z">2026-03-27T16:57:42.552Z</time></a></div><div class="message-content">
+<div class="tool-use bash-tool" data-tool-id="toolu_01ESokamvbNrL9T58uFQsMKF">
+<div class="tool-header"><span class="tool-icon">$</span> Bash</div>
+<div class="tool-description">Create src directory</div><div class="truncatable"><div class="truncatable-content"><pre class="bash-command">mkdir -p /home/david/projects/stirlingbridge/localfirst-demo/src</pre></div><button class="expand-btn">Show more</button></div>
+</div></div></div>
+<div class="message tool-reply" id="msg-2026-03-27T16-57-42-647Z"><div class="message-header"><span class="role-label">Tool reply</span><a href="#msg-2026-03-27T16-57-42-647Z" class="timestamp-link"><time datetime="2026-03-27T16:57:42.647Z" data-timestamp="2026-03-27T16:57:42.647Z">2026-03-27T16:57:42.647Z</time></a></div><div class="message-content"><div class="tool-result"><div class="truncatable"><div class="truncatable-content"><pre>(Bash completed with no output)</pre></div><button class="expand-btn">Show more</button></div></div></div></div>
+<div class="message assistant" id="msg-2026-03-27T16-57-51-696Z"><div class="message-header"><span class="role-label">Assistant</span><a href="#msg-2026-03-27T16-57-51-696Z" class="timestamp-link"><time datetime="2026-03-27T16:57:51.696Z" data-timestamp="2026-03-27T16:57:51.696Z">2026-03-27T16:57:51.696Z</time></a></div><div class="message-content"><div class="file-tool write-tool" data-tool-id="toolu_01X3BJdB11evSTJj23q1QhLj">
+<div class="file-tool-header write-header"><span class="file-tool-icon">📝</span> Write <span class="file-tool-path">types.ts</span></div>
+<div class="file-tool-fullpath">/home/david/projects/stirlingbridge/localfirst-demo/src/types.ts</div>
+<div class="truncatable"><div class="truncatable-content"><pre class="file-content">// --- Public API types ---
+
+export interface ExecOptions {
+  stdin?: string;
+  env?: Record&lt;string, string&gt;;
+  cwd?: string;
+}
+
+export interface ProcessResult {
+  stdout: string;
+  stderr: string;
+  exitCode: number;
+}
+
+// --- Worker message protocol ---
+
+export type WorkerRequest =
+  | { id: string; type: &#34;init&#34; }
+  | { id: string; type: &#34;exec&#34;; scriptPath: string; args: string[] }
+  | { id: string; type: &#34;install&#34;; packages: string[] }
+  | { id: string; type: &#34;write-file&#34;; path: string; content: string }
+  | { id: string; type: &#34;read-file&#34;; path: string };
+
+export type WorkerResponse =
+  | { id: string; type: &#34;ready&#34; }
+  | { id: string; type: &#34;exec-result&#34;; stdout: string; stderr: string; exitCode: number }
+  | { id: string; type: &#34;install-result&#34;; success: boolean; error?: string }
+  | { id: string; type: &#34;write-file-result&#34;; success: boolean; error?: string }
+  | { id: string; type: &#34;read-file-result&#34;; success: boolean; content?: string; error?: string }
+  | { id: string; type: &#34;error&#34;; error: string };
+
+// --- Command registry ---
+
+export interface CommandDef {
+  /** Python source code of the CLI tool */
+  source: string;
+  /** Optional packages to install before first run */
+  dependencies?: string[];
+}
+</pre></div><button class="expand-btn">Show more</button></div>
+</div></div></div>
+<div class="message tool-reply" id="msg-2026-03-27T16-57-51-726Z"><div class="message-header"><span class="role-label">Tool reply</span><a href="#msg-2026-03-27T16-57-51-726Z" class="timestamp-link"><time datetime="2026-03-27T16:57:51.726Z" data-timestamp="2026-03-27T16:57:51.726Z">2026-03-27T16:57:51.726Z</time></a></div><div class="message-content"><div class="tool-result"><div class="truncatable"><div class="truncatable-content"><pre>File created successfully at: /home/david/projects/stirlingbridge/localfirst-demo/src/types.ts</pre></div><button class="expand-btn">Show more</button></div></div></div></div>
+<div class="message assistant" id="msg-2026-03-27T16-57-55-268Z"><div class="message-header"><span class="role-label">Assistant</span><a href="#msg-2026-03-27T16-57-55-268Z" class="timestamp-link"><time datetime="2026-03-27T16:57:55.268Z" data-timestamp="2026-03-27T16:57:55.268Z">2026-03-27T16:57:55.268Z</time></a></div><div class="message-content">
+<div class="tool-use" data-tool-id="toolu_01UpcFk3wU32XveyjzK9Pbj4"><div class="tool-header"><span class="tool-icon">⚙</span> TaskUpdate</div><div class="truncatable"><div class="truncatable-content"><pre class="json">{
+  &#34;taskId&#34;: &#34;2&#34;,
+  &#34;status&#34;: &#34;completed&#34;
+}</pre></div><button class="expand-btn">Show more</button></div></div></div></div>
+<div class="message tool-reply" id="msg-2026-03-27T16-57-55-295Z"><div class="message-header"><span class="role-label">Tool reply</span><a href="#msg-2026-03-27T16-57-55-295Z" class="timestamp-link"><time datetime="2026-03-27T16:57:55.295Z" data-timestamp="2026-03-27T16:57:55.295Z">2026-03-27T16:57:55.295Z</time></a></div><div class="message-content"><div class="tool-result"><div class="truncatable"><div class="truncatable-content"><pre>Updated task #2 status</pre></div><button class="expand-btn">Show more</button></div></div></div></div>
+<div class="message assistant" id="msg-2026-03-27T16-57-55-349Z"><div class="message-header"><span class="role-label">Assistant</span><a href="#msg-2026-03-27T16-57-55-349Z" class="timestamp-link"><time datetime="2026-03-27T16:57:55.349Z" data-timestamp="2026-03-27T16:57:55.349Z">2026-03-27T16:57:55.349Z</time></a></div><div class="message-content">
+<div class="tool-use" data-tool-id="toolu_01EaM9VeHwyVpnf7LiTMWZim"><div class="tool-header"><span class="tool-icon">⚙</span> TaskUpdate</div><div class="truncatable"><div class="truncatable-content"><pre class="json">{
+  &#34;taskId&#34;: &#34;3&#34;,
+  &#34;status&#34;: &#34;in_progress&#34;
+}</pre></div><button class="expand-btn">Show more</button></div></div></div></div>
+<div class="message tool-reply" id="msg-2026-03-27T16-57-55-391Z"><div class="message-header"><span class="role-label">Tool reply</span><a href="#msg-2026-03-27T16-57-55-391Z" class="timestamp-link"><time datetime="2026-03-27T16:57:55.391Z" data-timestamp="2026-03-27T16:57:55.391Z">2026-03-27T16:57:55.391Z</time></a></div><div class="message-content"><div class="tool-result"><div class="truncatable"><div class="truncatable-content"><pre>Updated task #3 status</pre></div><button class="expand-btn">Show more</button></div></div></div></div>
+<div class="message assistant" id="msg-2026-03-27T16-58-21-543Z"><div class="message-header"><span class="role-label">Assistant</span><a href="#msg-2026-03-27T16-58-21-543Z" class="timestamp-link"><time datetime="2026-03-27T16:58:21.543Z" data-timestamp="2026-03-27T16:58:21.543Z">2026-03-27T16:58:21.543Z</time></a></div><div class="message-content"><div class="file-tool write-tool" data-tool-id="toolu_01BLyr49YTVCkDNgWsc6D2HV">
+<div class="file-tool-header write-header"><span class="file-tool-icon">📝</span> Write <span class="file-tool-path">worker.ts</span></div>
+<div class="file-tool-fullpath">/home/david/projects/stirlingbridge/localfirst-demo/src/worker.ts</div>
+<div class="truncatable"><div class="truncatable-content"><pre class="file-content">// Pyodide Web Worker
+// Runs in a dedicated worker thread to keep the UI responsive.
+
+declare const self: DedicatedWorkerGlobalScope;
+
+// Pyodide types (minimal, loaded dynamically from CDN)
+interface PyodideInterface {
+  runPythonAsync(code: string): Promise&lt;unknown&gt;;
+  FS: {
+    writeFile(path: string, data: string): void;
+    readFile(path: string, opts: { encoding: string }): string;
+    mkdir(path: string): void;
+    analyzePath(path: string): { exists: boolean };
+  };
+}
+
+const PYODIDE_CDN = &#34;https://cdn.jsdelivr.net/pyodide/v0.26.4/full&#34;;
+
+let pyodide: PyodideInterface | null = null;
+
+// --- Bootstrap Python code ---
+// Sets up the run_command() helper that executes a script with captured I/O.
+
+const BOOTSTRAP_PYTHON = `
+import sys, io, runpy, os, json
+
+def _run_command(script_path, args_json):
+    &#34;&#34;&#34;Run a Python script as if it were a CLI command.
+
+    Sets sys.argv, captures stdout/stderr, returns JSON result.
+    &#34;&#34;&#34;
+    args = json.loads(args_json)
+
+    old_argv = sys.argv[:]
+    old_stdout = sys.stdout
+    old_stderr = sys.stderr
+
+    stdout_buf = io.StringIO()
+    stderr_buf = io.StringIO()
+
+    sys.argv = [script_path] + args
+    sys.stdout = stdout_buf
+    sys.stderr = stderr_buf
+
+    exit_code = 0
+    try:
+        # run_path handles __name__ == &#39;__main__&#39; correctly
+        runpy.run_path(script_path, run_name=&#39;__main__&#39;)
+    except SystemExit as e:
+        if e.code is None:
+            exit_code = 0
+        elif isinstance(e.code, int):
+            exit_code = e.code
+        else:
+            exit_code = 1
+    except Exception:
+        import traceback
+        traceback.print_exc(file=stderr_buf)
+        exit_code = 1
+    finally:
+        sys.argv = old_argv
+        sys.stdout = old_stdout
+        sys.stderr = old_stderr
+
+    return json.dumps({
+        &#34;stdout&#34;: stdout_buf.getvalue(),
+        &#34;stderr&#34;: stderr_buf.getvalue(),
+        &#34;exitCode&#34;: exit_code,
+    })
+`;
+
+const SETUP_HTTP_PATCHING = `
+import micropip
+await micropip.install(&#34;pyodide-http&#34;)
+import pyodide_http
+pyodide_http.patch_all()
+`;
+
+// --- Message handling ---
+
+async function initPyodide(): Promise&lt;void&gt; {
+  // Dynamic import from CDN
+  const mod = await import(
+    /* @vite-ignore */
+    `${PYODIDE_CDN}/pyodide.mjs`
+  );
+  pyodide = await mod.loadPyodide({
+    indexURL: PYODIDE_CDN,
+  });
+
+  // Create /tools directory for CLI scripts
+  pyodide!.FS.mkdir(&#34;/tools&#34;);
+
+  // Bootstrap the command runner
+  await pyodide!.runPythonAsync(BOOTSTRAP_PYTHON);
+
+  // Set up HTTP patching so requests/urllib work
+  try {
+    await pyodide!.runPythonAsync(SETUP_HTTP_PATCHING);
+  } catch (e) {
+    // Non-fatal: HTTP patching is nice-to-have
+    console.warn(&#34;Could not set up HTTP patching:&#34;, e);
+  }
+}
+
+async function handleExec(
+  scriptPath: string,
+  args: string[]
+): Promise&lt;{ stdout: string; stderr: string; exitCode: number }&gt; {
+  const argsJson = JSON.stringify(args);
+  const resultJson = (await pyodide!.runPythonAsync(
+    `_run_command(${JSON.stringify(scriptPath)}, ${JSON.stringify(argsJson)})`
+  )) as string;
+  return JSON.parse(resultJson);
+}
+
+async function handleInstall(packages: string[]): Promise&lt;void&gt; {
+  const pkgList = packages.map((p) =&gt; JSON.stringify(p)).join(&#34;, &#34;);
+  await pyodide!.runPythonAsync(`
+import micropip
+await micropip.install([${pkgList}])
+`);
+}
+
+function handleWriteFile(path: string, content: string): void {
+  // Ensure parent directories exist
+  const parts = path.split(&#34;/&#34;).filter(Boolean);
+  let current = &#34;&#34;;
+  for (let i = 0; i &lt; parts.length - 1; i++) {
+    current += &#34;/&#34; + parts[i];
+    if (!pyodide!.FS.analyzePath(current).exists) {
+      pyodide!.FS.mkdir(current);
+    }
+  }
+  pyodide!.FS.writeFile(path, content);
+}
+
+function handleReadFile(path: string): string {
+  return pyodide!.FS.readFile(path, { encoding: &#34;utf8&#34; });
+}
+
+// --- Worker message loop ---
+
+self.onmessage = async (event: MessageEvent) =&gt; {
+  const msg = event.data;
+  const id = msg.id;
+
+  try {
+    switch (msg.type) {
+      case &#34;init&#34;: {
+        await initPyodide();
+        self.postMessage({ id, type: &#34;ready&#34; });
+        break;
+      }
+
+      case &#34;exec&#34;: {
+        const result = await handleExec(msg.scriptPath, msg.args);
+        self.postMessage({
+          id,
+          type: &#34;exec-result&#34;,
+          stdout: result.stdout,
+          stderr: result.stderr,
+          exitCode: result.exitCode,
+        });
+        break;
+      }
+
+      case &#34;install&#34;: {
+        await handleInstall(msg.packages);
+        self.postMessage({ id, type: &#34;install-result&#34;, success: true });
+        break;
+      }
+
+      case &#34;write-file&#34;: {
+        handleWriteFile(msg.path, msg.content);
+        self.postMessage({ id, type: &#34;write-file-result&#34;, success: true });
+        break;
+      }
+
+      case &#34;read-file&#34;: {
+        const content = handleReadFile(msg.path);
+        self.postMessage({
+          id,
+          type: &#34;read-file-result&#34;,
+          success: true,
+          content,
+        });
+        break;
+      }
+
+      default:
+        self.postMessage({
+          id,
+          type: &#34;error&#34;,
+          error: `Unknown message type: ${msg.type}`,
+        });
+    }
+  } catch (err: unknown) {
+    const message = err instanceof Error ? err.message : String(err);
+    self.postMessage({ id, type: &#34;error&#34;, error: message });
+  }
+};
+</pre></div><button class="expand-btn">Show more</button></div>
+</div></div></div>
+<div class="message tool-reply" id="msg-2026-03-27T16-58-21-584Z"><div class="message-header"><span class="role-label">Tool reply</span><a href="#msg-2026-03-27T16-58-21-584Z" class="timestamp-link"><time datetime="2026-03-27T16:58:21.584Z" data-timestamp="2026-03-27T16:58:21.584Z">2026-03-27T16:58:21.584Z</time></a></div><div class="message-content"><div class="tool-result"><div class="truncatable"><div class="truncatable-content"><pre>File created successfully at: /home/david/projects/stirlingbridge/localfirst-demo/src/worker.ts</pre></div><button class="expand-btn">Show more</button></div></div></div></div>
+<div class="message assistant" id="msg-2026-03-27T16-58-25-220Z"><div class="message-header"><span class="role-label">Assistant</span><a href="#msg-2026-03-27T16-58-25-220Z" class="timestamp-link"><time datetime="2026-03-27T16:58:25.220Z" data-timestamp="2026-03-27T16:58:25.220Z">2026-03-27T16:58:25.220Z</time></a></div><div class="message-content">
+<div class="tool-use" data-tool-id="toolu_0179t9Qd4SPg4zDNRCEB6DE6"><div class="tool-header"><span class="tool-icon">⚙</span> TaskUpdate</div><div class="truncatable"><div class="truncatable-content"><pre class="json">{
+  &#34;taskId&#34;: &#34;3&#34;,
+  &#34;status&#34;: &#34;completed&#34;
+}</pre></div><button class="expand-btn">Show more</button></div></div></div></div>
+<div class="message tool-reply" id="msg-2026-03-27T16-58-25-229Z"><div class="message-header"><span class="role-label">Tool reply</span><a href="#msg-2026-03-27T16-58-25-229Z" class="timestamp-link"><time datetime="2026-03-27T16:58:25.229Z" data-timestamp="2026-03-27T16:58:25.229Z">2026-03-27T16:58:25.229Z</time></a></div><div class="message-content"><div class="tool-result"><div class="truncatable"><div class="truncatable-content"><pre>Updated task #3 status</pre></div><button class="expand-btn">Show more</button></div></div></div></div>
+<div class="message assistant" id="msg-2026-03-27T16-58-25-276Z"><div class="message-header"><span class="role-label">Assistant</span><a href="#msg-2026-03-27T16-58-25-276Z" class="timestamp-link"><time datetime="2026-03-27T16:58:25.276Z" data-timestamp="2026-03-27T16:58:25.276Z">2026-03-27T16:58:25.276Z</time></a></div><div class="message-content">
+<div class="tool-use" data-tool-id="toolu_016DWniqWU8qiiZEheSHkYtb"><div class="tool-header"><span class="tool-icon">⚙</span> TaskUpdate</div><div class="truncatable"><div class="truncatable-content"><pre class="json">{
+  &#34;taskId&#34;: &#34;4&#34;,
+  &#34;status&#34;: &#34;in_progress&#34;
+}</pre></div><button class="expand-btn">Show more</button></div></div></div></div>
+<div class="message tool-reply" id="msg-2026-03-27T16-58-25-282Z"><div class="message-header"><span class="role-label">Tool reply</span><a href="#msg-2026-03-27T16-58-25-282Z" class="timestamp-link"><time datetime="2026-03-27T16:58:25.282Z" data-timestamp="2026-03-27T16:58:25.282Z">2026-03-27T16:58:25.282Z</time></a></div><div class="message-content"><div class="tool-result"><div class="truncatable"><div class="truncatable-content"><pre>Updated task #4 status</pre></div><button class="expand-btn">Show more</button></div></div></div></div>
+<div class="message assistant" id="msg-2026-03-27T16-58-47-169Z"><div class="message-header"><span class="role-label">Assistant</span><a href="#msg-2026-03-27T16-58-47-169Z" class="timestamp-link"><time datetime="2026-03-27T16:58:47.169Z" data-timestamp="2026-03-27T16:58:47.169Z">2026-03-27T16:58:47.169Z</time></a></div><div class="message-content"><div class="file-tool write-tool" data-tool-id="toolu_01QhgyUrUXZUr1q6XgFQyBw6">
+<div class="file-tool-header write-header"><span class="file-tool-icon">📝</span> Write <span class="file-tool-path">runtime.ts</span></div>
+<div class="file-tool-fullpath">/home/david/projects/stirlingbridge/localfirst-demo/src/runtime.ts</div>
+<div class="truncatable"><div class="truncatable-content"><pre class="file-content">import type {
+  CommandDef,
+  ExecOptions,
+  ProcessResult,
+  WorkerRequest,
+  WorkerResponse,
+} from &#34;./types.js&#34;;
+
+type PendingRequest = {
+  resolve: (msg: WorkerResponse) =&gt; void;
+  reject: (err: Error) =&gt; void;
+};
+
+let nextId = 0;
+function genId(): string {
+  return `req-${++nextId}`;
+}
+
+/**
+ * BrowserRuntime provides an exec/spawn-like API backed by a
+ * Pyodide Web Worker. Python CLI tools run in-browser via WASM.
+ */
+export class BrowserRuntime {
+  private worker: Worker;
+  private pending = new Map&lt;string, PendingRequest&gt;();
+  private commands = new Map&lt;string, CommandDef&gt;();
+  private installedDeps = new Set&lt;string&gt;();
+  private ready = false;
+
+  constructor() {
+    this.worker = new Worker(
+      new URL(&#34;./worker.ts&#34;, import.meta.url),
+      { type: &#34;module&#34; }
+    );
+    this.worker.onmessage = (event: MessageEvent&lt;WorkerResponse&gt;) =&gt; {
+      const msg = event.data;
+      const pending = this.pending.get(msg.id);
+      if (pending) {
+        this.pending.delete(msg.id);
+        if (msg.type === &#34;error&#34;) {
+          pending.reject(new Error(msg.error));
+        } else {
+          pending.resolve(msg);
+        }
+      }
+    };
+  }
+
+  /** Send a request to the worker and await the response. */
+  private send(req: Omit&lt;WorkerRequest, &#34;id&#34;&gt;): Promise&lt;WorkerResponse&gt; {
+    const id = genId();
+    return new Promise((resolve, reject) =&gt; {
+      this.pending.set(id, { resolve, reject });
+      this.worker.postMessage({ ...req, id });
+    });
+  }
+
+  /** Initialize the Pyodide runtime. Must be called before exec(). */
+  async init(): Promise&lt;void&gt; {
+    const resp = await this.send({ type: &#34;init&#34; });
+    if (resp.type !== &#34;ready&#34;) {
+      throw new Error(`Unexpected init response: ${resp.type}`);
+    }
+    this.ready = true;
+  }
+
+  /**
+   * Register a command that can be invoked by name.
+   * The source is written to the virtual filesystem at /tools/&lt;name&gt;.py.
+   */
+  async registerCommand(name: string, def: CommandDef): Promise&lt;void&gt; {
+    this.commands.set(name, def);
+    const path = `/tools/${name}.py`;
+    await this.send({ type: &#34;write-file&#34;, path, content: def.source });
+  }
+
+  /**
+   * Fetch a Python script from a URL (e.g. GitHub raw) and register it.
+   */
+  async fetchAndRegister(
+    name: string,
+    url: string,
+    dependencies?: string[]
+  ): Promise&lt;void&gt; {
+    const resp = await fetch(url);
+    if (!resp.ok) {
+      throw new Error(`Failed to fetch ${url}: ${resp.status} ${resp.statusText}`);
+    }
+    const source = await resp.text();
+    await this.registerCommand(name, { source, dependencies });
+  }
+
+  /** Install Python packages via micropip. */
+  async installPackages(packages: string[]): Promise&lt;void&gt; {
+    // Filter out already-installed packages
+    const toInstall = packages.filter((p) =&gt; !this.installedDeps.has(p));
+    if (toInstall.length === 0) return;
+
+    const resp = await this.send({ type: &#34;install&#34;, packages: toInstall });
+    if (resp.type === &#34;install-result&#34; &amp;&amp; resp.success) {
+      toInstall.forEach((p) =&gt; this.installedDeps.add(p));
+    }
+  }
+
+  /** Write a file to the in-memory virtual filesystem. */
+  async writeFile(path: string, content: string): Promise&lt;void&gt; {
+    await this.send({ type: &#34;write-file&#34;, path, content });
+  }
+
+  /** Read a file from the in-memory virtual filesystem. */
+  async readFile(path: string): Promise&lt;string&gt; {
+    const resp = await this.send({ type: &#34;read-file&#34;, path });
+    if (resp.type === &#34;read-file-result&#34; &amp;&amp; resp.success) {
+      return resp.content!;
+    }
+    throw new Error(&#34;Failed to read file&#34;);
+  }
+
+  /**
+   * Execute a registered command, similar to child_process.exec().
+   *
+   * @param command - Name of a registered command, or a path to a .py file on the virtual FS
+   * @param args - CLI arguments to pass to the script
+   * @param options - ExecOptions (stdin, env, cwd) — partially supported
+   * @returns ProcessResult with stdout, stderr, exitCode
+   */
+  async exec(
+    command: string,
+    args: string[] = [],
+    _options?: ExecOptions
+  ): Promise&lt;ProcessResult&gt; {
+    if (!this.ready) {
+      throw new Error(&#34;Runtime not initialized. Call init() first.&#34;);
+    }
+
+    let scriptPath: string;
+
+    // If it looks like a path, use it directly
+    if (command.startsWith(&#34;/&#34;) || command.endsWith(&#34;.py&#34;)) {
+      scriptPath = command;
+    } else {
+      // Look up in command registry
+      const def = this.commands.get(command);
+      if (!def) {
+        return {
+          stdout: &#34;&#34;,
+          stderr: `command not found: ${command}\n`,
+          exitCode: 127,
+        };
+      }
+
+      // Install dependencies if needed
+      if (def.dependencies &amp;&amp; def.dependencies.length &gt; 0) {
+        await this.installPackages(def.dependencies);
+      }
+
+      scriptPath = `/tools/${command}.py`;
+    }
+
+    const resp = await this.send({ type: &#34;exec&#34;, scriptPath, args });
+    if (resp.type === &#34;exec-result&#34;) {
+      return {
+        stdout: resp.stdout,
+        stderr: resp.stderr,
+        exitCode: resp.exitCode,
+      };
+    }
+
+    throw new Error(`Unexpected exec response: ${resp.type}`);
+  }
+}
+</pre></div><button class="expand-btn">Show more</button></div>
+</div></div></div>
+<div class="message tool-reply" id="msg-2026-03-27T16-58-47-219Z"><div class="message-header"><span class="role-label">Tool reply</span><a href="#msg-2026-03-27T16-58-47-219Z" class="timestamp-link"><time datetime="2026-03-27T16:58:47.219Z" data-timestamp="2026-03-27T16:58:47.219Z">2026-03-27T16:58:47.219Z</time></a></div><div class="message-content"><div class="tool-result"><div class="truncatable"><div class="truncatable-content"><pre>File created successfully at: /home/david/projects/stirlingbridge/localfirst-demo/src/runtime.ts</pre></div><button class="expand-btn">Show more</button></div></div></div></div>
+<div class="message assistant" id="msg-2026-03-27T16-58-50-924Z"><div class="message-header"><span class="role-label">Assistant</span><a href="#msg-2026-03-27T16-58-50-924Z" class="timestamp-link"><time datetime="2026-03-27T16:58:50.924Z" data-timestamp="2026-03-27T16:58:50.924Z">2026-03-27T16:58:50.924Z</time></a></div><div class="message-content">
+<div class="tool-use" data-tool-id="toolu_01B1ZUTpxArK3sGjjS8ZX6Xt"><div class="tool-header"><span class="tool-icon">⚙</span> TaskUpdate</div><div class="truncatable"><div class="truncatable-content"><pre class="json">{
+  &#34;taskId&#34;: &#34;4&#34;,
+  &#34;status&#34;: &#34;completed&#34;
+}</pre></div><button class="expand-btn">Show more</button></div></div></div></div>
+<div class="message tool-reply" id="msg-2026-03-27T16-58-50-947Z"><div class="message-header"><span class="role-label">Tool reply</span><a href="#msg-2026-03-27T16-58-50-947Z" class="timestamp-link"><time datetime="2026-03-27T16:58:50.947Z" data-timestamp="2026-03-27T16:58:50.947Z">2026-03-27T16:58:50.947Z</time></a></div><div class="message-content"><div class="tool-result"><div class="truncatable"><div class="truncatable-content"><pre>Updated task #4 status</pre></div><button class="expand-btn">Show more</button></div></div></div></div>
+<div class="message assistant" id="msg-2026-03-27T16-58-50-948Z"><div class="message-header"><span class="role-label">Assistant</span><a href="#msg-2026-03-27T16-58-50-948Z" class="timestamp-link"><time datetime="2026-03-27T16:58:50.948Z" data-timestamp="2026-03-27T16:58:50.948Z">2026-03-27T16:58:50.948Z</time></a></div><div class="message-content">
+<div class="tool-use" data-tool-id="toolu_01DgLYLJHAJaXCGMbPZMzXEp"><div class="tool-header"><span class="tool-icon">⚙</span> TaskUpdate</div><div class="truncatable"><div class="truncatable-content"><pre class="json">{
+  &#34;taskId&#34;: &#34;5&#34;,
+  &#34;status&#34;: &#34;in_progress&#34;
+}</pre></div><button class="expand-btn">Show more</button></div></div></div></div>
+<div class="message tool-reply" id="msg-2026-03-27T16-58-50-964Z"><div class="message-header"><span class="role-label">Tool reply</span><a href="#msg-2026-03-27T16-58-50-964Z" class="timestamp-link"><time datetime="2026-03-27T16:58:50.964Z" data-timestamp="2026-03-27T16:58:50.964Z">2026-03-27T16:58:50.964Z</time></a></div><div class="message-content"><div class="tool-result"><div class="truncatable"><div class="truncatable-content"><pre>Updated task #5 status</pre></div><button class="expand-btn">Show more</button></div></div></div></div>
+<div class="message assistant" id="msg-2026-03-27T16-59-07-290Z"><div class="message-header"><span class="role-label">Assistant</span><a href="#msg-2026-03-27T16-59-07-290Z" class="timestamp-link"><time datetime="2026-03-27T16:59:07.290Z" data-timestamp="2026-03-27T16:59:07.290Z">2026-03-27T16:59:07.290Z</time></a></div><div class="message-content"><div class="file-tool write-tool" data-tool-id="toolu_019aX7dA9ZDGj75x6ZFNaLEy">
+<div class="file-tool-header write-header"><span class="file-tool-icon">📝</span> Write <span class="file-tool-path">commands.ts</span></div>
+<div class="file-tool-fullpath">/home/david/projects/stirlingbridge/localfirst-demo/src/commands.ts</div>
+<div class="truncatable"><div class="truncatable-content"><pre class="file-content">import type { CommandDef } from &#34;./types.js&#34;;
+
+/**
+ * Built-in demo commands that showcase the framework&#39;s capabilities.
+ */
+
+export const HELLO: CommandDef = {
+  source: `\
+import argparse
+import sys
+
+parser = argparse.ArgumentParser(description=&#34;Say hello&#34;)
+parser.add_argument(&#34;--name&#34;, default=&#34;World&#34;, help=&#34;Who to greet&#34;)
+parser.add_argument(&#34;--shout&#34;, action=&#34;store_true&#34;, help=&#34;SHOUT the greeting&#34;)
+
+args = parser.parse_args()
+greeting = f&#34;Hello, {args.name}!&#34;
+if args.shout:
+    greeting = greeting.upper()
+print(greeting)
+`,
+};
+
+export const SYSINFO: CommandDef = {
+  source: `\
+import sys
+import platform
+import os
+
+print(f&#34;Python version:  {sys.version}&#34;)
+print(f&#34;Platform:        {platform.platform()}&#34;)
+print(f&#34;Machine:         {platform.machine()}&#34;)
+print(f&#34;Working dir:     {os.getcwd()}&#34;)
+print(f&#34;Executable:      {sys.executable or &#39;(wasm)&#39;}&#34;)
+print()
+print(&#34;Loaded modules (top 20):&#34;)
+mods = sorted(sys.modules.keys())[:20]
+for m in mods:
+    print(f&#34;  {m}&#34;)
+print(f&#34;  ... and {len(sys.modules) - 20} more&#34;)
+`,
+};
+
+export const FETCH: CommandDef = {
+  source: `\
+import argparse
+import json
+import sys
+
+parser = argparse.ArgumentParser(description=&#34;Fetch a URL and print the response&#34;)
+parser.add_argument(&#34;url&#34;, help=&#34;URL to fetch&#34;)
+parser.add_argument(&#34;--headers&#34;, action=&#34;store_true&#34;, help=&#34;Print response headers&#34;)
+
+args = parser.parse_args()
+
+try:
+    from urllib.request import urlopen, Request
+    req = Request(args.url, headers={&#34;User-Agent&#34;: &#34;localfirst-demo/0.1&#34;})
+    with urlopen(req) as resp:
+        if args.headers:
+            for key, val in resp.headers.items():
+                print(f&#34;{key}: {val}&#34;)
+            print()
+        body = resp.read().decode(&#34;utf-8&#34;)
+        # Try to pretty-print JSON
+        try:
+            data = json.loads(body)
+            print(json.dumps(data, indent=2))
+        except json.JSONDecodeError:
+            print(body)
+except Exception as e:
+    print(f&#34;Error: {e}&#34;, file=sys.stderr)
+    sys.exit(1)
+`,
+};
+
+export const FILES: CommandDef = {
+  source: `\
+import os
+import argparse
+
+parser = argparse.ArgumentParser(description=&#34;List files in the virtual filesystem&#34;)
+parser.add_argument(&#34;path&#34;, nargs=&#34;?&#34;, default=&#34;/&#34;, help=&#34;Directory to list&#34;)
+parser.add_argument(&#34;-r&#34;, &#34;--recursive&#34;, action=&#34;store_true&#34;, help=&#34;List recursively&#34;)
+
+args = parser.parse_args()
+
+def list_dir(path, indent=0):
+    try:
+        entries = sorted(os.listdir(path))
+    except PermissionError:
+        return
+    except FileNotFoundError:
+        print(f&#34;No such directory: {path}&#34;)
+        return
+
+    for entry in entries:
+        full = os.path.join(path, entry)
+        prefix = &#34;  &#34; * indent
+        if os.path.isdir(full):
+            print(f&#34;{prefix}{entry}/&#34;)
+            if args.recursive:
+                list_dir(full, indent + 1)
+        else:
+            size = os.path.getsize(full)
+            print(f&#34;{prefix}{entry}  ({size} bytes)&#34;)
+
+list_dir(args.path)
+`,
+};
+</pre></div><button class="expand-btn">Show more</button></div>
+</div></div></div>
+<div class="message tool-reply" id="msg-2026-03-27T16-59-07-333Z"><div class="message-header"><span class="role-label">Tool reply</span><a href="#msg-2026-03-27T16-59-07-333Z" class="timestamp-link"><time datetime="2026-03-27T16:59:07.333Z" data-timestamp="2026-03-27T16:59:07.333Z">2026-03-27T16:59:07.333Z</time></a></div><div class="message-content"><div class="tool-result"><div class="truncatable"><div class="truncatable-content"><pre>File created successfully at: /home/david/projects/stirlingbridge/localfirst-demo/src/commands.ts</pre></div><button class="expand-btn">Show more</button></div></div></div></div>
+<div class="message assistant" id="msg-2026-03-27T16-59-28-452Z"><div class="message-header"><span class="role-label">Assistant</span><a href="#msg-2026-03-27T16-59-28-452Z" class="timestamp-link"><time datetime="2026-03-27T16:59:28.452Z" data-timestamp="2026-03-27T16:59:28.452Z">2026-03-27T16:59:28.452Z</time></a></div><div class="message-content"><div class="file-tool write-tool" data-tool-id="toolu_01Cpenpej3zzppfttc7ZAMGo">
+<div class="file-tool-header write-header"><span class="file-tool-icon">📝</span> Write <span class="file-tool-path">main.ts</span></div>
+<div class="file-tool-fullpath">/home/david/projects/stirlingbridge/localfirst-demo/src/main.ts</div>
+<div class="truncatable"><div class="truncatable-content"><pre class="file-content">import { BrowserRuntime } from &#34;./runtime.js&#34;;
+import { HELLO, SYSINFO, FETCH, FILES } from &#34;./commands.js&#34;;
+
+// --- DOM references ---
+const output = document.getElementById(&#34;output&#34;)!;
+const input = document.getElementById(&#34;cmd-input&#34;) as HTMLInputElement;
+const statusBar = document.getElementById(&#34;status-bar&#34;)!;
+const exampleButtons = document.querySelectorAll&lt;HTMLButtonElement&gt;(&#34;#examples button&#34;);
+
+// --- Output helpers ---
+function appendLine(text: string, cls: string) {
+  const span = document.createElement(&#34;span&#34;);
+  span.className = cls;
+  span.textContent = text + &#34;\n&#34;;
+  output.appendChild(span);
+  output.scrollTop = output.scrollHeight;
+}
+
+function log(text: string) { appendLine(text, &#34;line-info&#34;); }
+function logCmd(text: string) { appendLine(`$ ${text}`, &#34;line-cmd&#34;); }
+function logStdout(text: string) { if (text) appendLine(text, &#34;line-stdout&#34;); }
+function logStderr(text: string) { if (text) appendLine(text, &#34;line-stderr&#34;); }
+function logExit(code: number) {
+  appendLine(
+    `(exit ${code})`,
+    code === 0 ? &#34;line-exit-ok&#34; : &#34;line-exit-err&#34;
+  );
+}
+
+function setStatus(text: string, state: &#34;&#34; | &#34;ready&#34; | &#34;error&#34; = &#34;&#34;) {
+  statusBar.textContent = text;
+  statusBar.className = state;
+}
+
+// --- Parse input ---
+function parseCommand(raw: string): { command: string; args: string[] } {
+  const parts: string[] = [];
+  let current = &#34;&#34;;
+  let inQuote = false;
+  let quoteChar = &#34;&#34;;
+
+  for (const ch of raw) {
+    if (inQuote) {
+      if (ch === quoteChar) {
+        inQuote = false;
+      } else {
+        current += ch;
+      }
+    } else if (ch === &#39;&#34;&#39; || ch === &#34;&#39;&#34;) {
+      inQuote = true;
+      quoteChar = ch;
+    } else if (ch === &#34; &#34;) {
+      if (current) {
+        parts.push(current);
+        current = &#34;&#34;;
+      }
+    } else {
+      current += ch;
+    }
+  }
+  if (current) parts.push(current);
+
+  return { command: parts[0] || &#34;&#34;, args: parts.slice(1) };
+}
+
+// --- Main ---
+async function main() {
+  const runtime = new BrowserRuntime();
+
+  let busy = false;
+
+  async function runCommand(raw: string) {
+    if (busy) return;
+    const trimmed = raw.trim();
+    if (!trimmed) return;
+
+    busy = true;
+    input.disabled = true;
+    logCmd(trimmed);
+
+    // Special built-in: help
+    if (trimmed === &#34;help&#34;) {
+      log(&#34;Available commands:&#34;);
+      log(&#34;  hello [--name NAME] [--shout]  — greeting demo&#34;);
+      log(&#34;  sysinfo                        — Python/platform info&#34;);
+      log(&#34;  fetch URL [--headers]          — HTTP fetch demo&#34;);
+      log(&#34;  files [PATH] [-r]              — list virtual filesystem&#34;);
+      log(&#34;  install PKG [PKG...]           — install Python packages&#34;);
+      log(&#34;  help                           — this message&#34;);
+      busy = false;
+      input.disabled = false;
+      input.focus();
+      return;
+    }
+
+    // Special built-in: install
+    if (trimmed.startsWith(&#34;install &#34;)) {
+      const packages = trimmed.slice(8).trim().split(/\s+/);
+      log(`Installing: ${packages.join(&#34;, &#34;)}...`);
+      try {
+        await runtime.installPackages(packages);
+        log(&#34;Done.&#34;);
+      } catch (e: unknown) {
+        logStderr(`Install failed: ${e instanceof Error ? e.message : e}`);
+      }
+      busy = false;
+      input.disabled = false;
+      input.focus();
+      return;
+    }
+
+    const { command, args } = parseCommand(trimmed);
+
+    try {
+      const result = await runtime.exec(command, args);
+      logStdout(result.stdout);
+      logStderr(result.stderr);
+      logExit(result.exitCode);
+    } catch (e: unknown) {
+      logStderr(`Runtime error: ${e instanceof Error ? e.message : e}`);
+    }
+
+    busy = false;
+    input.disabled = false;
+    input.focus();
+  }
+
+  // Wire up input
+  input.addEventListener(&#34;keydown&#34;, (e) =&gt; {
+    if (e.key === &#34;Enter&#34;) {
+      const raw = input.value;
+      input.value = &#34;&#34;;
+      runCommand(raw);
+    }
+  });
+
+  // Wire up example buttons
+  exampleButtons.forEach((btn) =&gt; {
+    btn.addEventListener(&#34;click&#34;, () =&gt; {
+      const cmd = btn.getAttribute(&#34;data-cmd&#34;);
+      if (cmd) runCommand(cmd);
+    });
+  });
+
+  // Initialize runtime
+  log(&#34;Loading Pyodide runtime (this may take a few seconds)...&#34;);
+  setStatus(&#34;Loading Pyodide...&#34;);
+
+  try {
+    await runtime.init();
+
+    // Register built-in commands
+    setStatus(&#34;Registering commands...&#34;);
+    await Promise.all([
+      runtime.registerCommand(&#34;hello&#34;, HELLO),
+      runtime.registerCommand(&#34;sysinfo&#34;, SYSINFO),
+      runtime.registerCommand(&#34;fetch&#34;, FETCH),
+      runtime.registerCommand(&#34;files&#34;, FILES),
+    ]);
+
+    setStatus(&#34;Ready&#34;, &#34;ready&#34;);
+    log(&#34;Runtime ready. Type &#39;help&#39; for available commands.&#34;);
+    input.focus();
+  } catch (e: unknown) {
+    const msg = e instanceof Error ? e.message : String(e);
+    setStatus(`Init failed: ${msg}`, &#34;error&#34;);
+    logStderr(`Failed to initialize: ${msg}`);
+  }
+}
+
+main();
+</pre></div><button class="expand-btn">Show more</button></div>
+</div></div></div>
+<div class="message tool-reply" id="msg-2026-03-27T16-59-28-479Z"><div class="message-header"><span class="role-label">Tool reply</span><a href="#msg-2026-03-27T16-59-28-479Z" class="timestamp-link"><time datetime="2026-03-27T16:59:28.479Z" data-timestamp="2026-03-27T16:59:28.479Z">2026-03-27T16:59:28.479Z</time></a></div><div class="message-content"><div class="tool-result"><div class="truncatable"><div class="truncatable-content"><pre>File created successfully at: /home/david/projects/stirlingbridge/localfirst-demo/src/main.ts</pre></div><button class="expand-btn">Show more</button></div></div></div></div>
+<div class="message assistant" id="msg-2026-03-27T16-59-34-570Z"><div class="message-header"><span class="role-label">Assistant</span><a href="#msg-2026-03-27T16-59-34-570Z" class="timestamp-link"><time datetime="2026-03-27T16:59:34.570Z" data-timestamp="2026-03-27T16:59:34.570Z">2026-03-27T16:59:34.570Z</time></a></div><div class="message-content">
+<div class="tool-use" data-tool-id="toolu_01MKumN3i1vuCfYw1nSyCJMk"><div class="tool-header"><span class="tool-icon">⚙</span> TaskUpdate</div><div class="truncatable"><div class="truncatable-content"><pre class="json">{
+  &#34;taskId&#34;: &#34;5&#34;,
+  &#34;status&#34;: &#34;completed&#34;
+}</pre></div><button class="expand-btn">Show more</button></div></div></div></div>
+<div class="message tool-reply" id="msg-2026-03-27T16-59-34-578Z"><div class="message-header"><span class="role-label">Tool reply</span><a href="#msg-2026-03-27T16-59-34-578Z" class="timestamp-link"><time datetime="2026-03-27T16:59:34.578Z" data-timestamp="2026-03-27T16:59:34.578Z">2026-03-27T16:59:34.578Z</time></a></div><div class="message-content"><div class="tool-result"><div class="truncatable"><div class="truncatable-content"><pre>Updated task #5 status</pre></div><button class="expand-btn">Show more</button></div></div></div></div>
+<div class="message assistant" id="msg-2026-03-27T16-59-34-611Z"><div class="message-header"><span class="role-label">Assistant</span><a href="#msg-2026-03-27T16-59-34-611Z" class="timestamp-link"><time datetime="2026-03-27T16:59:34.611Z" data-timestamp="2026-03-27T16:59:34.611Z">2026-03-27T16:59:34.611Z</time></a></div><div class="message-content">
+<div class="tool-use" data-tool-id="toolu_01DJLj1uKZzsVtha29Z6csHP"><div class="tool-header"><span class="tool-icon">⚙</span> TaskUpdate</div><div class="truncatable"><div class="truncatable-content"><pre class="json">{
+  &#34;taskId&#34;: &#34;6&#34;,
+  &#34;status&#34;: &#34;in_progress&#34;
+}</pre></div><button class="expand-btn">Show more</button></div></div></div></div>
+<div class="message tool-reply" id="msg-2026-03-27T16-59-34-632Z"><div class="message-header"><span class="role-label">Tool reply</span><a href="#msg-2026-03-27T16-59-34-632Z" class="timestamp-link"><time datetime="2026-03-27T16:59:34.632Z" data-timestamp="2026-03-27T16:59:34.632Z">2026-03-27T16:59:34.632Z</time></a></div><div class="message-content"><div class="tool-result"><div class="truncatable"><div class="truncatable-content"><pre>Updated task #6 status</pre></div><button class="expand-btn">Show more</button></div></div></div></div>
+<div class="message assistant" id="msg-2026-03-27T16-59-40-702Z"><div class="message-header"><span class="role-label">Assistant</span><a href="#msg-2026-03-27T16-59-40-702Z" class="timestamp-link"><time datetime="2026-03-27T16:59:40.702Z" data-timestamp="2026-03-27T16:59:40.702Z">2026-03-27T16:59:40.702Z</time></a></div><div class="message-content">
+<div class="tool-use bash-tool" data-tool-id="toolu_01JGjPEiLFbQ3kgdmouQN3A4">
+<div class="tool-header"><span class="tool-icon">$</span> Bash</div>
+<div class="tool-description">Install npm dependencies</div><div class="truncatable"><div class="truncatable-content"><pre class="bash-command">npm install 2&gt;&amp;1</pre></div><button class="expand-btn">Show more</button></div>
+</div></div></div>
+<div class="message tool-reply" id="msg-2026-03-27T16-59-51-159Z"><div class="message-header"><span class="role-label">Tool reply</span><a href="#msg-2026-03-27T16-59-51-159Z" class="timestamp-link"><time datetime="2026-03-27T16:59:51.159Z" data-timestamp="2026-03-27T16:59:51.159Z">2026-03-27T16:59:51.159Z</time></a></div><div class="message-content"><div class="tool-result"><div class="truncatable"><div class="truncatable-content"><pre>added 14 packages, and audited 15 packages in 6s
+
+5 packages are looking for funding
+  run `npm fund` for details
+
+found 0 vulnerabilities
+npm notice
+npm notice New major version of npm available! 10.9.3 -&gt; 11.12.1
+npm notice Changelog: https://github.com/npm/cli/releases/tag/v11.12.1
+npm notice To update run: npm install -g npm@11.12.1
+npm notice</pre></div><button class="expand-btn">Show more</button></div></div></div></div>
+<div class="message assistant" id="msg-2026-03-27T16-59-54-712Z"><div class="message-header"><span class="role-label">Assistant</span><a href="#msg-2026-03-27T16-59-54-712Z" class="timestamp-link"><time datetime="2026-03-27T16:59:54.712Z" data-timestamp="2026-03-27T16:59:54.712Z">2026-03-27T16:59:54.712Z</time></a></div><div class="message-content">
+<div class="tool-use bash-tool" data-tool-id="toolu_0183UhDkPjjnMKzeZbczUHhR">
+<div class="tool-header"><span class="tool-icon">$</span> Bash</div>
+<div class="tool-description">Type-check TypeScript</div><div class="truncatable"><div class="truncatable-content"><pre class="bash-command">npx tsc --noEmit 2&gt;&amp;1</pre></div><button class="expand-btn">Show more</button></div>
+</div></div></div>
+<div class="message tool-reply" id="msg-2026-03-27T16-59-58-068Z"><div class="message-header"><span class="role-label">Tool reply</span><a href="#msg-2026-03-27T16-59-58-068Z" class="timestamp-link"><time datetime="2026-03-27T16:59:58.068Z" data-timestamp="2026-03-27T16:59:58.068Z">2026-03-27T16:59:58.068Z</time></a></div><div class="message-content"><div class="tool-result tool-error"><div class="truncatable"><div class="truncatable-content"><pre>Exit code 2
+src/runtime.ts(74,43): error TS2353: Object literal may only specify known properties, and &#x27;path&#x27; does not exist in type &#x27;Omit&lt;WorkerRequest, &quot;id&quot;&gt;&#x27;.
+src/runtime.ts(99,53): error TS2353: Object literal may only specify known properties, and &#x27;packages&#x27; does not exist in type &#x27;Omit&lt;WorkerRequest, &quot;id&quot;&gt;&#x27;.
+src/runtime.ts(107,43): error TS2353: Object literal may only specify known properties, and &#x27;path&#x27; does not exist in type &#x27;Omit&lt;WorkerRequest, &quot;id&quot;&gt;&#x27;.
+src/runtime.ts(112,55): error TS2353: Object literal may only specify known properties, and &#x27;path&#x27; does not exist in type &#x27;Omit&lt;WorkerRequest, &quot;id&quot;&gt;&#x27;.
+src/runtime.ts(160,50): error TS2353: Object literal may only specify known properties, and &#x27;scriptPath&#x27; does not exist in type &#x27;Omit&lt;WorkerRequest, &quot;id&quot;&gt;&#x27;.
+src/worker.ts(4,15): error TS2451: Cannot redeclare block-scoped variable &#x27;self&#x27;.</pre></div><button class="expand-btn">Show more</button></div></div></div></div>
+<div class="message assistant" id="msg-2026-03-27T17-00-05-524Z"><div class="message-header"><span class="role-label">Assistant</span><a href="#msg-2026-03-27T17-00-05-524Z" class="timestamp-link"><time datetime="2026-03-27T17:00:05.524Z" data-timestamp="2026-03-27T17:00:05.524Z">2026-03-27T17:00:05.524Z</time></a></div><div class="message-content">
+<div class="thinking"><div class="thinking-label">Thinking</div></div></div></div>
+<div class="message assistant" id="msg-2026-03-27T17-00-06-032Z"><div class="message-header"><span class="role-label">Assistant</span><a href="#msg-2026-03-27T17-00-06-032Z" class="timestamp-link"><time datetime="2026-03-27T17:00:06.032Z" data-timestamp="2026-03-27T17:00:06.032Z">2026-03-27T17:00:06.032Z</time></a></div><div class="message-content">
+<div class="assistant-text"><p>Need to fix the union type distribution and the worker <code>self</code> redeclaration.</p></div></div></div>
+<div class="message assistant" id="msg-2026-03-27T17-00-06-362Z"><div class="message-header"><span class="role-label">Assistant</span><a href="#msg-2026-03-27T17-00-06-362Z" class="timestamp-link"><time datetime="2026-03-27T17:00:06.362Z" data-timestamp="2026-03-27T17:00:06.362Z">2026-03-27T17:00:06.362Z</time></a></div><div class="message-content">
+<div class="tool-use" data-tool-id="toolu_01Kt7erht5uMvwygLigLLc5L"><div class="tool-header"><span class="tool-icon">⚙</span> Read</div><div class="truncatable"><div class="truncatable-content"><pre class="json">{
+  &#34;file_path&#34;: &#34;/home/david/projects/stirlingbridge/localfirst-demo/src/types.ts&#34;
+}</pre></div><button class="expand-btn">Show more</button></div></div></div></div>
+<div class="message tool-reply" id="msg-2026-03-27T17-00-06-383Z"><div class="message-header"><span class="role-label">Tool reply</span><a href="#msg-2026-03-27T17-00-06-383Z" class="timestamp-link"><time datetime="2026-03-27T17:00:06.383Z" data-timestamp="2026-03-27T17:00:06.383Z">2026-03-27T17:00:06.383Z</time></a></div><div class="message-content"><div class="tool-result"><div class="truncatable"><div class="truncatable-content"><pre>     1→// --- Public API types ---
+     2→
+     3→export interface ExecOptions {
+     4→  stdin?: string;
+     5→  env?: Record&lt;string, string&gt;;
+     6→  cwd?: string;
+     7→}
+     8→
+     9→export interface ProcessResult {
+    10→  stdout: string;
+    11→  stderr: string;
+    12→  exitCode: number;
+    13→}
+    14→
+    15→// --- Worker message protocol ---
+    16→
+    17→export type WorkerRequest =
+    18→  | { id: string; type: &quot;init&quot; }
+    19→  | { id: string; type: &quot;exec&quot;; scriptPath: string; args: string[] }
+    20→  | { id: string; type: &quot;install&quot;; packages: string[] }
+    21→  | { id: string; type: &quot;write-file&quot;; path: string; content: string }
+    22→  | { id: string; type: &quot;read-file&quot;; path: string };
+    23→
+    24→export type WorkerResponse =
+    25→  | { id: string; type: &quot;ready&quot; }
+    26→  | { id: string; type: &quot;exec-result&quot;; stdout: string; stderr: string; exitCode: number }
+    27→  | { id: string; type: &quot;install-result&quot;; success: boolean; error?: string }
+    28→  | { id: string; type: &quot;write-file-result&quot;; success: boolean; error?: string }
+    29→  | { id: string; type: &quot;read-file-result&quot;; success: boolean; content?: string; error?: string }
+    30→  | { id: string; type: &quot;error&quot;; error: string };
+    31→
+    32→// --- Command registry ---
+    33→
+    34→export interface CommandDef {
+    35→  /** Python source code of the CLI tool */
+    36→  source: string;
+    37→  /** Optional packages to install before first run */
+    38→  dependencies?: string[];
+    39→}
+    40→</pre></div><button class="expand-btn">Show more</button></div></div></div></div>
+<div class="message assistant" id="msg-2026-03-27T17-00-14-553Z"><div class="message-header"><span class="role-label">Assistant</span><a href="#msg-2026-03-27T17-00-14-553Z" class="timestamp-link"><time datetime="2026-03-27T17:00:14.553Z" data-timestamp="2026-03-27T17:00:14.553Z">2026-03-27T17:00:14.553Z</time></a></div><div class="message-content"><div class="file-tool edit-tool" data-tool-id="toolu_01SXcL3rNFq7RCLB2CtTvkHD">
+<div class="file-tool-header edit-header"><span class="file-tool-icon">✏️</span> Edit <span class="file-tool-path">types.ts</span></div>
+<div class="file-tool-fullpath">/home/david/projects/stirlingbridge/localfirst-demo/src/types.ts</div>
+<div class="truncatable"><div class="truncatable-content">
+<div class="edit-section edit-old"><div class="edit-label">−</div><pre class="edit-content">// --- Worker message protocol ---
+
+export type WorkerRequest =
+  | { id: string; type: &#34;init&#34; }
+  | { id: string; type: &#34;exec&#34;; scriptPath: string; args: string[] }
+  | { id: string; type: &#34;install&#34;; packages: string[] }
+  | { id: string; type: &#34;write-file&#34;; path: string; content: string }
+  | { id: string; type: &#34;read-file&#34;; path: string };</pre></div>
+<div class="edit-section edit-new"><div class="edit-label">+</div><pre class="edit-content">// --- Worker message protocol ---
+
+// Distributive Omit for union types
+type DistributiveOmit&lt;T, K extends keyof T&gt; = T extends unknown ? Omit&lt;T, K&gt; : never;
+
+export type WorkerRequest =
+  | { id: string; type: &#34;init&#34; }
+  | { id: string; type: &#34;exec&#34;; scriptPath: string; args: string[] }
+  | { id: string; type: &#34;install&#34;; packages: string[] }
+  | { id: string; type: &#34;write-file&#34;; path: string; content: string }
+  | { id: string; type: &#34;read-file&#34;; path: string };
+
+export type WorkerRequestBody = DistributiveOmit&lt;WorkerRequest, &#34;id&#34;&gt;;</pre></div>
+</div><button class="expand-btn">Show more</button></div>
+</div></div></div>
+<div class="message tool-reply" id="msg-2026-03-27T17-00-14-583Z"><div class="message-header"><span class="role-label">Tool reply</span><a href="#msg-2026-03-27T17-00-14-583Z" class="timestamp-link"><time datetime="2026-03-27T17:00:14.583Z" data-timestamp="2026-03-27T17:00:14.583Z">2026-03-27T17:00:14.583Z</time></a></div><div class="message-content"><div class="tool-result"><div class="truncatable"><div class="truncatable-content"><pre>The file /home/david/projects/stirlingbridge/localfirst-demo/src/types.ts has been updated successfully.</pre></div><button class="expand-btn">Show more</button></div></div></div></div>
+<div class="message assistant" id="msg-2026-03-27T17-00-20-523Z"><div class="message-header"><span class="role-label">Assistant</span><a href="#msg-2026-03-27T17-00-20-523Z" class="timestamp-link"><time datetime="2026-03-27T17:00:20.523Z" data-timestamp="2026-03-27T17:00:20.523Z">2026-03-27T17:00:20.523Z</time></a></div><div class="message-content"><div class="file-tool edit-tool" data-tool-id="toolu_019p8A94D1M5tiwr9APsD2Ki">
+<div class="file-tool-header edit-header"><span class="file-tool-icon">✏️</span> Edit <span class="file-tool-path">runtime.ts</span></div>
+<div class="file-tool-fullpath">/home/david/projects/stirlingbridge/localfirst-demo/src/runtime.ts</div>
+<div class="truncatable"><div class="truncatable-content">
+<div class="edit-section edit-old"><div class="edit-label">−</div><pre class="edit-content">import type {
+  CommandDef,
+  ExecOptions,
+  ProcessResult,
+  WorkerRequest,
+  WorkerResponse,
+} from &#34;./types.js&#34;;</pre></div>
+<div class="edit-section edit-new"><div class="edit-label">+</div><pre class="edit-content">import type {
+  CommandDef,
+  ExecOptions,
+  ProcessResult,
+  WorkerRequestBody,
+  WorkerResponse,
+} from &#34;./types.js&#34;;</pre></div>
+</div><button class="expand-btn">Show more</button></div>
+</div></div></div>
+<div class="message tool-reply" id="msg-2026-03-27T17-00-20-544Z"><div class="message-header"><span class="role-label">Tool reply</span><a href="#msg-2026-03-27T17-00-20-544Z" class="timestamp-link"><time datetime="2026-03-27T17:00:20.544Z" data-timestamp="2026-03-27T17:00:20.544Z">2026-03-27T17:00:20.544Z</time></a></div><div class="message-content"><div class="tool-result"><div class="truncatable"><div class="truncatable-content"><pre>The file /home/david/projects/stirlingbridge/localfirst-demo/src/runtime.ts has been updated successfully.</pre></div><button class="expand-btn">Show more</button></div></div></div></div>
+<div class="message assistant" id="msg-2026-03-27T17-00-21-276Z"><div class="message-header"><span class="role-label">Assistant</span><a href="#msg-2026-03-27T17-00-21-276Z" class="timestamp-link"><time datetime="2026-03-27T17:00:21.276Z" data-timestamp="2026-03-27T17:00:21.276Z">2026-03-27T17:00:21.276Z</time></a></div><div class="message-content"><div class="file-tool edit-tool" data-tool-id="toolu_01NmZS6n6h7QQfYzscbDTk8X">
+<div class="file-tool-header edit-header"><span class="file-tool-icon">✏️</span> Edit <span class="file-tool-path">runtime.ts</span></div>
+<div class="file-tool-fullpath">/home/david/projects/stirlingbridge/localfirst-demo/src/runtime.ts</div>
+<div class="truncatable"><div class="truncatable-content">
+<div class="edit-section edit-old"><div class="edit-label">−</div><pre class="edit-content">  private send(req: Omit&lt;WorkerRequest, &#34;id&#34;&gt;): Promise&lt;WorkerResponse&gt; {</pre></div>
+<div class="edit-section edit-new"><div class="edit-label">+</div><pre class="edit-content">  private send(req: WorkerRequestBody): Promise&lt;WorkerResponse&gt; {</pre></div>
+</div><button class="expand-btn">Show more</button></div>
+</div></div></div>
+<div class="message tool-reply" id="msg-2026-03-27T17-00-21-283Z"><div class="message-header"><span class="role-label">Tool reply</span><a href="#msg-2026-03-27T17-00-21-283Z" class="timestamp-link"><time datetime="2026-03-27T17:00:21.283Z" data-timestamp="2026-03-27T17:00:21.283Z">2026-03-27T17:00:21.283Z</time></a></div><div class="message-content"><div class="tool-result"><div class="truncatable"><div class="truncatable-content"><pre>The file /home/david/projects/stirlingbridge/localfirst-demo/src/runtime.ts has been updated successfully.</pre></div><button class="expand-btn">Show more</button></div></div></div></div>
+<div class="message assistant" id="msg-2026-03-27T17-00-22-761Z"><div class="message-header"><span class="role-label">Assistant</span><a href="#msg-2026-03-27T17-00-22-761Z" class="timestamp-link"><time datetime="2026-03-27T17:00:22.761Z" data-timestamp="2026-03-27T17:00:22.761Z">2026-03-27T17:00:22.761Z</time></a></div><div class="message-content"><div class="file-tool edit-tool" data-tool-id="toolu_01MShLkn7raE7Bw8CPZtoY1P">
+<div class="file-tool-header edit-header"><span class="file-tool-icon">✏️</span> Edit <span class="file-tool-path">worker.ts</span></div>
+<div class="file-tool-fullpath">/home/david/projects/stirlingbridge/localfirst-demo/src/worker.ts</div>
+<div class="truncatable"><div class="truncatable-content">
+<div class="edit-section edit-old"><div class="edit-label">−</div><pre class="edit-content">// Pyodide Web Worker
+// Runs in a dedicated worker thread to keep the UI responsive.
+
+declare const self: DedicatedWorkerGlobalScope;</pre></div>
+<div class="edit-section edit-new"><div class="edit-label">+</div><pre class="edit-content">// Pyodide Web Worker
+// Runs in a dedicated worker thread to keep the UI responsive.</pre></div>
+</div><button class="expand-btn">Show more</button></div>
+</div></div></div>
+<div class="message tool-reply" id="msg-2026-03-27T17-00-22-770Z"><div class="message-header"><span class="role-label">Tool reply</span><a href="#msg-2026-03-27T17-00-22-770Z" class="timestamp-link"><time datetime="2026-03-27T17:00:22.770Z" data-timestamp="2026-03-27T17:00:22.770Z">2026-03-27T17:00:22.770Z</time></a></div><div class="message-content"><div class="tool-result"><div class="truncatable"><div class="truncatable-content"><pre>The file /home/david/projects/stirlingbridge/localfirst-demo/src/worker.ts has been updated successfully.</pre></div><button class="expand-btn">Show more</button></div></div></div></div>
+<div class="message assistant" id="msg-2026-03-27T17-00-26-114Z"><div class="message-header"><span class="role-label">Assistant</span><a href="#msg-2026-03-27T17-00-26-114Z" class="timestamp-link"><time datetime="2026-03-27T17:00:26.114Z" data-timestamp="2026-03-27T17:00:26.114Z">2026-03-27T17:00:26.114Z</time></a></div><div class="message-content">
+<div class="tool-use bash-tool" data-tool-id="toolu_015rMGGRPS2mBSgLQPm6B3wq">
+<div class="tool-header"><span class="tool-icon">$</span> Bash</div>
+<div class="tool-description">Type-check TypeScript</div><div class="truncatable"><div class="truncatable-content"><pre class="bash-command">npx tsc --noEmit 2&gt;&amp;1</pre></div><button class="expand-btn">Show more</button></div>
+</div></div></div>
+<div class="message tool-reply" id="msg-2026-03-27T17-00-31-815Z"><div class="message-header"><span class="role-label">Tool reply</span><a href="#msg-2026-03-27T17-00-31-815Z" class="timestamp-link"><time datetime="2026-03-27T17:00:31.815Z" data-timestamp="2026-03-27T17:00:31.815Z">2026-03-27T17:00:31.815Z</time></a></div><div class="message-content"><div class="tool-result"><div class="truncatable"><div class="truncatable-content"><pre>(Bash completed with no output)</pre></div><button class="expand-btn">Show more</button></div></div></div></div>
+<div class="message assistant" id="msg-2026-03-27T17-00-34-650Z"><div class="message-header"><span class="role-label">Assistant</span><a href="#msg-2026-03-27T17-00-34-650Z" class="timestamp-link"><time datetime="2026-03-27T17:00:34.650Z" data-timestamp="2026-03-27T17:00:34.650Z">2026-03-27T17:00:34.650Z</time></a></div><div class="message-content">
+<div class="assistant-text"><p>Clean. Now let's build.</p></div></div></div>
+<div class="message assistant" id="msg-2026-03-27T17-00-35-415Z"><div class="message-header"><span class="role-label">Assistant</span><a href="#msg-2026-03-27T17-00-35-415Z" class="timestamp-link"><time datetime="2026-03-27T17:00:35.415Z" data-timestamp="2026-03-27T17:00:35.415Z">2026-03-27T17:00:35.415Z</time></a></div><div class="message-content">
+<div class="tool-use bash-tool" data-tool-id="toolu_01Ls1JmTcCJ6ViYNSQTohVgx">
+<div class="tool-header"><span class="tool-icon">$</span> Bash</div>
+<div class="tool-description">Build the project with Vite</div><div class="truncatable"><div class="truncatable-content"><pre class="bash-command">npx vite build 2&gt;&amp;1</pre></div><button class="expand-btn">Show more</button></div>
+</div></div></div>
+<div class="message tool-reply" id="msg-2026-03-27T17-00-40-254Z"><div class="message-header"><span class="role-label">Tool reply</span><a href="#msg-2026-03-27T17-00-40-254Z" class="timestamp-link"><time datetime="2026-03-27T17:00:40.254Z" data-timestamp="2026-03-27T17:00:40.254Z">2026-03-27T17:00:40.254Z</time></a></div><div class="message-content"><div class="tool-result"><div class="truncatable"><div class="truncatable-content"><pre>vite v6.4.1 building for production...
+transforming...
+✓ 6 modules transformed.
+rendering chunks...
+computing gzip size...
+dist/assets/worker-oSrgwLPg.js  2.89 kB
+dist/index.html                 3.10 kB │ gzip: 1.14 kB
+dist/assets/index-CuXkHRT2.js   8.01 kB │ gzip: 3.31 kB
+✓ built in 140ms</pre></div><button class="expand-btn">Show more</button></div></div></div></div>
+<div class="message assistant" id="msg-2026-03-27T17-00-45-366Z"><div class="message-header"><span class="role-label">Assistant</span><a href="#msg-2026-03-27T17-00-45-366Z" class="timestamp-link"><time datetime="2026-03-27T17:00:45.366Z" data-timestamp="2026-03-27T17:00:45.366Z">2026-03-27T17:00:45.366Z</time></a></div><div class="message-content">
+<div class="assistant-text"><p>Build succeeds. Let me also update the README to reflect what this project actually is.</p></div></div></div>
+<div class="message assistant" id="msg-2026-03-27T17-00-45-718Z"><div class="message-header"><span class="role-label">Assistant</span><a href="#msg-2026-03-27T17-00-45-718Z" class="timestamp-link"><time datetime="2026-03-27T17:00:45.718Z" data-timestamp="2026-03-27T17:00:45.718Z">2026-03-27T17:00:45.718Z</time></a></div><div class="message-content">
+<div class="tool-use" data-tool-id="toolu_013m7h618P4qd3NVQjMR7TdB"><div class="tool-header"><span class="tool-icon">⚙</span> Read</div><div class="truncatable"><div class="truncatable-content"><pre class="json">{
+  &#34;file_path&#34;: &#34;/home/david/projects/stirlingbridge/localfirst-demo/README.md&#34;
+}</pre></div><button class="expand-btn">Show more</button></div></div></div></div>
+<div class="message tool-reply" id="msg-2026-03-27T17-00-45-724Z"><div class="message-header"><span class="role-label">Tool reply</span><a href="#msg-2026-03-27T17-00-45-724Z" class="timestamp-link"><time datetime="2026-03-27T17:00:45.724Z" data-timestamp="2026-03-27T17:00:45.724Z">2026-03-27T17:00:45.724Z</time></a></div><div class="message-content"><div class="tool-result"><div class="truncatable"><div class="truncatable-content"><pre>     1→# localfirst-demo
+     2→Demonstrate local first framework
+     3→</pre></div><button class="expand-btn">Show more</button></div></div></div></div>
+<div class="message assistant" id="msg-2026-03-27T17-00-56-784Z"><div class="message-header"><span class="role-label">Assistant</span><a href="#msg-2026-03-27T17-00-56-784Z" class="timestamp-link"><time datetime="2026-03-27T17:00:56.784Z" data-timestamp="2026-03-27T17:00:56.784Z">2026-03-27T17:00:56.784Z</time></a></div><div class="message-content"><div class="file-tool write-tool" data-tool-id="toolu_019itFCeZzefWqDWKvgNhCjo">
+<div class="file-tool-header write-header"><span class="file-tool-icon">📝</span> Write <span class="file-tool-path">README.md</span></div>
+<div class="file-tool-fullpath">/home/david/projects/stirlingbridge/localfirst-demo/README.md</div>
+<div class="truncatable"><div class="truncatable-content"><pre class="file-content"># localfirst-demo
+
+A framework for running Python CLI tools in the browser via Pyodide/WASM.
+
+Provides an `exec()`-style API that lets a web app invoke Python scripts as if
+they were local CLI commands, with captured stdout/stderr and exit codes.
+
+## Quick start
+
+```bash
+npm install
+npm run dev
+```
+
+Then open http://localhost:5173 in your browser.
+
+## Architecture
+
+- **`src/runtime.ts`** — `BrowserRuntime` class: the main API surface (`exec()`, `registerCommand()`, `fetchAndRegister()`, `installPackages()`)
+- **`src/worker.ts`** — Web Worker that hosts the Pyodide Python runtime, handles command execution with I/O capture
+- **`src/commands.ts`** — Built-in demo commands (hello, sysinfo, fetch, files)
+- **`src/types.ts`** — Shared types for the worker message protocol and public API
+- **`src/main.ts`** — Demo UI wiring
+
+## Demo commands
+
+| Command | Description |
+|---------|-------------|
+| `hello [--name NAME] [--shout]` | Greeting demo with argparse |
+| `sysinfo` | Show Python/platform info from inside WASM |
+| `fetch URL [--headers]` | HTTP fetch proxied through browser&#39;s network stack |
+| `files [PATH] [-r]` | List the in-memory virtual filesystem |
+| `install PKG [...]` | Install Python packages via micropip |
+</pre></div><button class="expand-btn">Show more</button></div>
+</div></div></div>
+<div class="message tool-reply" id="msg-2026-03-27T17-00-56-831Z"><div class="message-header"><span class="role-label">Tool reply</span><a href="#msg-2026-03-27T17-00-56-831Z" class="timestamp-link"><time datetime="2026-03-27T17:00:56.831Z" data-timestamp="2026-03-27T17:00:56.831Z">2026-03-27T17:00:56.831Z</time></a></div><div class="message-content"><div class="tool-result"><div class="truncatable"><div class="truncatable-content"><pre>The file /home/david/projects/stirlingbridge/localfirst-demo/README.md has been updated successfully.</pre></div><button class="expand-btn">Show more</button></div></div></div></div>
+<div class="message assistant" id="msg-2026-03-27T17-01-00-457Z"><div class="message-header"><span class="role-label">Assistant</span><a href="#msg-2026-03-27T17-01-00-457Z" class="timestamp-link"><time datetime="2026-03-27T17:01:00.457Z" data-timestamp="2026-03-27T17:01:00.457Z">2026-03-27T17:01:00.457Z</time></a></div><div class="message-content">
+<div class="tool-use" data-tool-id="toolu_013v4XAm9YfpBvpgpbk8hvRc"><div class="tool-header"><span class="tool-icon">⚙</span> TaskUpdate</div><div class="truncatable"><div class="truncatable-content"><pre class="json">{
+  &#34;taskId&#34;: &#34;6&#34;,
+  &#34;status&#34;: &#34;completed&#34;
+}</pre></div><button class="expand-btn">Show more</button></div></div></div></div>
+<div class="message tool-reply" id="msg-2026-03-27T17-01-00-474Z"><div class="message-header"><span class="role-label">Tool reply</span><a href="#msg-2026-03-27T17-01-00-474Z" class="timestamp-link"><time datetime="2026-03-27T17:01:00.474Z" data-timestamp="2026-03-27T17:01:00.474Z">2026-03-27T17:01:00.474Z</time></a></div><div class="message-content"><div class="tool-result"><div class="truncatable"><div class="truncatable-content"><pre>Updated task #6 status</pre></div><button class="expand-btn">Show more</button></div></div></div></div>
+<div class="message assistant" id="msg-2026-03-27T17-01-04-202Z"><div class="message-header"><span class="role-label">Assistant</span><a href="#msg-2026-03-27T17-01-04-202Z" class="timestamp-link"><time datetime="2026-03-27T17:01:04.202Z" data-timestamp="2026-03-27T17:01:04.202Z">2026-03-27T17:01:04.202Z</time></a></div><div class="message-content">
+<div class="assistant-text"><p>Now let me save a project memory for future conversations.</p></div></div></div>
+<div class="message assistant" id="msg-2026-03-27T17-01-10-429Z"><div class="message-header"><span class="role-label">Assistant</span><a href="#msg-2026-03-27T17-01-10-429Z" class="timestamp-link"><time datetime="2026-03-27T17:01:10.429Z" data-timestamp="2026-03-27T17:01:10.429Z">2026-03-27T17:01:10.429Z</time></a></div><div class="message-content"><div class="file-tool write-tool" data-tool-id="toolu_01NEhvEjFL9oqQJSHbdaaJdh">
+<div class="file-tool-header write-header"><span class="file-tool-icon">📝</span> Write <span class="file-tool-path">project_goals.md</span></div>
+<div class="file-tool-fullpath">/home/david/.claude/projects/-home-david-projects-stirlingbridge-localfirst-demo/memory/project_goals.md</div>
+<div class="truncatable"><div class="truncatable-content"><pre class="file-content">---
+name: Project goals and architecture
+description: localfirst-demo is a browser-hosted Python CLI framework using Pyodide/WASM, providing exec()-style API
+type: project
+---
+
+The project demonstrates hosting Python CLI tools in the browser via Pyodide/WASM.
+
+**Why:** User wants to show that a framework can be built where a web app orchestrates Python CLI tools running entirely in-browser, without a server backend. The tools get an exec/spawn-like API with stdout/stderr capture. This is a demo/proof-of-concept, not production.
+
+**How to apply:** Keep things simple and demo-focused. No need for full subprocess support, no need for general-purpose networking beyond HTTP (which is shimmed via pyodide-http). Python scripts can be fetched from GitHub raw URLs. CORS is assumed to be permissive for target services.
+</pre></div><button class="expand-btn">Show more</button></div>
+</div></div></div>
+<div class="message tool-reply" id="msg-2026-03-27T17-01-10-471Z"><div class="message-header"><span class="role-label">Tool reply</span><a href="#msg-2026-03-27T17-01-10-471Z" class="timestamp-link"><time datetime="2026-03-27T17:01:10.471Z" data-timestamp="2026-03-27T17:01:10.471Z">2026-03-27T17:01:10.471Z</time></a></div><div class="message-content"><div class="tool-result"><div class="truncatable"><div class="truncatable-content"><pre>File created successfully at: /home/david/.claude/projects/-home-david-projects-stirlingbridge-localfirst-demo/memory/project_goals.md</pre></div><button class="expand-btn">Show more</button></div></div></div></div>
+<div class="message assistant" id="msg-2026-03-27T17-01-11-437Z"><div class="message-header"><span class="role-label">Assistant</span><a href="#msg-2026-03-27T17-01-11-437Z" class="timestamp-link"><time datetime="2026-03-27T17:01:11.437Z" data-timestamp="2026-03-27T17:01:11.437Z">2026-03-27T17:01:11.437Z</time></a></div><div class="message-content"><div class="file-tool write-tool" data-tool-id="toolu_01BtcpEKu9k3aTJe2fs22s5J">
+<div class="file-tool-header write-header"><span class="file-tool-icon">📝</span> Write <span class="file-tool-path">MEMORY.md</span></div>
+<div class="file-tool-fullpath">/home/david/.claude/projects/-home-david-projects-stirlingbridge-localfirst-demo/memory/MEMORY.md</div>
+<div class="truncatable"><div class="truncatable-content"><pre class="file-content">- [Project goals](project_goals.md) — browser-hosted Python CLI framework using Pyodide/WASM, demo scope
+</pre></div><button class="expand-btn">Show more</button></div>
+</div></div></div>
+<div class="message tool-reply" id="msg-2026-03-27T17-01-11-476Z"><div class="message-header"><span class="role-label">Tool reply</span><a href="#msg-2026-03-27T17-01-11-476Z" class="timestamp-link"><time datetime="2026-03-27T17:01:11.476Z" data-timestamp="2026-03-27T17:01:11.476Z">2026-03-27T17:01:11.476Z</time></a></div><div class="message-content"><div class="tool-result"><div class="truncatable"><div class="truncatable-content"><pre>File created successfully at: /home/david/.claude/projects/-home-david-projects-stirlingbridge-localfirst-demo/memory/MEMORY.md</pre></div><button class="expand-btn">Show more</button></div></div></div></div>
+<div class="message assistant" id="msg-2026-03-27T17-01-23-692Z"><div class="message-header"><span class="role-label">Assistant</span><a href="#msg-2026-03-27T17-01-23-692Z" class="timestamp-link"><time datetime="2026-03-27T17:01:23.692Z" data-timestamp="2026-03-27T17:01:23.692Z">2026-03-27T17:01:23.692Z</time></a></div><div class="message-content">
+<div class="assistant-text"><p>The project is built and ready. Here's what was created:</p>
+<p><strong>Core framework (3 files):</strong>
+- <code>src/runtime.ts</code> — <code>BrowserRuntime</code> class with the public API: <code>exec()</code>, <code>registerCommand()</code>, <code>fetchAndRegister()</code>, <code>installPackages()</code>, <code>writeFile()</code>, <code>readFile()</code>
+- <code>src/worker.ts</code> — Web Worker that loads Pyodide from CDN, bootstraps a Python <code>_run_command()</code> helper that sets <code>sys.argv</code>, captures stdout/stderr via <code>io.StringIO</code>, and handles <code>SystemExit</code> for proper exit codes. Also patches HTTP via <code>pyodide-http</code> so <code>urllib</code>/<code>requests</code> work.
+- <code>src/types.ts</code> — Shared types for the worker message protocol and public API</p>
+<p><strong>Demo layer (2 files):</strong>
+- <code>src/commands.ts</code> — Four built-in Python CLI tools: <code>hello</code> (argparse demo), <code>sysinfo</code> (platform info), <code>fetch</code> (HTTP via urllib), <code>files</code> (virtual FS listing)
+- <code>src/main.ts</code> — Terminal-style UI that wires everything together</p>
+<p><strong>To try it:</strong></p>
+<pre><code class="language-bash">npm run dev
+</code></pre>
+<p>The <code>exec()</code> call flow is: main thread sends a message to the worker with the script path and args, the worker runs the Python script via <code>runpy.run_path()</code> with captured I/O, and returns <code>{ stdout, stderr, exitCode }</code> — exactly like you'd get from a subprocess call.</p>
+<p>The <code>fetchAndRegister()</code> method handles the GitHub use case: fetch a raw <code>.py</code> URL, write it to the virtual FS, and it's immediately available as a command.</p></div></div></div>
+<div class="message user" id="msg-2026-03-27T17-06-32-171Z"><div class="message-header"><span class="role-label">User</span><a href="#msg-2026-03-27T17-06-32-171Z" class="timestamp-link"><time datetime="2026-03-27T17:06:32.171Z" data-timestamp="2026-03-27T17:06:32.171Z">2026-03-27T17:06:32.171Z</time></a></div><div class="message-content">
+<div class="user-content"><p>Thank you! I tried it out. The app loads and I was able to run the hello, sysinfo and files Python programs. However the "fetch" program didn't work. For any http URL I specify it says "Error: <urlopen error [Errno 26] Operation in progress>" and for any https URL I specify it says "Error: <urlopen error unknown url type: https>". Any ideas what's wrong?</p></div></div></div>
+<div class="message assistant" id="msg-2026-03-27T17-07-12-699Z"><div class="message-header"><span class="role-label">Assistant</span><a href="#msg-2026-03-27T17-07-12-699Z" class="timestamp-link"><time datetime="2026-03-27T17:07:12.699Z" data-timestamp="2026-03-27T17:07:12.699Z">2026-03-27T17:07:12.699Z</time></a></div><div class="message-content">
+<div class="thinking"><div class="thinking-label">Thinking</div></div></div></div>
+<div class="message assistant" id="msg-2026-03-27T17-07-15-305Z"><div class="message-header"><span class="role-label">Assistant</span><a href="#msg-2026-03-27T17-07-15-305Z" class="timestamp-link"><time datetime="2026-03-27T17:07:15.305Z" data-timestamp="2026-03-27T17:07:15.305Z">2026-03-27T17:07:15.305Z</time></a></div><div class="message-content">
+<div class="assistant-text"><p>The issue is that in the WASM/Worker environment, Python's standard <code>ssl</code> module isn't available, so <code>urllib</code> can't handle <code>https://</code> URLs natively. And raw HTTP sockets don't work either. The <code>pyodide-http</code> patch is supposed to fix this but can be unreliable.</p>
+<p>The most robust approach is to use Pyodide's JS interop — <code>XMLHttpRequest</code> is available synchronously in Web Workers. Let me provide a built-in HTTP helper and fix the fetch command.</p></div></div></div>
+<div class="message assistant" id="msg-2026-03-27T17-07-15-355Z"><div class="message-header"><span class="role-label">Assistant</span><a href="#msg-2026-03-27T17-07-15-355Z" class="timestamp-link"><time datetime="2026-03-27T17:07:15.355Z" data-timestamp="2026-03-27T17:07:15.355Z">2026-03-27T17:07:15.355Z</time></a></div><div class="message-content">
+<div class="tool-use" data-tool-id="toolu_01E9246FtUw3wDi1JwgmQY7g"><div class="tool-header"><span class="tool-icon">⚙</span> Read</div><div class="truncatable"><div class="truncatable-content"><pre class="json">{
+  &#34;file_path&#34;: &#34;/home/david/projects/stirlingbridge/localfirst-demo/src/worker.ts&#34;
+}</pre></div><button class="expand-btn">Show more</button></div></div></div></div>
+<div class="message tool-reply" id="msg-2026-03-27T17-07-15-398Z"><div class="message-header"><span class="role-label">Tool reply</span><a href="#msg-2026-03-27T17-07-15-398Z" class="timestamp-link"><time datetime="2026-03-27T17:07:15.398Z" data-timestamp="2026-03-27T17:07:15.398Z">2026-03-27T17:07:15.398Z</time></a></div><div class="message-content"><div class="tool-result"><div class="truncatable"><div class="truncatable-content"><pre>     1→// Pyodide Web Worker
+     2→// Runs in a dedicated worker thread to keep the UI responsive.
+     3→
+     4→// Pyodide types (minimal, loaded dynamically from CDN)
+     5→interface PyodideInterface {
+     6→  runPythonAsync(code: string): Promise&lt;unknown&gt;;
+     7→  FS: {
+     8→    writeFile(path: string, data: string): void;
+     9→    readFile(path: string, opts: { encoding: string }): string;
+    10→    mkdir(path: string): void;
+    11→    analyzePath(path: string): { exists: boolean };
+    12→  };
+    13→}
+    14→
+    15→const PYODIDE_CDN = &quot;https://cdn.jsdelivr.net/pyodide/v0.26.4/full&quot;;
+    16→
+    17→let pyodide: PyodideInterface | null = null;
+    18→
+    19→// --- Bootstrap Python code ---
+    20→// Sets up the run_command() helper that executes a script with captured I/O.
+    21→
+    22→const BOOTSTRAP_PYTHON = `
+    23→import sys, io, runpy, os, json
+    24→
+    25→def _run_command(script_path, args_json):
+    26→    &quot;&quot;&quot;Run a Python script as if it were a CLI command.
+    27→
+    28→    Sets sys.argv, captures stdout/stderr, returns JSON result.
+    29→    &quot;&quot;&quot;
+    30→    args = json.loads(args_json)
+    31→
+    32→    old_argv = sys.argv[:]
+    33→    old_stdout = sys.stdout
+    34→    old_stderr = sys.stderr
+    35→
+    36→    stdout_buf = io.StringIO()
+    37→    stderr_buf = io.StringIO()
+    38→
+    39→    sys.argv = [script_path] + args
+    40→    sys.stdout = stdout_buf
+    41→    sys.stderr = stderr_buf
+    42→
+    43→    exit_code = 0
+    44→    try:
+    45→        # run_path handles __name__ == &#x27;__main__&#x27; correctly
+    46→        runpy.run_path(script_path, run_name=&#x27;__main__&#x27;)
+    47→    except SystemExit as e:
+    48→        if e.code is None:
+    49→            exit_code = 0
+    50→        elif isinstance(e.code, int):
+    51→            exit_code = e.code
+    52→        else:
+    53→            exit_code = 1
+    54→    except Exception:
+    55→        import traceback
+    56→        traceback.print_exc(file=stderr_buf)
+    57→        exit_code = 1
+    58→    finally:
+    59→        sys.argv = old_argv
+    60→        sys.stdout = old_stdout
+    61→        sys.stderr = old_stderr
+    62→
+    63→    return json.dumps({
+    64→        &quot;stdout&quot;: stdout_buf.getvalue(),
+    65→        &quot;stderr&quot;: stderr_buf.getvalue(),
+    66→        &quot;exitCode&quot;: exit_code,
+    67→    })
+    68→`;
+    69→
+    70→const SETUP_HTTP_PATCHING = `
+    71→import micropip
+    72→await micropip.install(&quot;pyodide-http&quot;)
+    73→import pyodide_http
+    74→pyodide_http.patch_all()
+    75→`;
+    76→
+    77→// --- Message handling ---
+    78→
+    79→async function initPyodide(): Promise&lt;void&gt; {
+    80→  // Dynamic import from CDN
+    81→  const mod = await import(
+    82→    /* @vite-ignore */
+    83→    `${PYODIDE_CDN}/pyodide.mjs`
+    84→  );
+    85→  pyodide = await mod.loadPyodide({
+    86→    indexURL: PYODIDE_CDN,
+    87→  });
+    88→
+    89→  // Create /tools directory for CLI scripts
+    90→  pyodide!.FS.mkdir(&quot;/tools&quot;);
+    91→
+    92→  // Bootstrap the command runner
+    93→  await pyodide!.runPythonAsync(BOOTSTRAP_PYTHON);
+    94→
+    95→  // Set up HTTP patching so requests/urllib work
+    96→  try {
+    97→    await pyodide!.runPythonAsync(SETUP_HTTP_PATCHING);
+    98→  } catch (e) {
+    99→    // Non-fatal: HTTP patching is nice-to-have
+   100→    console.warn(&quot;Could not set up HTTP patching:&quot;, e);
+   101→  }
+   102→}
+   103→
+   104→async function handleExec(
+   105→  scriptPath: string,
+   106→  args: string[]
+   107→): Promise&lt;{ stdout: string; stderr: string; exitCode: number }&gt; {
+   108→  const argsJson = JSON.stringify(args);
+   109→  const resultJson = (await pyodide!.runPythonAsync(
+   110→    `_run_command(${JSON.stringify(scriptPath)}, ${JSON.stringify(argsJson)})`
+   111→  )) as string;
+   112→  return JSON.parse(resultJson);
+   113→}
+   114→
+   115→async function handleInstall(packages: string[]): Promise&lt;void&gt; {
+   116→  const pkgList = packages.map((p) =&gt; JSON.stringify(p)).join(&quot;, &quot;);
+   117→  await pyodide!.runPythonAsync(`
+   118→import micropip
+   119→await micropip.install([${pkgList}])
+   120→`);
+   121→}
+   122→
+   123→function handleWriteFile(path: string, content: string): void {
+   124→  // Ensure parent directories exist
+   125→  const parts = path.split(&quot;/&quot;).filter(Boolean);
+   126→  let current = &quot;&quot;;
+   127→  for (let i = 0; i &lt; parts.length - 1; i++) {
+   128→    current += &quot;/&quot; + parts[i];
+   129→    if (!pyodide!.FS.analyzePath(current).exists) {
+   130→      pyodide!.FS.mkdir(current);
+   131→    }
+   132→  }
+   133→  pyodide!.FS.writeFile(path, content);
+   134→}
+   135→
+   136→function handleReadFile(path: string): string {
+   137→  return pyodide!.FS.readFile(path, { encoding: &quot;utf8&quot; });
+   138→}
+   139→
+   140→// --- Worker message loop ---
+   141→
+   142→self.onmessage = async (event: MessageEvent) =&gt; {
+   143→  const msg = event.data;
+   144→  const id = msg.id;
+   145→
+   146→  try {
+   147→    switch (msg.type) {
+   148→      case &quot;init&quot;: {
+   149→        await initPyodide();
+   150→        self.postMessage({ id, type: &quot;ready&quot; });
+   151→        break;
+   152→      }
+   153→
+   154→      case &quot;exec&quot;: {
+   155→        const result = await handleExec(msg.scriptPath, msg.args);
+   156→        self.postMessage({
+   157→          id,
+   158→          type: &quot;exec-result&quot;,
+   159→          stdout: result.stdout,
+   160→          stderr: result.stderr,
+   161→          exitCode: result.exitCode,
+   162→        });
+   163→        break;
+   164→      }
+   165→
+   166→      case &quot;install&quot;: {
+   167→        await handleInstall(msg.packages);
+   168→        self.postMessage({ id, type: &quot;install-result&quot;, success: true });
+   169→        break;
+   170→      }
+   171→
+   172→      case &quot;write-file&quot;: {
+   173→        handleWriteFile(msg.path, msg.content);
+   174→        self.postMessage({ id, type: &quot;write-file-result&quot;, success: true });
+   175→        break;
+   176→      }
+   177→
+   178→      case &quot;read-file&quot;: {
+   179→        const content = handleReadFile(msg.path);
+   180→        self.postMessage({
+   181→          id,
+   182→          type: &quot;read-file-result&quot;,
+   183→          success: true,
+   184→          content,
+   185→        });
+   186→        break;
+   187→      }
+   188→
+   189→      default:
+   190→        self.postMessage({
+   191→          id,
+   192→          type: &quot;error&quot;,
+   193→          error: `Unknown message type: ${msg.type}`,
+   194→        });
+   195→    }
+   196→  } catch (err: unknown) {
+   197→    const message = err instanceof Error ? err.message : String(err);
+   198→    self.postMessage({ id, type: &quot;error&quot;, error: message });
+   199→  }
+   200→};
+   201→</pre></div><button class="expand-btn">Show more</button></div></div></div></div>
+<div class="message assistant" id="msg-2026-03-27T17-07-19-903Z"><div class="message-header"><span class="role-label">Assistant</span><a href="#msg-2026-03-27T17-07-19-903Z" class="timestamp-link"><time datetime="2026-03-27T17:07:19.903Z" data-timestamp="2026-03-27T17:07:19.903Z">2026-03-27T17:07:19.903Z</time></a></div><div class="message-content">
+<div class="tool-use" data-tool-id="toolu_016ozo1z63v7j6e6v8n4ovac"><div class="tool-header"><span class="tool-icon">⚙</span> Read</div><div class="truncatable"><div class="truncatable-content"><pre class="json">{
+  &#34;file_path&#34;: &#34;/home/david/projects/stirlingbridge/localfirst-demo/src/commands.ts&#34;
+}</pre></div><button class="expand-btn">Show more</button></div></div></div></div>
+<div class="message tool-reply" id="msg-2026-03-27T17-07-19-923Z"><div class="message-header"><span class="role-label">Tool reply</span><a href="#msg-2026-03-27T17-07-19-923Z" class="timestamp-link"><time datetime="2026-03-27T17:07:19.923Z" data-timestamp="2026-03-27T17:07:19.923Z">2026-03-27T17:07:19.923Z</time></a></div><div class="message-content"><div class="tool-result"><div class="truncatable"><div class="truncatable-content"><pre>     1→import type { CommandDef } from &quot;./types.js&quot;;
+     2→
+     3→/**
+     4→ * Built-in demo commands that showcase the framework&#x27;s capabilities.
+     5→ */
+     6→
+     7→export const HELLO: CommandDef = {
+     8→  source: `\
+     9→import argparse
+    10→import sys
+    11→
+    12→parser = argparse.ArgumentParser(description=&quot;Say hello&quot;)
+    13→parser.add_argument(&quot;--name&quot;, default=&quot;World&quot;, help=&quot;Who to greet&quot;)
+    14→parser.add_argument(&quot;--shout&quot;, action=&quot;store_true&quot;, help=&quot;SHOUT the greeting&quot;)
+    15→
+    16→args = parser.parse_args()
+    17→greeting = f&quot;Hello, {args.name}!&quot;
+    18→if args.shout:
+    19→    greeting = greeting.upper()
+    20→print(greeting)
+    21→`,
+    22→};
+    23→
+    24→export const SYSINFO: CommandDef = {
+    25→  source: `\
+    26→import sys
+    27→import platform
+    28→import os
+    29→
+    30→print(f&quot;Python version:  {sys.version}&quot;)
+    31→print(f&quot;Platform:        {platform.platform()}&quot;)
+    32→print(f&quot;Machine:         {platform.machine()}&quot;)
+    33→print(f&quot;Working dir:     {os.getcwd()}&quot;)
+    34→print(f&quot;Executable:      {sys.executable or &#x27;(wasm)&#x27;}&quot;)
+    35→print()
+    36→print(&quot;Loaded modules (top 20):&quot;)
+    37→mods = sorted(sys.modules.keys())[:20]
+    38→for m in mods:
+    39→    print(f&quot;  {m}&quot;)
+    40→print(f&quot;  ... and {len(sys.modules) - 20} more&quot;)
+    41→`,
+    42→};
+    43→
+    44→export const FETCH: CommandDef = {
+    45→  source: `\
+    46→import argparse
+    47→import json
+    48→import sys
+    49→
+    50→parser = argparse.ArgumentParser(description=&quot;Fetch a URL and print the response&quot;)
+    51→parser.add_argument(&quot;url&quot;, help=&quot;URL to fetch&quot;)
+    52→parser.add_argument(&quot;--headers&quot;, action=&quot;store_true&quot;, help=&quot;Print response headers&quot;)
+    53→
+    54→args = parser.parse_args()
+    55→
+    56→try:
+    57→    from urllib.request import urlopen, Request
+    58→    req = Request(args.url, headers={&quot;User-Agent&quot;: &quot;localfirst-demo/0.1&quot;})
+    59→    with urlopen(req) as resp:
+    60→        if args.headers:
+    61→            for key, val in resp.headers.items():
+    62→                print(f&quot;{key}: {val}&quot;)
+    63→            print()
+    64→        body = resp.read().decode(&quot;utf-8&quot;)
+    65→        # Try to pretty-print JSON
+    66→        try:
+    67→            data = json.loads(body)
+    68→            print(json.dumps(data, indent=2))
+    69→        except json.JSONDecodeError:
+    70→            print(body)
+    71→except Exception as e:
+    72→    print(f&quot;Error: {e}&quot;, file=sys.stderr)
+    73→    sys.exit(1)
+    74→`,
+    75→};
+    76→
+    77→export const FILES: CommandDef = {
+    78→  source: `\
+    79→import os
+    80→import argparse
+    81→
+    82→parser = argparse.ArgumentParser(description=&quot;List files in the virtual filesystem&quot;)
+    83→parser.add_argument(&quot;path&quot;, nargs=&quot;?&quot;, default=&quot;/&quot;, help=&quot;Directory to list&quot;)
+    84→parser.add_argument(&quot;-r&quot;, &quot;--recursive&quot;, action=&quot;store_true&quot;, help=&quot;List recursively&quot;)
+    85→
+    86→args = parser.parse_args()
+    87→
+    88→def list_dir(path, indent=0):
+    89→    try:
+    90→        entries = sorted(os.listdir(path))
+    91→    except PermissionError:
+    92→        return
+    93→    except FileNotFoundError:
+    94→        print(f&quot;No such directory: {path}&quot;)
+    95→        return
+    96→
+    97→    for entry in entries:
+    98→        full = os.path.join(path, entry)
+    99→        prefix = &quot;  &quot; * indent
+   100→        if os.path.isdir(full):
+   101→            print(f&quot;{prefix}{entry}/&quot;)
+   102→            if args.recursive:
+   103→                list_dir(full, indent + 1)
+   104→        else:
+   105→            size = os.path.getsize(full)
+   106→            print(f&quot;{prefix}{entry}  ({size} bytes)&quot;)
+   107→
+   108→list_dir(args.path)
+   109→`,
+   110→};
+   111→</pre></div><button class="expand-btn">Show more</button></div></div></div></div>
+<div class="message assistant" id="msg-2026-03-27T17-07-25-140Z"><div class="message-header"><span class="role-label">Assistant</span><a href="#msg-2026-03-27T17-07-25-140Z" class="timestamp-link"><time datetime="2026-03-27T17:07:25.140Z" data-timestamp="2026-03-27T17:07:25.140Z">2026-03-27T17:07:25.140Z</time></a></div><div class="message-content">
+<div class="assistant-text"><p>Now I'll fix both issues: replace the unreliable <code>pyodide-http</code> patching with a built-in HTTP helper that uses synchronous <code>XMLHttpRequest</code> (which works fine in Web Workers), and update the fetch command to use it.</p></div></div></div>
+<div class="message assistant" id="msg-2026-03-27T17-07-35-100Z"><div class="message-header"><span class="role-label">Assistant</span><a href="#msg-2026-03-27T17-07-35-100Z" class="timestamp-link"><time datetime="2026-03-27T17:07:35.100Z" data-timestamp="2026-03-27T17:07:35.100Z">2026-03-27T17:07:35.100Z</time></a></div><div class="message-content"><div class="file-tool edit-tool" data-tool-id="toolu_012xhLroP4FT55mkN3ZPat2T">
+<div class="file-tool-header edit-header"><span class="file-tool-icon">✏️</span> Edit <span class="file-tool-path">worker.ts</span></div>
+<div class="file-tool-fullpath">/home/david/projects/stirlingbridge/localfirst-demo/src/worker.ts</div>
+<div class="truncatable"><div class="truncatable-content">
+<div class="edit-section edit-old"><div class="edit-label">−</div><pre class="edit-content">const SETUP_HTTP_PATCHING = `
+import micropip
+await micropip.install(&#34;pyodide-http&#34;)
+import pyodide_http
+pyodide_http.patch_all()
+`;</pre></div>
+<div class="edit-section edit-new"><div class="edit-label">+</div><pre class="edit-content">// Python module that provides HTTP via synchronous XMLHttpRequest (available in Workers).
+// This avoids the ssl/socket limitations of WASM entirely.
+const HTTP_HELPER_MODULE = `\
+&#34;&#34;&#34;HTTP client for the browser WASM environment.
+
+Uses synchronous XMLHttpRequest (available in Web Workers) via Pyodide&#39;s JS interop.
+This bypasses Python&#39;s socket/ssl stack entirely, routing through the browser&#39;s
+network stack which handles TLS natively.
+&#34;&#34;&#34;
+import json as _json
+from pyodide.ffi import to_js  # noqa: F401
+from js import XMLHttpRequest
+
+
+class Response:
+    def __init__(self, status, status_text, headers, text):
+        self.status_code = status
+        self.status_text = status_text
+        self.headers = headers
+        self.text = text
+        self.ok = 200 &lt;= status &lt; 300
+
+    def json(self):
+        return _json.loads(self.text)
+
+    def raise_for_status(self):
+        if not self.ok:
+            raise Exception(f&#34;HTTP {self.status_code}: {self.status_text}&#34;)
+
+
+def request(method, url, headers=None, data=None, timeout=30):
+    &#34;&#34;&#34;Perform a synchronous HTTP request via the browser&#39;s XMLHttpRequest.&#34;&#34;&#34;
+    xhr = XMLHttpRequest.new()
+    xhr.open(method, url, False)  # False = synchronous
+    xhr.timeout = timeout * 1000
+
+    if headers:
+        for key, value in headers.items():
+            xhr.setRequestHeader(key, value)
+
+    if data is not None:
+        if isinstance(data, dict):
+            xhr.setRequestHeader(&#34;Content-Type&#34;, &#34;application/json&#34;)
+            data = _json.dumps(data)
+        xhr.send(data)
+    else:
+        xhr.send()
+
+    # Parse response headers
+    raw_headers = xhr.getAllResponseHeaders()
+    resp_headers = {}
+    if raw_headers:
+        for line in raw_headers.strip().split(&#34;\\r\\n&#34;):
+            if &#34;: &#34; in line:
+                k, v = line.split(&#34;: &#34;, 1)
+                resp_headers[k] = v
+
+    return Response(xhr.status, xhr.statusText, resp_headers, xhr.responseText)
+
+
+def get(url, headers=None, **kwargs):
+    return request(&#34;GET&#34;, url, headers=headers, **kwargs)
+
+
+def post(url, headers=None, data=None, json=None, **kwargs):
+    if json is not None:
+        data = json
+    return request(&#34;POST&#34;, url, headers=headers, data=data, **kwargs)
+
+
+def put(url, headers=None, data=None, **kwargs):
+    return request(&#34;PUT&#34;, url, headers=headers, data=data, **kwargs)
+
+
+def delete(url, headers=None, **kwargs):
+    return request(&#34;DELETE&#34;, url, headers=headers, **kwargs)
+`;</pre></div>
+</div><button class="expand-btn">Show more</button></div>
+</div></div></div>
+<div class="message tool-reply" id="msg-2026-03-27T17-07-35-110Z"><div class="message-header"><span class="role-label">Tool reply</span><a href="#msg-2026-03-27T17-07-35-110Z" class="timestamp-link"><time datetime="2026-03-27T17:07:35.110Z" data-timestamp="2026-03-27T17:07:35.110Z">2026-03-27T17:07:35.110Z</time></a></div><div class="message-content"><div class="tool-result"><div class="truncatable"><div class="truncatable-content"><pre>The file /home/david/projects/stirlingbridge/localfirst-demo/src/worker.ts has been updated successfully.</pre></div><button class="expand-btn">Show more</button></div></div></div></div>
+<div class="message assistant" id="msg-2026-03-27T17-07-39-298Z"><div class="message-header"><span class="role-label">Assistant</span><a href="#msg-2026-03-27T17-07-39-298Z" class="timestamp-link"><time datetime="2026-03-27T17:07:39.298Z" data-timestamp="2026-03-27T17:07:39.298Z">2026-03-27T17:07:39.298Z</time></a></div><div class="message-content">
+<div class="assistant-text"><p>Now update <code>initPyodide</code> to write this module to the virtual FS instead of installing <code>pyodide-http</code>:</p></div></div></div>
+<div class="message assistant" id="msg-2026-03-27T17-07-42-203Z"><div class="message-header"><span class="role-label">Assistant</span><a href="#msg-2026-03-27T17-07-42-203Z" class="timestamp-link"><time datetime="2026-03-27T17:07:42.203Z" data-timestamp="2026-03-27T17:07:42.203Z">2026-03-27T17:07:42.203Z</time></a></div><div class="message-content"><div class="file-tool edit-tool" data-tool-id="toolu_019pb4j8NFURXqm7dxSed1Uh">
+<div class="file-tool-header edit-header"><span class="file-tool-icon">✏️</span> Edit <span class="file-tool-path">worker.ts</span></div>
+<div class="file-tool-fullpath">/home/david/projects/stirlingbridge/localfirst-demo/src/worker.ts</div>
+<div class="truncatable"><div class="truncatable-content">
+<div class="edit-section edit-old"><div class="edit-label">−</div><pre class="edit-content">  // Create /tools directory for CLI scripts
+  pyodide!.FS.mkdir(&#34;/tools&#34;);
+
+  // Bootstrap the command runner
+  await pyodide!.runPythonAsync(BOOTSTRAP_PYTHON);
+
+  // Set up HTTP patching so requests/urllib work
+  try {
+    await pyodide!.runPythonAsync(SETUP_HTTP_PATCHING);
+  } catch (e) {
+    // Non-fatal: HTTP patching is nice-to-have
+    console.warn(&#34;Could not set up HTTP patching:&#34;, e);
+  }</pre></div>
+<div class="edit-section edit-new"><div class="edit-label">+</div><pre class="edit-content">  // Create /tools directory for CLI scripts
+  pyodide!.FS.mkdir(&#34;/tools&#34;);
+
+  // Write the HTTP helper module so Python scripts can `import http_client`
+  pyodide!.FS.writeFile(&#34;/lib/python3.12/http_client.py&#34;, HTTP_HELPER_MODULE);
+
+  // Bootstrap the command runner
+  await pyodide!.runPythonAsync(BOOTSTRAP_PYTHON);</pre></div>
+</div><button class="expand-btn">Show more</button></div>
+</div></div></div>
+<div class="message tool-reply" id="msg-2026-03-27T17-07-42-232Z"><div class="message-header"><span class="role-label">Tool reply</span><a href="#msg-2026-03-27T17-07-42-232Z" class="timestamp-link"><time datetime="2026-03-27T17:07:42.232Z" data-timestamp="2026-03-27T17:07:42.232Z">2026-03-27T17:07:42.232Z</time></a></div><div class="message-content"><div class="tool-result"><div class="truncatable"><div class="truncatable-content"><pre>The file /home/david/projects/stirlingbridge/localfirst-demo/src/worker.ts has been updated successfully.</pre></div><button class="expand-btn">Show more</button></div></div></div></div>
+<div class="message assistant" id="msg-2026-03-27T17-07-45-901Z"><div class="message-header"><span class="role-label">Assistant</span><a href="#msg-2026-03-27T17-07-45-901Z" class="timestamp-link"><time datetime="2026-03-27T17:07:45.901Z" data-timestamp="2026-03-27T17:07:45.901Z">2026-03-27T17:07:45.901Z</time></a></div><div class="message-content">
+<div class="assistant-text"><p>Now update the fetch command to use <code>http_client</code> instead of <code>urllib</code>:</p></div></div></div>
+<div class="message assistant" id="msg-2026-03-27T17-07-51-342Z"><div class="message-header"><span class="role-label">Assistant</span><a href="#msg-2026-03-27T17-07-51-342Z" class="timestamp-link"><time datetime="2026-03-27T17:07:51.342Z" data-timestamp="2026-03-27T17:07:51.342Z">2026-03-27T17:07:51.342Z</time></a></div><div class="message-content"><div class="file-tool edit-tool" data-tool-id="toolu_01Ed5twSazK4Y3Zx8TJDV2hW">
+<div class="file-tool-header edit-header"><span class="file-tool-icon">✏️</span> Edit <span class="file-tool-path">commands.ts</span></div>
+<div class="file-tool-fullpath">/home/david/projects/stirlingbridge/localfirst-demo/src/commands.ts</div>
+<div class="truncatable"><div class="truncatable-content">
+<div class="edit-section edit-old"><div class="edit-label">−</div><pre class="edit-content">export const FETCH: CommandDef = {
+  source: `\
+import argparse
+import json
+import sys
+
+parser = argparse.ArgumentParser(description=&#34;Fetch a URL and print the response&#34;)
+parser.add_argument(&#34;url&#34;, help=&#34;URL to fetch&#34;)
+parser.add_argument(&#34;--headers&#34;, action=&#34;store_true&#34;, help=&#34;Print response headers&#34;)
+
+args = parser.parse_args()
+
+try:
+    from urllib.request import urlopen, Request
+    req = Request(args.url, headers={&#34;User-Agent&#34;: &#34;localfirst-demo/0.1&#34;})
+    with urlopen(req) as resp:
+        if args.headers:
+            for key, val in resp.headers.items():
+                print(f&#34;{key}: {val}&#34;)
+            print()
+        body = resp.read().decode(&#34;utf-8&#34;)
+        # Try to pretty-print JSON
+        try:
+            data = json.loads(body)
+            print(json.dumps(data, indent=2))
+        except json.JSONDecodeError:
+            print(body)
+except Exception as e:
+    print(f&#34;Error: {e}&#34;, file=sys.stderr)
+    sys.exit(1)
+`,
+};</pre></div>
+<div class="edit-section edit-new"><div class="edit-label">+</div><pre class="edit-content">export const FETCH: CommandDef = {
+  source: `\
+import argparse
+import json
+import sys
+import http_client
+
+parser = argparse.ArgumentParser(description=&#34;Fetch a URL and print the response&#34;)
+parser.add_argument(&#34;url&#34;, help=&#34;URL to fetch&#34;)
+parser.add_argument(&#34;--headers&#34;, action=&#34;store_true&#34;, help=&#34;Print response headers&#34;)
+parser.add_argument(&#34;-X&#34;, &#34;--method&#34;, default=&#34;GET&#34;, help=&#34;HTTP method&#34;)
+
+args = parser.parse_args()
+
+try:
+    resp = http_client.request(args.method, args.url, headers={&#34;User-Agent&#34;: &#34;localfirst-demo/0.1&#34;})
+
+    if args.headers:
+        print(f&#34;HTTP {resp.status_code} {resp.status_text}&#34;)
+        for key, val in resp.headers.items():
+            print(f&#34;{key}: {val}&#34;)
+        print()
+
+    # Try to pretty-print JSON
+    try:
+        data = json.loads(resp.text)
+        print(json.dumps(data, indent=2))
+    except (json.JSONDecodeError, ValueError):
+        print(resp.text)
+
+    if not resp.ok:
+        sys.exit(1)
+except Exception as e:
+    print(f&#34;Error: {e}&#34;, file=sys.stderr)
+    sys.exit(1)
+`,
+};</pre></div>
+</div><button class="expand-btn">Show more</button></div>
+</div></div></div>
+<div class="message tool-reply" id="msg-2026-03-27T17-07-51-367Z"><div class="message-header"><span class="role-label">Tool reply</span><a href="#msg-2026-03-27T17-07-51-367Z" class="timestamp-link"><time datetime="2026-03-27T17:07:51.367Z" data-timestamp="2026-03-27T17:07:51.367Z">2026-03-27T17:07:51.367Z</time></a></div><div class="message-content"><div class="tool-result"><div class="truncatable"><div class="truncatable-content"><pre>The file /home/david/projects/stirlingbridge/localfirst-demo/src/commands.ts has been updated successfully.</pre></div><button class="expand-btn">Show more</button></div></div></div></div>
+<div class="message assistant" id="msg-2026-03-27T17-07-56-251Z"><div class="message-header"><span class="role-label">Assistant</span><a href="#msg-2026-03-27T17-07-56-251Z" class="timestamp-link"><time datetime="2026-03-27T17:07:56.251Z" data-timestamp="2026-03-27T17:07:56.251Z">2026-03-27T17:07:56.251Z</time></a></div><div class="message-content">
+<div class="assistant-text"><p>Now let me verify the path for the helper module is correct — Pyodide's Python version might not be 3.12:</p></div></div></div>
+<div class="message assistant" id="msg-2026-03-27T17-07-58-779Z"><div class="message-header"><span class="role-label">Assistant</span><a href="#msg-2026-03-27T17-07-58-779Z" class="timestamp-link"><time datetime="2026-03-27T17:07:58.779Z" data-timestamp="2026-03-27T17:07:58.779Z">2026-03-27T17:07:58.779Z</time></a></div><div class="message-content"><div class="file-tool edit-tool" data-tool-id="toolu_01CwsmevbcFH27J1g4yPJoQL">
+<div class="file-tool-header edit-header"><span class="file-tool-icon">✏️</span> Edit <span class="file-tool-path">worker.ts</span></div>
+<div class="file-tool-fullpath">/home/david/projects/stirlingbridge/localfirst-demo/src/worker.ts</div>
+<div class="truncatable"><div class="truncatable-content">
+<div class="edit-section edit-old"><div class="edit-label">−</div><pre class="edit-content">  // Write the HTTP helper module so Python scripts can `import http_client`
+  pyodide!.FS.writeFile(&#34;/lib/python3.12/http_client.py&#34;, HTTP_HELPER_MODULE);</pre></div>
+<div class="edit-section edit-new"><div class="edit-label">+</div><pre class="edit-content">  // Detect the Python stdlib path and write the HTTP helper module there
+  // so that Python scripts can simply `import http_client`.
+  const pyVersion = (await pyodide!.runPythonAsync(
+    &#34;import sys; f&#39;{sys.version_info.major}.{sys.version_info.minor}&#39;&#34;
+  )) as string;
+  pyodide!.FS.writeFile(`/lib/python${pyVersion}/http_client.py`, HTTP_HELPER_MODULE);</pre></div>
+</div><button class="expand-btn">Show more</button></div>
+</div></div></div>
+<div class="message tool-reply" id="msg-2026-03-27T17-07-58-812Z"><div class="message-header"><span class="role-label">Tool reply</span><a href="#msg-2026-03-27T17-07-58-812Z" class="timestamp-link"><time datetime="2026-03-27T17:07:58.812Z" data-timestamp="2026-03-27T17:07:58.812Z">2026-03-27T17:07:58.812Z</time></a></div><div class="message-content"><div class="tool-result"><div class="truncatable"><div class="truncatable-content"><pre>The file /home/david/projects/stirlingbridge/localfirst-demo/src/worker.ts has been updated successfully.</pre></div><button class="expand-btn">Show more</button></div></div></div></div>
+<div class="message assistant" id="msg-2026-03-27T17-08-03-671Z"><div class="message-header"><span class="role-label">Assistant</span><a href="#msg-2026-03-27T17-08-03-671Z" class="timestamp-link"><time datetime="2026-03-27T17:08:03.671Z" data-timestamp="2026-03-27T17:08:03.671Z">2026-03-27T17:08:03.671Z</time></a></div><div class="message-content">
+<div class="tool-use bash-tool" data-tool-id="toolu_01LQuGmZi5UQdgZMZy1eLAdX">
+<div class="tool-header"><span class="tool-icon">$</span> Bash</div>
+<div class="tool-description">Type-check and build</div><div class="truncatable"><div class="truncatable-content"><pre class="bash-command">npx tsc --noEmit 2&gt;&amp;1 &amp;&amp; npx vite build 2&gt;&amp;1</pre></div><button class="expand-btn">Show more</button></div>
+</div></div></div>
+<div class="message tool-reply" id="msg-2026-03-27T17-08-05-049Z"><div class="message-header"><span class="role-label">Tool reply</span><a href="#msg-2026-03-27T17-08-05-049Z" class="timestamp-link"><time datetime="2026-03-27T17:08:05.049Z" data-timestamp="2026-03-27T17:08:05.049Z">2026-03-27T17:08:05.049Z</time></a></div><div class="message-content"><div class="tool-result"><div class="truncatable"><div class="truncatable-content"><pre>vite v6.4.1 building for production...
+transforming...
+✓ 6 modules transformed.
+rendering chunks...
+computing gzip size...
+dist/index.html                 3.10 kB │ gzip: 1.14 kB
+dist/assets/worker-DH2RNvQQ.js  5.10 kB
+dist/assets/index-DzzTyjoX.js   8.09 kB │ gzip: 3.33 kB
+✓ built in 126ms</pre></div><button class="expand-btn">Show more</button></div></div></div></div>
+<div class="message assistant" id="msg-2026-03-27T17-08-16-191Z"><div class="message-header"><span class="role-label">Assistant</span><a href="#msg-2026-03-27T17-08-16-191Z" class="timestamp-link"><time datetime="2026-03-27T17:08:16.191Z" data-timestamp="2026-03-27T17:08:16.191Z">2026-03-27T17:08:16.191Z</time></a></div><div class="message-content">
+<div class="assistant-text"><p>Builds clean. Here's what changed:</p>
+<p><strong>Root cause:</strong> In the WASM environment, Python's <code>ssl</code> module isn't available and raw sockets don't work, so <code>urllib.request</code> can't handle HTTPS (or even HTTP reliably). The <code>pyodide-http</code> third-party patch was failing silently.</p>
+<p><strong>Fix:</strong> Replaced the <code>pyodide-http</code> approach with a built-in <code>http_client</code> Python module that uses synchronous <code>XMLHttpRequest</code> via Pyodide's JS interop. Since we're in a Web Worker, synchronous XHR is allowed (it's only blocked on the main thread). This routes all HTTP/HTTPS through the browser's native network stack, which handles TLS transparently.</p>
+<p>The <code>http_client</code> module provides a <code>requests</code>-like API:
+- <code>http_client.get(url)</code>, <code>.post(url, data=...)</code>, <code>.put()</code>, <code>.delete()</code>
+- Returns a <code>Response</code> with <code>.status_code</code>, <code>.text</code>, <code>.json()</code>, <code>.headers</code>, <code>.ok</code></p>
+<p>Any Python CLI tool can <code>import http_client</code> and use it. Give <code>fetch https://httpbin.org/get</code> another try.</p></div></div></div>
+        
+
+<div class="pagination">
+<a href="index.html" class="index-link">Index</a>
+<span class="disabled">&larr; Prev</span>
+<span class="current">1</span>
+<a href="page-002.html">2</a>
+<a href="page-003.html">3</a>
+<a href="page-004.html">4</a>
+<a href="page-005.html">5</a>
+<a href="page-002.html">Next &rarr;</a>
+</div>
+
+    </div>
+    <script>
+document.querySelectorAll('time[data-timestamp]').forEach(function(el) {
+    const timestamp = el.getAttribute('data-timestamp');
+    const date = new Date(timestamp);
+    const now = new Date();
+    const isToday = date.toDateString() === now.toDateString();
+    const timeStr = date.toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' });
+    if (isToday) { el.textContent = timeStr; }
+    else { el.textContent = date.toLocaleDateString(undefined, { month: 'short', day: 'numeric' }) + ' ' + timeStr; }
+});
+document.querySelectorAll('pre.json').forEach(function(el) {
+    let text = el.textContent;
+    text = text.replace(/"([^"]+)":/g, '<span style="color: #ce93d8">"$1"</span>:');
+    text = text.replace(/: "([^"]*)"/g, ': <span style="color: #81d4fa">"$1"</span>');
+    text = text.replace(/: (\d+)/g, ': <span style="color: #ffcc80">$1</span>');
+    text = text.replace(/: (true|false|null)/g, ': <span style="color: #f48fb1">$1</span>');
+    el.innerHTML = text;
+});
+document.querySelectorAll('.truncatable').forEach(function(wrapper) {
+    const content = wrapper.querySelector('.truncatable-content');
+    const btn = wrapper.querySelector('.expand-btn');
+    if (content.scrollHeight > 250) {
+        wrapper.classList.add('truncated');
+        btn.addEventListener('click', function() {
+            if (wrapper.classList.contains('truncated')) { wrapper.classList.remove('truncated'); wrapper.classList.add('expanded'); btn.textContent = 'Show less'; }
+            else { wrapper.classList.remove('expanded'); wrapper.classList.add('truncated'); btn.textContent = 'Show more'; }
+        });
+    }
+});
+</script>
+</body>
+</html>

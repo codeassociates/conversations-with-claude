@@ -1,0 +1,848 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Claude Code transcript - page 1</title>
+    <style>
+:root { --bg-color: #f5f5f5; --card-bg: #ffffff; --user-bg: #e3f2fd; --user-border: #1976d2; --assistant-bg: #f5f5f5; --assistant-border: #9e9e9e; --thinking-bg: #fff8e1; --thinking-border: #ffc107; --thinking-text: #666; --tool-bg: #f3e5f5; --tool-border: #9c27b0; --tool-result-bg: #e8f5e9; --tool-error-bg: #ffebee; --text-color: #212121; --text-muted: #757575; --code-bg: #263238; --code-text: #aed581; }
+* { box-sizing: border-box; }
+body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: var(--bg-color); color: var(--text-color); margin: 0; padding: 16px; line-height: 1.6; }
+.container { max-width: 800px; margin: 0 auto; }
+h1 { font-size: 1.5rem; margin-bottom: 24px; padding-bottom: 8px; border-bottom: 2px solid var(--user-border); }
+.header-row { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; border-bottom: 2px solid var(--user-border); padding-bottom: 8px; margin-bottom: 24px; }
+.header-row h1 { border-bottom: none; padding-bottom: 0; margin-bottom: 0; flex: 1; min-width: 200px; }
+.message { margin-bottom: 16px; border-radius: 12px; overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+.message.user { background: var(--user-bg); border-left: 4px solid var(--user-border); }
+.message.assistant { background: var(--card-bg); border-left: 4px solid var(--assistant-border); }
+.message.tool-reply { background: #fff8e1; border-left: 4px solid #ff9800; }
+.tool-reply .role-label { color: #e65100; }
+.tool-reply .tool-result { background: transparent; padding: 0; margin: 0; }
+.tool-reply .tool-result .truncatable.truncated::after { background: linear-gradient(to bottom, transparent, #fff8e1); }
+.message-header { display: flex; justify-content: space-between; align-items: center; padding: 8px 16px; background: rgba(0,0,0,0.03); font-size: 0.85rem; }
+.role-label { font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; }
+.user .role-label { color: var(--user-border); }
+time { color: var(--text-muted); font-size: 0.8rem; }
+.timestamp-link { color: inherit; text-decoration: none; }
+.timestamp-link:hover { text-decoration: underline; }
+.message:target { animation: highlight 2s ease-out; }
+@keyframes highlight { 0% { background-color: rgba(25, 118, 210, 0.2); } 100% { background-color: transparent; } }
+.message-content { padding: 16px; }
+.message-content p { margin: 0 0 12px 0; }
+.message-content p:last-child { margin-bottom: 0; }
+.thinking { background: var(--thinking-bg); border: 1px solid var(--thinking-border); border-radius: 8px; padding: 12px; margin: 12px 0; font-size: 0.9rem; color: var(--thinking-text); }
+.thinking-label { font-size: 0.75rem; font-weight: 600; text-transform: uppercase; color: #f57c00; margin-bottom: 8px; }
+.thinking p { margin: 8px 0; }
+.assistant-text { margin: 8px 0; }
+.tool-use { background: var(--tool-bg); border: 1px solid var(--tool-border); border-radius: 8px; padding: 12px; margin: 12px 0; }
+.tool-header { font-weight: 600; color: var(--tool-border); margin-bottom: 8px; display: flex; align-items: center; gap: 8px; }
+.tool-icon { font-size: 1.1rem; }
+.tool-description { font-size: 0.9rem; color: var(--text-muted); margin-bottom: 8px; font-style: italic; }
+.tool-result { background: var(--tool-result-bg); border-radius: 8px; padding: 12px; margin: 12px 0; }
+.tool-result.tool-error { background: var(--tool-error-bg); }
+.file-tool { border-radius: 8px; padding: 12px; margin: 12px 0; }
+.write-tool { background: linear-gradient(135deg, #e3f2fd 0%, #e8f5e9 100%); border: 1px solid #4caf50; }
+.edit-tool { background: linear-gradient(135deg, #fff3e0 0%, #fce4ec 100%); border: 1px solid #ff9800; }
+.file-tool-header { font-weight: 600; margin-bottom: 4px; display: flex; align-items: center; gap: 8px; font-size: 0.95rem; }
+.write-header { color: #2e7d32; }
+.edit-header { color: #e65100; }
+.file-tool-icon { font-size: 1rem; }
+.file-tool-path { font-family: monospace; background: rgba(0,0,0,0.08); padding: 2px 8px; border-radius: 4px; }
+.file-tool-fullpath { font-family: monospace; font-size: 0.8rem; color: var(--text-muted); margin-bottom: 8px; word-break: break-all; }
+.file-content { margin: 0; }
+.edit-section { display: flex; margin: 4px 0; border-radius: 4px; overflow: hidden; }
+.edit-label { padding: 8px 12px; font-weight: bold; font-family: monospace; display: flex; align-items: flex-start; }
+.edit-old { background: #fce4ec; }
+.edit-old .edit-label { color: #b71c1c; background: #f8bbd9; }
+.edit-old .edit-content { color: #880e4f; }
+.edit-new { background: #e8f5e9; }
+.edit-new .edit-label { color: #1b5e20; background: #a5d6a7; }
+.edit-new .edit-content { color: #1b5e20; }
+.edit-content { margin: 0; flex: 1; background: transparent; font-size: 0.85rem; }
+.edit-replace-all { font-size: 0.75rem; font-weight: normal; color: var(--text-muted); }
+.write-tool .truncatable.truncated::after { background: linear-gradient(to bottom, transparent, #e6f4ea); }
+.edit-tool .truncatable.truncated::after { background: linear-gradient(to bottom, transparent, #fff0e5); }
+.todo-list { background: linear-gradient(135deg, #e8f5e9 0%, #f1f8e9 100%); border: 1px solid #81c784; border-radius: 8px; padding: 12px; margin: 12px 0; }
+.todo-header { font-weight: 600; color: #2e7d32; margin-bottom: 10px; display: flex; align-items: center; gap: 8px; font-size: 0.95rem; }
+.todo-items { list-style: none; margin: 0; padding: 0; }
+.todo-item { display: flex; align-items: flex-start; gap: 10px; padding: 6px 0; border-bottom: 1px solid rgba(0,0,0,0.06); font-size: 0.9rem; }
+.todo-item:last-child { border-bottom: none; }
+.todo-icon { flex-shrink: 0; width: 20px; height: 20px; display: flex; align-items: center; justify-content: center; font-weight: bold; border-radius: 50%; }
+.todo-completed .todo-icon { color: #2e7d32; background: rgba(46, 125, 50, 0.15); }
+.todo-completed .todo-content { color: #558b2f; text-decoration: line-through; }
+.todo-in-progress .todo-icon { color: #f57c00; background: rgba(245, 124, 0, 0.15); }
+.todo-in-progress .todo-content { color: #e65100; font-weight: 500; }
+.todo-pending .todo-icon { color: #757575; background: rgba(0,0,0,0.05); }
+.todo-pending .todo-content { color: #616161; }
+pre { background: var(--code-bg); color: var(--code-text); padding: 12px; border-radius: 6px; overflow-x: auto; font-size: 0.85rem; line-height: 1.5; margin: 8px 0; white-space: pre-wrap; word-wrap: break-word; }
+pre.json { color: #e0e0e0; }
+code { background: rgba(0,0,0,0.08); padding: 2px 6px; border-radius: 4px; font-size: 0.9em; }
+pre code { background: none; padding: 0; }
+.user-content { margin: 0; }
+.truncatable { position: relative; }
+.truncatable.truncated .truncatable-content { max-height: 200px; overflow: hidden; }
+.truncatable.truncated::after { content: ''; position: absolute; bottom: 32px; left: 0; right: 0; height: 60px; background: linear-gradient(to bottom, transparent, var(--card-bg)); pointer-events: none; }
+.message.user .truncatable.truncated::after { background: linear-gradient(to bottom, transparent, var(--user-bg)); }
+.message.tool-reply .truncatable.truncated::after { background: linear-gradient(to bottom, transparent, #fff8e1); }
+.tool-use .truncatable.truncated::after { background: linear-gradient(to bottom, transparent, var(--tool-bg)); }
+.tool-result .truncatable.truncated::after { background: linear-gradient(to bottom, transparent, var(--tool-result-bg)); }
+.expand-btn { display: none; width: 100%; padding: 8px 16px; margin-top: 4px; background: rgba(0,0,0,0.05); border: 1px solid rgba(0,0,0,0.1); border-radius: 6px; cursor: pointer; font-size: 0.85rem; color: var(--text-muted); }
+.expand-btn:hover { background: rgba(0,0,0,0.1); }
+.truncatable.truncated .expand-btn, .truncatable.expanded .expand-btn { display: block; }
+.pagination { display: flex; justify-content: center; gap: 8px; margin: 24px 0; flex-wrap: wrap; }
+.pagination a, .pagination span { padding: 5px 10px; border-radius: 6px; text-decoration: none; font-size: 0.85rem; }
+.pagination a { background: var(--card-bg); color: var(--user-border); border: 1px solid var(--user-border); }
+.pagination a:hover { background: var(--user-bg); }
+.pagination .current { background: var(--user-border); color: white; }
+.pagination .disabled { color: var(--text-muted); border: 1px solid #ddd; }
+.pagination .index-link { background: var(--user-border); color: white; }
+details.continuation { margin-bottom: 16px; }
+details.continuation summary { cursor: pointer; padding: 12px 16px; background: var(--user-bg); border-left: 4px solid var(--user-border); border-radius: 12px; font-weight: 500; color: var(--text-muted); }
+details.continuation summary:hover { background: rgba(25, 118, 210, 0.15); }
+details.continuation[open] summary { border-radius: 12px 12px 0 0; margin-bottom: 0; }
+.index-item { margin-bottom: 16px; border-radius: 12px; overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,0.1); background: var(--user-bg); border-left: 4px solid var(--user-border); }
+.index-item a { display: block; text-decoration: none; color: inherit; }
+.index-item a:hover { background: rgba(25, 118, 210, 0.1); }
+.index-item-header { display: flex; justify-content: space-between; align-items: center; padding: 8px 16px; background: rgba(0,0,0,0.03); font-size: 0.85rem; }
+.index-item-number { font-weight: 600; color: var(--user-border); }
+.index-item-content { padding: 16px; }
+.index-item-stats { padding: 8px 16px 12px 32px; font-size: 0.85rem; color: var(--text-muted); border-top: 1px solid rgba(0,0,0,0.06); }
+.index-item-commit { margin-top: 6px; padding: 4px 8px; background: #fff3e0; border-radius: 4px; font-size: 0.85rem; color: #e65100; }
+.index-item-commit code { background: rgba(0,0,0,0.08); padding: 1px 4px; border-radius: 3px; font-size: 0.8rem; margin-right: 6px; }
+.commit-card { margin: 8px 0; padding: 10px 14px; background: #fff3e0; border-left: 4px solid #ff9800; border-radius: 6px; }
+.commit-card a { text-decoration: none; color: #5d4037; display: block; }
+.commit-card a:hover { color: #e65100; }
+.commit-card-hash { font-family: monospace; color: #e65100; font-weight: 600; margin-right: 8px; }
+.index-commit { margin-bottom: 12px; padding: 10px 16px; background: #fff3e0; border-left: 4px solid #ff9800; border-radius: 8px; box-shadow: 0 1px 2px rgba(0,0,0,0.05); }
+.index-commit a { display: block; text-decoration: none; color: inherit; }
+.index-commit a:hover { background: rgba(255, 152, 0, 0.1); margin: -10px -16px; padding: 10px 16px; border-radius: 8px; }
+.index-commit-header { display: flex; justify-content: space-between; align-items: center; font-size: 0.85rem; margin-bottom: 4px; }
+.index-commit-hash { font-family: monospace; color: #e65100; font-weight: 600; }
+.index-commit-msg { color: #5d4037; }
+.index-item-long-text { margin-top: 8px; padding: 12px; background: var(--card-bg); border-radius: 8px; border-left: 3px solid var(--assistant-border); }
+.index-item-long-text .truncatable.truncated::after { background: linear-gradient(to bottom, transparent, var(--card-bg)); }
+.index-item-long-text-content { color: var(--text-color); }
+#search-box { display: none; align-items: center; gap: 8px; }
+#search-box input { padding: 6px 12px; border: 1px solid var(--assistant-border); border-radius: 6px; font-size: 16px; width: 180px; }
+#search-box button, #modal-search-btn, #modal-close-btn { background: var(--user-border); color: white; border: none; border-radius: 6px; padding: 6px 10px; cursor: pointer; display: flex; align-items: center; justify-content: center; }
+#search-box button:hover, #modal-search-btn:hover { background: #1565c0; }
+#modal-close-btn { background: var(--text-muted); margin-left: 8px; }
+#modal-close-btn:hover { background: #616161; }
+#search-modal[open] { border: none; border-radius: 12px; box-shadow: 0 4px 24px rgba(0,0,0,0.2); padding: 0; width: 90vw; max-width: 900px; height: 80vh; max-height: 80vh; display: flex; flex-direction: column; }
+#search-modal::backdrop { background: rgba(0,0,0,0.5); }
+.search-modal-header { display: flex; align-items: center; gap: 8px; padding: 16px; border-bottom: 1px solid var(--assistant-border); background: var(--bg-color); border-radius: 12px 12px 0 0; }
+.search-modal-header input { flex: 1; padding: 8px 12px; border: 1px solid var(--assistant-border); border-radius: 6px; font-size: 16px; }
+#search-status { padding: 8px 16px; font-size: 0.85rem; color: var(--text-muted); border-bottom: 1px solid rgba(0,0,0,0.06); }
+#search-results { flex: 1; overflow-y: auto; padding: 16px; }
+.search-result { margin-bottom: 16px; border-radius: 8px; overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+.search-result a { display: block; text-decoration: none; color: inherit; }
+.search-result a:hover { background: rgba(25, 118, 210, 0.05); }
+.search-result-page { padding: 6px 12px; background: rgba(0,0,0,0.03); font-size: 0.8rem; color: var(--text-muted); border-bottom: 1px solid rgba(0,0,0,0.06); }
+.search-result-content { padding: 12px; }
+.search-result mark { background: #fff59d; padding: 1px 2px; border-radius: 2px; }
+@media (max-width: 600px) { body { padding: 8px; } .message, .index-item { border-radius: 8px; } .message-content, .index-item-content { padding: 12px; } pre { font-size: 0.8rem; padding: 8px; } #search-box input { width: 120px; } #search-modal[open] { width: 95vw; height: 90vh; } }
+</style>
+</head>
+<body>
+    <div class="container">
+        <h1><a href="index.html" style="color: inherit; text-decoration: none;">Claude Code transcript</a> - page 1/2</h1>
+        
+
+<div class="pagination">
+<a href="index.html" class="index-link">Index</a>
+<span class="disabled">&larr; Prev</span>
+<span class="current">1</span>
+<a href="page-002.html">2</a>
+<a href="page-002.html">Next &rarr;</a>
+</div>
+
+        
+<div class="message user" id="msg-2026-03-28T15-24-29-389Z"><div class="message-header"><span class="role-label">User</span><a href="#msg-2026-03-28T15-24-29-389Z" class="timestamp-link"><time datetime="2026-03-28T15:24:29.389Z" data-timestamp="2026-03-28T15:24:29.389Z">2026-03-28T15:24:29.389Z</time></a></div><div class="message-content">
+<div class="user-content"><p>I would like to understand the best way to add the following feature: there should be a "login terminal" window that can be opened onto a newly created rmeote machine/vm. As-is new machines will be listening for ssh connections, and provisioned with whatever ssh key was specified at creation time. However, a user of this application can only interact with browser-hosted code, which precludes running a real ssh client, nor making tcp connections on port 22 (because browser code can't make non-http connections). I am aware that there are various options for support for "web ssh" that use a browser-side component in conjunction with some sort of server-hosted proxy. I'd like to use one of those, but with the specific requirement that the "server side proxy" component be running on the new VM itself. We can provision the installation of packages and even complex scripted setup on the new machine, via cloud-init. Somehow however the private key has to be provisioned. I'd prefer to avoid using shared secret authentication as a workaround, if possible.</p></div></div></div>
+<div class="message assistant" id="msg-2026-03-28T15-24-35-263Z"><div class="message-header"><span class="role-label">Assistant</span><a href="#msg-2026-03-28T15-24-35-263Z" class="timestamp-link"><time datetime="2026-03-28T15:24:35.263Z" data-timestamp="2026-03-28T15:24:35.263Z">2026-03-28T15:24:35.263Z</time></a></div><div class="message-content">
+<div class="thinking"><div class="thinking-label">Thinking</div></div></div></div>
+<div class="message assistant" id="msg-2026-03-28T15-24-45-162Z"><div class="message-header"><span class="role-label">Assistant</span><a href="#msg-2026-03-28T15-24-45-162Z" class="timestamp-link"><time datetime="2026-03-28T15:24:45.162Z" data-timestamp="2026-03-28T15:24:45.162Z">2026-03-28T15:24:45.162Z</time></a></div><div class="message-content">
+<div class="tool-use" data-tool-id="toolu_01CMFLSZ4NXD95if8tJUyWPq"><div class="tool-header"><span class="tool-icon">⚙</span> Agent</div><div class="tool-description">Research web SSH solutions</div><div class="truncatable"><div class="truncatable-content"><pre class="json">{
+  &#34;subagent_type&#34;: &#34;general-purpose&#34;,
+  &#34;prompt&#34;: &#34;Research the current landscape of web-based SSH terminal solutions that work with a browser-side terminal component and a server-side proxy. I need to understand:\n\n1. What are the main open-source options? (e.g., ttyd, webssh, gotty, Apache Guacamole, wetty, sshwifty, etc.)\n2. Which ones can run the proxy component directly on the target VM (not a separate bastion)?\n3. Which ones support WebSocket-based connections from the browser?\n4. Which ones are lightweight enough to install via cloud-init on a fresh VM?\n5. For each option, how does authentication work — can the browser send an SSH private key, or does the proxy need the key locally?\n6. Are there any solutions where the proxy connects to localhost SSH using a local key, and the browser just authenticates to the proxy via a token or certificate?\n\nFocus especially on:\n- **ttyd** - can it just expose a shell directly without SSH?\n- **wetty** - Node.js based, WebSocket to SSH\n- **sshwifty** - Go binary, supports SSH via browser\n- **Apache Guacamole** - heavier but full-featured\n\nAlso research: is there a pattern where the VM runs a WebSocket-to-SSH proxy that holds the private key locally, and the browser authenticates to the WebSocket endpoint using a short-lived token or TLS client cert? This would avoid sending private keys through the browser.\n\nReturn a structured comparison with pros/cons for each approach, focusing on: ease of cloud-init setup, security model, browser-side library requirements, and whether private keys need to transit through the browser.&#34;
+}</pre></div><button class="expand-btn">Show more</button></div></div></div></div>
+<div class="message assistant" id="msg-2026-03-28T15-24-53-014Z"><div class="message-header"><span class="role-label">Assistant</span><a href="#msg-2026-03-28T15-24-53-014Z" class="timestamp-link"><time datetime="2026-03-28T15:24:53.014Z" data-timestamp="2026-03-28T15:24:53.014Z">2026-03-28T15:24:53.014Z</time></a></div><div class="message-content">
+<div class="tool-use" data-tool-id="toolu_01R7ATv7mU7LPUqF5V7sBNqQ"><div class="tool-header"><span class="tool-icon">⚙</span> Agent</div><div class="tool-description">Explore current codebase architecture</div><div class="truncatable"><div class="truncatable-content"><pre class="json">{
+  &#34;subagent_type&#34;: &#34;Explore&#34;,
+  &#34;prompt&#34;: &#34;Explore this codebase to understand:\n1. How VMs/machines are currently created (look for cloud-init, SSH key provisioning, machine creation code)\n2. The existing runtime/worker architecture (how does the browser communicate with external services)\n3. Any existing terminal UI code that could be extended\n4. The types and message protocol used\n\nBe thorough - check src/, any config files, and the CLI tool integration.&#34;
+}</pre></div><button class="expand-btn">Show more</button></div></div></div></div>
+<div class="message tool-reply" id="msg-2026-03-28T15-26-09-336Z"><div class="message-header"><span class="role-label">Tool reply</span><a href="#msg-2026-03-28T15-26-09-336Z" class="timestamp-link"><time datetime="2026-03-28T15:26:09.336Z" data-timestamp="2026-03-28T15:26:09.336Z">2026-03-28T15:26:09.336Z</time></a></div><div class="message-content"><div class="tool-result"><div class="truncatable"><div class="truncatable-content"><pre>
+
+# Web-Based SSH Terminal Solutions: Structured Comparison
+
+## 1. Overview of Main Open-Source Options
+
+### ttyd
+- **Language:** C (tiny binary, ~3MB)
+- **How it works:** Wraps any command (e.g., `bash`, `login`) in a WebSocket-based terminal accessible from a browser. It does **not** use SSH at all — it directly spawns a process on the host and exposes it over HTTP/WebSocket with an embedded xterm.js frontend.
+- **WebSocket support:** Yes, native.
+- **Run on target VM:** Yes — this is its primary use case. You run `ttyd bash` on the VM and connect from a browser.
+- **Cloud-init friendly:** Extremely. Single static binary, available in most package managers (`apt install ttyd`), or downloadable from GitHub releases. A cloud-init script can install and start it in 3-4 lines.
+- **Authentication model:** ttyd itself supports HTTP basic auth (`-c user:pass`), or you can put it behind a reverse proxy with token/cert auth. Since it spawns a local process directly (not SSH), **no SSH keys are involved at all**. The process runs as whatever user starts ttyd (or you can use `ttyd login` to get a PAM login prompt).
+- **Key transit through browser:** No. No SSH involved. The browser connects to the ttyd HTTP/WebSocket endpoint; ttyd spawns a shell locally.
+- **Pros:**
+  - Lightest weight option — single binary, minimal dependencies
+  - No SSH overhead; direct PTY allocation
+  - Built-in xterm.js client, no browser-side library needed beyond a browser
+  - TLS support built in (`--ssl`)
+  - Can expose any command, not just shell (e.g., `ttyd htop`)
+- **Cons:**
+  - No SSH — so you get a shell as whatever user runs ttyd, not a multi-user SSH experience
+  - Basic auth is rudimentary; for production you need a reverse proxy for proper auth
+  - No built-in session recording or audit logging
+  - If ttyd process is compromised, attacker has a shell
+
+---
+
+### wetty (Web + TTY)
+- **Language:** Node.js (TypeScript)
+- **How it works:** Runs an HTTP/WebSocket server that, on connection, opens an SSH session to a target host (default: localhost). The browser gets an xterm.js terminal. The SSH connection is from the wetty process to the SSH daemon.
+- **WebSocket support:** Yes, native.
+- **Run on target VM:** Yes. Commonly deployed on the same machine, connecting to `localhost:22`.
+- **Cloud-init friendly:** Moderate. Requires Node.js runtime (~60-100MB installed). Install via `npm install -g wetty` or use the Docker image. Cloud-init needs to install Node.js first, then wetty. More steps than ttyd but still manageable (~10 lines of cloud-init).
+- **Authentication model:** By default, wetty prompts for SSH username/password in the terminal (the SSH auth happens server-side between wetty and sshd). It can also be configured with `--sshkey` to use a local private key for the SSH connection, in which case the browser user never touches a key. You can put it behind an OAuth proxy or use URL-based auth tokens.
+- **Key transit through browser:** **No** (when using `--sshkey`). The private key stays on the VM. The browser only authenticates to the wetty HTTP endpoint (via whatever auth layer you add) and then gets a pre-authenticated SSH session.
+- **Pros:**
+  - Mature project, well-maintained
+  - SSH connection means proper PAM auth, audit trail, session accounting
+  - `--sshkey` flag enables the exact pattern of &quot;proxy holds key, browser uses token&quot;
+  - Supports custom base paths for reverse proxy setups
+  - Docker image available
+- **Cons:**
+  - Requires Node.js runtime — heavier install than ttyd or Go binaries
+  - Node.js can have memory overhead for idle sessions
+  - npm dependency tree is a supply-chain surface
+
+---
+
+### sshwifty
+- **Language:** Go (single static binary)
+- **How it works:** WebSocket-based SSH (and Telnet) client. The Go server acts as a proxy — the browser UI sends SSH connection parameters (host, port, credentials) to the server, which opens the actual SSH connection. The browser-side is a custom JS/WASM client (not xterm.js).
+- **WebSocket support:** Yes, native.
+- **Run on target VM:** Yes, can run on the target and connect to localhost.
+- **Cloud-init friendly:** Very. Single Go binary, download from GitHub releases. Similar to ttyd in ease — 3-5 lines of cloud-init.
+- **Authentication model:** This is where sshwifty differs. By default, the **browser user provides SSH credentials** (password or private key) through the web UI, and those are sent to the sshwifty server over WebSocket, which then uses them to connect via SSH. There is a &quot;preset&quot; feature where you can pre-configure SSH connections with credentials stored in a server-side config file — in this mode, the browser user does not provide keys.
+- **Key transit through browser:** **Yes by default** (keys are sent from browser to proxy). **No with presets** (keys stored in server config).
+- **Pros:**
+  - Single binary, easy deployment
+  - Supports both SSH and Telnet
+  - Presets allow key-on-server pattern
+  - Built-in SharedKey authentication for the web interface itself
+  - Actively maintained
+- **Cons:**
+  - Default mode sends credentials through the browser (less secure)
+  - Custom UI (not xterm.js) — less familiar, less extensible
+  - Preset configuration is JSON file based, less dynamic than API-driven approaches
+  - Fewer configuration options than wetty for reverse proxy integration
+
+---
+
+### Apache Guacamole
+- **Language:** Java (server) + C (guacd proxy daemon)
+- **How it works:** Full remote desktop gateway. The architecture has three components: (1) browser-side JS client, (2) Java web app (guacamole-client), (3) guacd daemon (C, handles the actual SSH/RDP/VNC protocol). The browser speaks the Guacamole protocol over WebSocket to the Java server, which relays to guacd.
+- **WebSocket support:** Yes.
+- **Run on target VM:** Technically possible but impractical. Requires Java + Tomcat + guacd + database (MySQL/PostgreSQL for connection storage). This is designed as a centralized gateway, not a per-VM agent.
+- **Cloud-init friendly:** **No.** Heavy installation: Java/Tomcat, the guacamole WAR file, guacd compilation or package, database setup. Typically deployed via Docker Compose with 3+ containers. Not suitable for ephemeral VM setup.
+- **Authentication model:** Very rich — supports LDAP, SAML, OpenID Connect, TOTP, CAS, RADIUS, database auth. SSH keys are stored in the Guacamole database/config, not sent from the browser. The browser authenticates to Guacamole (the gateway), and Guacamole handles the SSH session with pre-configured credentials.
+- **Key transit through browser:** **No.** Keys are managed server-side in the connection configuration.
+- **Pros:**
+  - Enterprise-grade: session recording, audit logging, concurrent access, clipboard sharing
+  - Supports SSH, RDP, VNC, Telnet, Kubernetes
+  - Rich auth integration (SAML, OIDC, LDAP)
+  - Connection sharing and monitoring
+- **Cons:**
+  - Very heavy — not suitable for per-VM deployment or cloud-init
+  - Complex architecture (3+ components)
+  - High resource usage (Java + database)
+  - Overkill for single-VM shell access
+
+---
+
+### GoTTY
+- **Language:** Go (single binary)
+- **How it works:** Very similar to ttyd — wraps a command in a WebSocket terminal. `gotty bash` exposes a shell over HTTP.
+- **WebSocket support:** Yes.
+- **Run on target VM:** Yes.
+- **Cloud-init friendly:** Yes — single binary.
+- **Authentication model:** Basic auth via flags. No SSH involvement (same as ttyd). However, GoTTY is **largely unmaintained** (last significant commit was ~2017, archived on GitHub).
+- **Key transit through browser:** No (no SSH).
+- **Note:** ttyd was created as an actively-maintained alternative to GoTTY. **Use ttyd instead.**
+
+---
+
+### webssh / webssh2
+- **Language:** Python (webssh) / Node.js (webssh2)
+- **How it works:** Browser-based SSH client. The browser provides SSH credentials (host, user, password/key) through a web form, sends them to the server, which opens an SSH connection.
+- **WebSocket support:** Yes.
+- **Cloud-init friendly:** Moderate (Python/Node.js dependency).
+- **Authentication model:** By default, credentials are sent from browser to server. webssh2 (used by ManageEngine, etc.) can be configured with host-side keys.
+- **Key transit through browser:** **Yes by default.**
+- **Pros:** Simple, focused on SSH specifically
+- **Cons:** Default model requires browser to send keys; less maintained than alternatives
+
+---
+
+## 2. Structured Comparison Table
+
+| Feature | ttyd | wetty | sshwifty | Guacamole | GoTTY |
+|---|---|---|---|---|---|
+| **Language** | C | Node.js | Go | Java+C | Go |
+| **Binary size** | ~3MB | ~60MB (with Node) | ~15MB | ~500MB+ | ~10MB |
+| **Uses SSH** | No (direct PTY) | Yes | Yes | Yes | No (direct PTY) |
+| **WebSocket** | Yes | Yes | Yes | Yes | Yes |
+| **On-VM deployment** | Excellent | Good | Excellent | Poor | Excellent |
+| **Cloud-init lines** | 3-5 | 8-12 | 3-5 | 30+ | 3-5 (but unmaintained) |
+| **Key in browser** | N/A | No (with --sshkey) | Yes (default) / No (presets) | No | N/A |
+| **Auth options** | Basic/reverse proxy | SSH + proxy layer | SharedKey + SSH | LDAP/SAML/OIDC/DB | Basic |
+| **Maintained** | Active | Active | Active | Active | Archived |
+| **xterm.js** | Yes (built-in) | Yes (built-in) | Custom UI | Custom protocol | Yes (built-in) |
+
+---
+
+## 3. The &quot;Proxy Holds Key, Browser Uses Token&quot; Pattern
+
+This is the most security-conscious architecture, and yes, it is a well-established pattern. Here is how it works:
+
+### Architecture
+```
+Browser  --[HTTPS/WSS + auth token]--&gt; WebSocket Proxy (on VM)
+                                            |
+                                    [local SSH key on disk]
+                                            |
+                                       SSH to localhost:22
+```
+
+### Which tools support this natively:
+
+1. **ttyd** — achieves this without SSH entirely. Run `ttyd -c token:secret bash` or put it behind a reverse proxy that validates a short-lived JWT. The shell is direct, no SSH key involved at all.
+
+2. **wetty** — run with `wetty --sshkey /path/to/key --sshuser deploy --sshhost localhost`. The SSH key lives on disk, wetty uses it to connect to local sshd. Put wetty behind an auth proxy (e.g., oauth2-proxy) that validates a token. The browser never sees the SSH key.
+
+3. **sshwifty** — use presets in the config JSON:
+   ```json
+   {
+     &quot;Presets&quot;: [{
+       &quot;Type&quot;: &quot;SSH&quot;,
+       &quot;Host&quot;: &quot;localhost:22&quot;,
+       &quot;User&quot;: &quot;deploy&quot;,
+       &quot;PrivateKey&quot;: &quot;/path/to/key&quot;
+     }]
+   }
+   ```
+   The web interface uses SharedKey authentication (a shared secret/token). Browser never sees the SSH key.
+
+4. **Custom approach** — run a lightweight WebSocket server (e.g., using xterm.js addon-attach on the browser side) that authenticates via a signed token and then opens an SSH connection or PTY locally. Libraries like `ssh2` (Node.js) or Go&#x27;s `x/crypto/ssh` make this straightforward.
+
+### Short-lived token implementation patterns:
+- **Pre-shared token in cloud-init:** Generate a random token during VM provisioning, pass it as an env var or config file to the proxy. Share the token with the user via your control plane.
+- **TLS client certificates:** Generate a short-lived client cert during provisioning, provide it to the user&#x27;s browser. The proxy validates the cert. This is the strongest option but more complex to implement.
+- **JWT signed by control plane:** Your orchestrator signs a JWT with a short expiry. The proxy validates the signature against a known public key. No shared secret needed.
+
+---
+
+## 4. Recommendations by Use Case
+
+### For this project (cloud-init on fresh VMs, browser-side terminal):
+
+**Best option: ttyd**
+- Rationale: Lightest weight, no SSH needed (direct shell), trivial cloud-init setup, built-in xterm.js. Put it behind a token-validated reverse proxy or use its basic auth with a generated secret.
+- Cloud-init example:
+  ```yaml
+  runcmd:
+    - apt-get update &amp;&amp; apt-get install -y ttyd
+    - ttyd -p 7681 --writable -c &quot;token:$(cat /etc/ttyd-secret)&quot; bash &amp;
+  ```
+
+**Runner-up: wetty with --sshkey**
+- Rationale: If you need SSH semantics (PAM accounting, user switching, audit logs), wetty with a local key is the best option. Slightly heavier install but proven pattern.
+
+**Avoid for this use case:**
+- Guacamole — too heavy for per-VM deployment
+- GoTTY — unmaintained
+- sshwifty default mode — sends credentials through browser
+- webssh — sends credentials through browser
+
+### If you need maximum security:
+Use **ttyd** or **wetty** behind a reverse proxy (e.g., Caddy or nginx) that validates JWTs issued by your control plane. The proxy terminates TLS with a Let&#x27;s Encrypt cert (Caddy does this automatically). The ttyd/wetty process binds only to localhost. This gives you:
+- TLS encryption in transit
+- Short-lived token authentication
+- No SSH keys in the browser
+- No SSH keys in transit at all (with ttyd, no SSH period)</pre><pre>agentId: af4ee28fab40e34e0 (use SendMessage with to: &#x27;af4ee28fab40e34e0&#x27; to continue this agent)
+&lt;usage&gt;total_tokens: 12371
+tool_uses: 0
+duration_ms: 84170&lt;/usage&gt;</pre></div><button class="expand-btn">Show more</button></div></div></div></div>
+<div class="message tool-reply" id="msg-2026-03-28T15-26-16-145Z"><div class="message-header"><span class="role-label">Tool reply</span><a href="#msg-2026-03-28T15-26-16-145Z" class="timestamp-link"><time datetime="2026-03-28T15:26:16.145Z" data-timestamp="2026-03-28T15:26:16.145Z">2026-03-28T15:26:16.145Z</time></a></div><div class="message-content"><div class="tool-result"><div class="truncatable"><div class="truncatable-content"><pre>Perfect! Now let me create a comprehensive summary document based on my exploration:
+
+## Comprehensive Codebase Analysis Report
+
+I&#x27;ve completed a thorough exploration of the Stirlingbridge local-orchestrator project and related infrastructure. Here&#x27;s what I found:
+
+---
+
+## 1. VM/Machine Creation Architecture
+
+**Location:** `/home/david/projects/stirlingbridge/machine/` (separate repository)
+
+### Cloud-Init &amp; SSH Key Provisioning
+
+The machine tool uses **cloud-init** for VM provisioning:
+
+**Key Files:**
+- `/home/david/projects/stirlingbridge/machine/machine/cloud_config.py` - Generates cloud-config YAML with:
+  - User creation with sudo access (`new_user_name`)
+  - SSH public key injection from the provider&#x27;s SSH key store
+  - Optional `runcmd` section that downloads and executes setup scripts
+  - Environment variable substitution via `expandvars`
+
+**Cloud-Init Features:**
+- Creates a dedicated user with passwordless sudo
+- Injects SSH public key for authentication
+- Downloads and executes setup scripts if `script_url` is provided
+- Passes environment variables to the initialization script via cloud-config&#x27;s `runcmd`
+
+### VM Creation Process
+
+**DigitalOcean Provider** (`/home/david/projects/stirlingbridge/machine/machine/providers/digitalocean.py`):
+1. Looks up SSH key by name from DigitalOcean account
+2. Creates a `digitalocean.Droplet` object with:
+   - `name` - VM name
+   - `region` - Geographic region (NYC1, SFO3, AMS3, etc.)
+   - `image` - OS image (Ubuntu 24.04, Debian 12, CentOS, AlmaLinux, etc.)
+   - `size_slug` - Machine size (s-1vcpu-1gb, s-4vcpu-8gb, etc.)
+   - `ssh_keys` - List containing the SSH key object
+   - `tags` - For tracking (session ID, machine type, creation tag)
+   - `user_data` - The cloud-init config from `cloud_config.py`
+3. Calls `droplet.create()` which triggers DigitalOcean&#x27;s API
+4. Polls for IP address assignment (up to 60 seconds)
+5. Optionally creates DNS A records if DNS zone configured
+
+**Create Command** (`/home/david/projects/stirlingbridge/machine/machine/subcommands/create.py`):
+- Supports flags: `--name`, `--region`, `--image`, `--machine-size`, `--type`, `--tag`
+- Validates SSH key exists before creation
+- Supports `--wait-for-ip` and `--update-dns` flags
+- Returns droplet ID and IP address
+
+---
+
+## 2. Runtime/Worker Architecture
+
+**Location:** `/home/david/projects/stirlingbridge/local-orchestrator/src/`
+
+### Browser-to-External Communication Pattern
+
+The architecture uses **Pyodide (WASM Python)** with custom HTTP modules to bypass WASM socket limitations:
+
+**Key Components:**
+
+1. **BrowserRuntime** (`runtime.ts`):
+   - Public API class managing worker communication
+   - Methods: `init()`, `exec()`, `registerCommand()`, `installPackages()`, `writeFile()`, `readFile()`
+   - Implements request/response correlation with unique IDs
+   - Tracks installed dependencies to avoid reinstalling
+
+2. **Web Worker** (`worker.ts`):
+   - Hosts Pyodide instance (Python interpreter compiled to WASM)
+   - Manages in-memory virtual filesystem (`/tools/` for Python scripts)
+   - Provides HTTP client shims:
+     - **`http_client` module**: Uses synchronous XMLHttpRequest via Pyodide FFI
+     - **`requests` shim**: Wraps http_client to provide requests API compatibility
+   - Handles message types: `init`, `exec`, `install`, `write-file`, `read-file`
+
+3. **Bootstrap Python**:
+   - Runs `_run_command(script_path, args_json)` helper
+   - Captures stdout/stderr/exitCode
+   - Properly handles `sys.argv`, environment variables, and SystemExit
+
+### Message Protocol (Types in `types.ts`)
+
+```typescript
+WorkerRequest = 
+  | { id, type: &quot;init&quot; }
+  | { id, type: &quot;exec&quot;, scriptPath, args, env? }
+  | { id, type: &quot;install&quot;, packages }
+  | { id, type: &quot;write-file&quot;, path, content }
+  | { id, type: &quot;read-file&quot;, path }
+
+WorkerResponse =
+  | { id, type: &quot;ready&quot; }
+  | { id, type: &quot;exec-result&quot;, stdout, stderr, exitCode }
+  | { id, type: &quot;install-result&quot;, success, error? }
+  | { id, type: &quot;write-file-result&quot;, success, error? }
+  | { id, type: &quot;read-file-result&quot;, success, content?, error? }
+  | { id, type: &quot;error&quot;, error }
+```
+
+### Command Registration System
+
+- **Simple commands**: Python source code written to `/tools/{name}.py`, registered via `registerCommand()`
+- **Package commands**: Multi-file packages with entry point via `registerPackageCommand()`
+- **GitHub commands**: Auto-discovered from GitHub repos via `registerGitHubCommand()` using GitHub API
+- **Repository cloning**: Full GitHub repos cloned to virtual filesystem via `cloneRepo()`
+
+### Environment &amp; Secrets
+
+**SecretStore** (`secrets.ts`):
+- AES-GCM encrypted storage using Web Crypto API
+- Non-extractable CryptoKey stored in IndexedDB
+- Ciphertext persisted in localStorage (origin-scoped)
+- All secrets injected as environment variables to every command execution
+
+---
+
+## 3. Terminal UI Code
+
+**Location:** `/home/david/projects/stirlingbridge/local-orchestrator/`
+
+### Terminal Interface (`main.ts`)
+
+**DOM Structure** (from `index.html`):
+- Header with title and Secrets button
+- Status bar showing runtime state (Loading, Ready, Error)
+- Output area (scrollable, pre-formatted)
+- Input bar with command prompt
+- Example buttons for quick commands
+- Secrets modal (encrypted key/value storage)
+
+**Terminal Features:**
+- Command parsing with quote handling (`parseCommand()`)
+- Line coloring by type:
+  - `line-stdout`: Default text
+  - `line-stderr`: Red errors
+  - `line-cmd`: Green for executed commands
+  - `line-info`: Blue for info messages
+  - `line-exit-ok`/`line-exit-err`: Exit codes
+- Status bar with state indicators (ready=green, error=red)
+
+**Built-in Commands** (`commands.ts`):
+- `hello [--name NAME] [--shout]` - Argparse demo
+- `sysinfo` - Python/platform info
+- `fetch URL [--headers]` - HTTP fetch with custom http_client
+- `env [NAME] [--filter STR]` - Environment variables
+- `files [PATH] [-r]` - Virtual filesystem listing
+
+**Extensible Commands**:
+- `test-tool` - Loaded from `bozemanpass/test-python-cli-tool` on startup
+- `machine` - Loaded from `stirlingbridge/machine` on startup (see below)
+- Custom commands via `runtime.registerCommand()`
+
+### Secrets Modal UI
+
+- Modal overlay with key/value input fields
+- Password field for secret values
+- Delete button for each secret
+- &quot;Add&quot; button to encrypt and store
+- All encrypted client-side, never sent to backend
+
+**Styling**: Tokyonight dark theme (colors from `index.html` inline styles)
+
+---
+
+## 4. Types &amp; Message Protocol Summary
+
+### Public API Types (`types.ts`)
+
+```typescript
+// Command registration
+CommandDef {
+  source: string;        // Python source code
+  dependencies?: string[]; // Packages to install
+  scriptPath?: string;   // Override default /tools/{name}.py
+}
+
+PackageCommandDef {
+  files: Record&lt;string, string&gt;;  // File paths -&gt; contents
+  entryPoint: string;              // &quot;module.path:function&quot;
+  dependencies?: string[];
+}
+
+GitHubCommandOptions {
+  repo: string;        // &quot;owner/repo&quot;
+  branch?: string;     // Default: &quot;main&quot;
+  subdir?: string;     // Subdirectory in repo
+  entryPoint: string;  // Entry point in package
+  dependencies?: string[];
+}
+
+// Execution
+ExecOptions {
+  stdin?: string;
+  env?: Record&lt;string, string&gt;;
+  cwd?: string;
+}
+
+ProcessResult {
+  stdout: string;
+  stderr: string;
+  exitCode: number;
+}
+```
+
+### Machine Tool Integration
+
+The `machine` command is registered on startup (`main.ts` lines 307-326):
+
+```typescript
+runtime.registerGitHubCommand(&quot;machine&quot;, {
+  repo: &quot;stirlingbridge/machine&quot;,
+  entryPoint: &quot;machine.main:main&quot;,
+  dependencies: [&quot;click&quot;, &quot;python-digitalocean&quot;, &quot;ruamel.yaml&quot;, &quot;expandvars&quot;],
+});
+
+// Default config written to virtual filesystem
+await runtime.writeFile(&quot;/home/pyodide/.machine/config.yml&quot;, 
+  &quot;digital-ocean:\n  access-token: ${DIGITALOCEAN_ACCESS_TOKEN}\n...&quot;
+);
+```
+
+The machine tool&#x27;s Click CLI exposes subcommands:
+- `machine create --name &lt;NAME&gt; --type &lt;TYPE&gt;` - Creates VM
+- `machine list` - Lists VMs
+- `machine destroy &lt;VM-ID&gt;` - Destroys VM
+- `machine ssh-keys` - Lists SSH keys
+- `machine domains` - Lists DNS zones
+- `machine status &lt;VM-ID&gt;` - Gets VM status
+
+---
+
+## Key Design Patterns
+
+1. **Worker Isolation**: Python execution in Web Worker keeps UI responsive
+2. **HTTP Bypass**: Custom http_client module uses browser&#x27;s XHR instead of Python sockets to work in WASM
+3. **Requests Compatibility**: Shim layer lets `python-digitalocean` work unchanged
+4. **Virtual Filesystem**: In-memory, no disk I/O, scripts and packages stored as strings
+5. **Lazy Loading**: Pyodide and external tools loaded on demand, not bundled
+6. **Environment Injection**: Secrets stored securely, injected as env vars at execution time
+
+---
+
+## File Paths Reference
+
+**Local Orchestrator:**
+- `/home/david/projects/stirlingbridge/local-orchestrator/src/main.ts` - UI wiring
+- `/home/david/projects/stirlingbridge/local-orchestrator/src/runtime.ts` - Browser runtime API
+- `/home/david/projects/stirlingbridge/local-orchestrator/src/worker.ts` - Pyodide worker &amp; HTTP modules
+- `/home/david/projects/stirlingbridge/local-orchestrator/src/types.ts` - Type definitions
+- `/home/david/projects/stirlingbridge/local-orchestrator/src/commands.ts` - Built-in demo commands
+- `/home/david/projects/stirlingbridge/local-orchestrator/src/secrets.ts` - Encrypted secret store
+- `/home/david/projects/stirlingbridge/local-orchestrator/index.html` - UI template
+
+**Machine Tool:**
+- `/home/david/projects/stirlingbridge/machine/machine/main.py` - Click CLI entry point
+- `/home/david/projects/stirlingbridge/machine/machine/cloud_config.py` - Cloud-init generation
+- `/home/david/projects/stirlingbridge/machine/machine/providers/digitalocean.py` - DO API wrapper
+- `/home/david/projects/stirlingbridge/machine/machine/subcommands/create.py` - VM creation logic
+- `/home/david/projects/stirlingbridge/machine/machine/config.py` - Config file parsing</pre></div><button class="expand-btn">Show more</button></div></div></div></div>
+<div class="message assistant" id="msg-2026-03-28T15-26-37-479Z"><div class="message-header"><span class="role-label">Assistant</span><a href="#msg-2026-03-28T15-26-37-479Z" class="timestamp-link"><time datetime="2026-03-28T15:26:37.479Z" data-timestamp="2026-03-28T15:26:37.479Z">2026-03-28T15:26:37.479Z</time></a></div><div class="message-content">
+<div class="thinking"><div class="thinking-label">Thinking</div></div></div></div>
+<div class="message assistant" id="msg-2026-03-28T15-27-04-969Z"><div class="message-header"><span class="role-label">Assistant</span><a href="#msg-2026-03-28T15-27-04-969Z" class="timestamp-link"><time datetime="2026-03-28T15:27:04.969Z" data-timestamp="2026-03-28T15:27:04.969Z">2026-03-28T15:27:04.969Z</time></a></div><div class="message-content">
+<div class="assistant-text"><p>Here's my analysis of the best approaches, given your architecture:</p>
+<h2>The Core Problem</h2>
+<p>Your browser has the SSH <strong>private</strong> key (in SecretStore). The VM has the corresponding <strong>public</strong> key (via cloud-init). But the browser can't speak SSH. You need a WebSocket-accessible proxy on the VM, and you want to avoid shared secrets for auth.</p>
+<h2>Two Viable Approaches</h2>
+<h3>Approach 1: ttyd (Recommended — simplest)</h3>
+<p><strong>ttyd</strong> is a ~3MB C binary that wraps a shell in a WebSocket terminal with built-in xterm.js. It spawns a PTY directly — no SSH involved at all. Cloud-init is trivial:</p>
+<pre><code class="language-yaml">runcmd:
+  - apt-get update &amp;&amp; apt-get install -y ttyd
+  - ttyd -p 7681 --writable bash
+</code></pre>
+<p><strong>The auth question:</strong> Since ttyd itself only supports basic auth (a shared secret), you'd put it behind a reverse proxy. For asymmetric auth without shared secrets, you have two clean options:</p>
+<p><strong>Option A — Challenge-response using the existing SSH key:</strong>
+- Cloud-init installs a small auth proxy (nginx + a tiny auth service)
+- Browser requests a challenge nonce from the proxy
+- Browser signs the nonce with the SSH private key using WebCrypto (RSA/Ed25519 keys can be imported)
+- Proxy verifies the signature against the SSH public key already in <code>~/.ssh/authorized_keys</code>
+- On success, proxy issues a short-lived session cookie and proxies WebSocket to ttyd on localhost</p>
+<p>This is the most elegant approach — it reuses the SSH keypair for auth without any new secrets. The private key never leaves the browser.</p>
+<p><strong>Option B — JWT signed by the orchestrator:</strong>
+- At VM creation time, generate a keypair; put the public key on the VM via cloud-init
+- The orchestrator signs a short-lived JWT with the private key
+- Browser presents JWT to the proxy, which validates against the provisioned public key
+- Downside: requires the orchestrator to hold a signing key (but it's not a <em>shared</em> secret)</p>
+<h3>Approach 2: wetty with cloud-init-generated keypair</h3>
+<p><strong>wetty</strong> (Node.js) is an SSH-over-WebSocket proxy. Run it with <code>--sshkey</code> so it connects to localhost sshd using a key that never leaves the VM:</p>
+<pre><code class="language-yaml">runcmd:
+  - apt-get update &amp;&amp; apt-get install -y nodejs npm
+  - npm install -g wetty
+  - ssh-keygen -t ed25519 -f /etc/wetty/local-key -N &quot;&quot;
+  - cat /etc/wetty/local-key.pub &gt;&gt; /home/deploy/.ssh/authorized_keys
+  - wetty --sshkey /etc/wetty/local-key --sshuser deploy --sshhost localhost -p 7681
+</code></pre>
+<p>Same auth proxy question applies for browser-to-wetty authentication. Heavier install (~60MB for Node.js) but gives you proper SSH session semantics (PAM, audit log, user switching).</p>
+<h2>My Recommendation</h2>
+<p><strong>ttyd + challenge-response auth using the SSH keypair</strong> is the best fit because:</p>
+<ol>
+<li><strong>No shared secrets</strong> — the SSH keypair you already provision does double duty</li>
+<li><strong>Private key never transits</strong> — browser signs a challenge locally via WebCrypto</li>
+<li><strong>Lightest weight</strong> — single binary, 3 lines of cloud-init for ttyd itself</li>
+<li><strong>No SSH overhead</strong> — direct PTY, no localhost SSH hop</li>
+<li><strong>Built-in xterm.js</strong> — or you can use your own xterm.js instance and connect via the WebSocket API directly</li>
+</ol>
+<h3>Architecture Sketch</h3>
+<pre><code>Browser (xterm.js)
+    |
+    |  1. GET /auth/challenge  →  returns nonce
+    |  2. Sign nonce with SSH private key (WebCrypto)
+    |  3. POST /auth/verify { signature, pubkey_fingerprint }  →  session cookie
+    |  4. WSS /terminal  (cookie auth)  →  proxied to ttyd on localhost:7681
+    |
+    ▼
+[Caddy or nginx on VM, port 443 with auto-TLS]
+    |
+    ├── /auth/*  →  small auth service (validates signatures against authorized_keys)
+    └── /terminal  →  reverse proxy to ttyd (localhost:7681, bound to 127.0.0.1)
+</code></pre>
+<p>The auth service can be a small Go or Python binary (~100 lines) provisioned via cloud-init. It reads the public key from <code>~/.ssh/authorized_keys</code>, verifies the challenge signature, and sets a session cookie.</p>
+<h3>Browser-Side Integration</h3>
+<p>On the browser side, you'd add:
+- An xterm.js terminal component (or use ttyd's built-in one in an iframe)
+- WebCrypto code to import the SSH private key and sign challenges
+- A new UI panel/modal for the terminal session</p>
+<p>The main complexity is the WebCrypto part — SSH keys need to be parsed from PEM/OpenSSH format into a format WebCrypto can import. Libraries like <code>sshpk</code> (JS) handle this conversion.</p>
+<hr />
+<p>Want me to dive deeper into any of these areas — the cloud-init setup, the auth service design, the WebCrypto key signing, or the browser-side terminal integration?</p></div></div></div>
+<div class="message user" id="msg-2026-03-28T15-37-26-410Z"><div class="message-header"><span class="role-label">User</span><a href="#msg-2026-03-28T15-37-26-410Z" class="timestamp-link"><time datetime="2026-03-28T15:37:26.410Z" data-timestamp="2026-03-28T15:37:26.410Z">2026-03-28T15:37:26.410Z</time></a></div><div class="message-content">
+<div class="user-content"><p>Thanks, very interesting. Reading this I wondered about another approach: could we use Webauthn to make a strongly secure authentication mechanism for the reverse proxy? User either uses a Yubikey, or passkey support in the browser. The newly installed reverse proxy on the target server somehow onboards them via Webauthn and subsequently authentication works like any web site that uses passkeys?</p></div></div></div>
+<div class="message assistant" id="msg-2026-03-28T15-37-59-677Z"><div class="message-header"><span class="role-label">Assistant</span><a href="#msg-2026-03-28T15-37-59-677Z" class="timestamp-link"><time datetime="2026-03-28T15:37:59.677Z" data-timestamp="2026-03-28T15:37:59.677Z">2026-03-28T15:37:59.677Z</time></a></div><div class="message-content">
+<div class="thinking"><div class="thinking-label">Thinking</div></div></div></div>
+<div class="message assistant" id="msg-2026-03-28T15-38-24-763Z"><div class="message-header"><span class="role-label">Assistant</span><a href="#msg-2026-03-28T15-38-24-763Z" class="timestamp-link"><time datetime="2026-03-28T15:38:24.763Z" data-timestamp="2026-03-28T15:38:24.763Z">2026-03-28T15:38:24.763Z</time></a></div><div class="message-content">
+<div class="assistant-text"><p>Interesting idea. It <em>can</em> work, but there are some structural challenges worth understanding before committing to it.</p>
+<h2>How It Could Work</h2>
+<pre><code>Orchestrator UI (origin: app.example.com)
+    |
+    |  1. User registers passkey (one-time, RP ID = app.example.com)
+    |  2. Orchestrator stores credential ID + public key
+    |  3. At VM creation, cloud-init provisions the credential public key
+    |
+    |  --- on &quot;connect terminal&quot; ---
+    |
+    |  4. Browser fetches challenge from VM proxy
+    |  5. navigator.credentials.get() → user taps Yubikey / uses passkey
+    |  6. Signed assertion sent to VM proxy
+    |  7. VM proxy verifies signature against provisioned credential public key
+    |  8. Session established → WebSocket terminal opens
+    |
+    ▼
+[VM proxy verifies WebAuthn assertions, proxies to ttyd]
+</code></pre>
+<h2>The Key Constraints</h2>
+<p><strong>WebAuthn is origin-bound.</strong> The credential is tied to the Relying Party ID (RP ID), which is a domain. This has several implications:</p>
+<p><strong>1. The RP must be your orchestrator's origin, not the VM's.</strong>
+Since each VM is a different host (IP or subdomain), you can't register a passkey per-VM — the user would need to tap their Yubikey for a new registration on every VM creation. Instead, the passkey is registered once at the orchestrator's origin, and the VM proxy accepts assertions scoped to that origin.</p>
+<p><strong>2. The assertion ceremony must happen in the orchestrator's browsing context.</strong>
+<code>navigator.credentials.get()</code> checks that the RP ID matches the current page's origin. So the WebAuthn challenge-response must be triggered from your orchestrator UI, then the resulting assertion is forwarded to the VM. This works fine — the assertion is just a signed blob you can send anywhere.</p>
+<p><strong>3. The VM proxy needs to know the orchestrator's origin.</strong>
+When verifying the assertion, the proxy checks that <code>clientDataJSON.origin</code> matches an expected value. This is straightforward to provision via cloud-init.</p>
+<h2>The Bootstrapping Problem</h2>
+<p>This is the main wrinkle. WebAuthn registration itself must be authenticated — otherwise anyone could register their passkey with your orchestrator. So you still need an initial auth mechanism to gate registration:</p>
+<ul>
+<li>If the orchestrator is a local app (localhost), this may be acceptable — only the local user can access it</li>
+<li>If it's hosted, you need <em>some</em> identity layer for the initial enrollment (OAuth, email link, etc.)</li>
+</ul>
+<p>After that first enrollment, all subsequent VM connections use the passkey. The credential public key gets provisioned to every new VM via cloud-init.</p>
+<h2>Practical Assessment</h2>
+<p><strong>What it gives you over the SSH-key challenge-response approach:</strong>
+- Hardware-bound keys (Yubikey's private key is non-extractable)
+- Biometric option (fingerprint/face via platform passkeys)
+- Phishing resistance (browser enforces origin binding)
+- Standardized protocol with broad library support</p>
+<p><strong>What it costs you:</strong>
+- Registration flow in the orchestrator UI (one-time, but still needs building)
+- WebAuthn server-side verification library on the VM (Python: <code>py_webauthn</code> ~50KB; Go: <code>go-webauthn</code> ~5MB binary; Node: <code>@simplewebauthn/server</code>)
+- The bootstrapping problem above
+- More moving parts than raw signature verification</p>
+<p><strong>Compared to the SSH key approach:</strong>
+| | SSH key challenge-response | WebAuthn |
+|---|---|---|
+| Key material | SSH private key in SecretStore (software) | Yubikey/passkey (can be hardware-bound) |
+| Extractability | Key is in JS memory | Non-extractable from hardware authenticator |
+| Browser API | WebCrypto (import PEM, sign) | <code>navigator.credentials.get()</code> (standardized) |
+| VM-side verification | Parse authorized_keys, verify sig (~100 lines) | WebAuthn library (~same complexity) |
+| Provisioning data | SSH public key (already there) | Credential ID + public key (new data path) |
+| Registration | None (key already exists) | One-time enrollment flow needed |</p>
+<h2>My Take</h2>
+<p>WebAuthn is a solid choice <strong>if</strong> you value hardware-bound keys (Yubikey) or want the standard passkey UX. The orchestrator already has a natural place for the one-time registration, and the credential public key is small enough to provision via cloud-init alongside the SSH public key.</p>
+<p>However, if your users are already managing SSH private keys in the browser's SecretStore, the SSH-key challenge-response approach is simpler and reuses infrastructure you already have — no new registration flow, no new credential to provision, and the VM already has the public key.</p>
+<p>The two approaches aren't mutually exclusive either — you could support both, letting users choose passkey auth if they have a Yubikey, or SSH key auth as a fallback.</p>
+<p>Want me to sketch out the implementation plan for either (or both) approaches?</p></div></div></div>
+<div class="message user" id="msg-2026-03-28T15-44-35-177Z"><div class="message-header"><span class="role-label">User</span><a href="#msg-2026-03-28T15-44-35-177Z" class="timestamp-link"><time datetime="2026-03-28T15:44:35.177Z" data-timestamp="2026-03-28T15:44:35.177Z">2026-03-28T15:44:35.177Z</time></a></div><div class="message-content">
+<div class="user-content"><p>No let me think about the options for a bit. I was aware that the RP ID is a domain, but we assume the new VM will be provisioned with a DNS hostname that we know. However I hadn't considered that the RP ID has to match the orchestrator origin domain. It won't! Perhaps there's a way around that by opening a new browser page directly to the proxy on the target VM, via a URL specifying its host name. There would need to be a way to pass some nonce between the orchestrator and that new page. Also while the user would be able to interact manually with that new page in a terminal session, if we wanted to send shell commands programatically to the target VM from the orchestrator application, that wouldn't work because auth would be bound to the other page.</p></div></div></div>
+<div class="message assistant" id="msg-2026-03-28T15-44-55-840Z"><div class="message-header"><span class="role-label">Assistant</span><a href="#msg-2026-03-28T15-44-55-840Z" class="timestamp-link"><time datetime="2026-03-28T15:44:55.840Z" data-timestamp="2026-03-28T15:44:55.840Z">2026-03-28T15:44:55.840Z</time></a></div><div class="message-content">
+<div class="assistant-text"><p>You're thinking through this well. Let me address both points.</p>
+<h2>Opening a new page on the VM's origin</h2>
+<p>This does solve the RP ID problem — if the browser navigates to <code>https://vm-abc.vms.example.com</code>, the WebAuthn ceremony can use that domain (or a parent like <code>vms.example.com</code>) as the RP ID. The user registers a passkey scoped to <code>vms.example.com</code>, and it works across all VMs under that domain.</p>
+<p><strong>Passing a nonce from orchestrator to the new page:</strong> Several options:
+- URL fragment (<code>#nonce=...</code>) — not sent to server, readable by JS on the new page
+- <code>window.open()</code> + <code>postMessage()</code> — orchestrator opens the page and sends the nonce cross-origin
+- Short-lived token in the URL path/query — the VM proxy validates it once to bootstrap the WebAuthn registration</p>
+<p>But this leads to your second point, which is the real problem.</p>
+<h2>Programmatic access from the orchestrator</h2>
+<p>Exactly right. If auth is bound to a page on the VM's origin, the orchestrator app (different origin) can't use that session to send commands. You'd have two isolated contexts:</p>
+<ul>
+<li><strong>VM page</strong>: has the authenticated WebSocket, user can type interactively</li>
+<li><strong>Orchestrator page</strong>: can create VMs, manage secrets, but can't send commands to the terminal</li>
+</ul>
+<p>You could bridge them with <code>postMessage()</code> between the two windows, but that's fragile — the user could close the VM tab, and you're building a cross-origin RPC layer on top of a hack.</p>
+<h2>Where this lands</h2>
+<p>WebAuthn is fundamentally designed to bind auth to an origin. That's its strength for preventing phishing, but it works against you here because you have two origins that both need authenticated access to the same resource.</p>
+<p>This brings it back to the <strong>SSH key challenge-response</strong> approach, which doesn't have the origin-binding constraint. The SSH private key is just bytes in your SecretStore — you can sign a challenge from any page, send the signature to any server, and it verifies the same way. You get:</p>
+<ul>
+<li>Single origin (orchestrator) controls everything</li>
+<li>Interactive terminal via xterm.js embedded in the orchestrator UI</li>
+<li>Programmatic command execution via the same authenticated WebSocket</li>
+<li>No second browser window needed</li>
+</ul>
+<p>The tradeoff is software keys vs. hardware-bound keys. If hardware binding is important to you, there might be a hybrid: use WebAuthn at the orchestrator origin purely to gate access to the SSH private key in SecretStore (i.e., "tap your Yubikey to unlock the terminal feature"), then use the SSH key for the actual VM auth. That gives you a physical confirmation step without the origin-binding problem.</p></div></div></div>
+<div class="message user" id="msg-2026-03-30T22-37-23-182Z"><div class="message-header"><span class="role-label">User</span><a href="#msg-2026-03-30T22-37-23-182Z" class="timestamp-link"><time datetime="2026-03-30T22:37:23.182Z" data-timestamp="2026-03-30T22:37:23.182Z">2026-03-30T22:37:23.182Z</time></a></div><div class="message-content">
+<div class="user-content"><p><local-command-caveat>Caveat: The messages below were generated by the user while running local commands. DO NOT respond to these messages or otherwise consider them in your response unless the user explicitly asks you to.</local-command-caveat></p></div></div></div>
+<div class="message user" id="msg-2026-03-30T22-37-23-182Z"><div class="message-header"><span class="role-label">User</span><a href="#msg-2026-03-30T22-37-23-182Z" class="timestamp-link"><time datetime="2026-03-30T22:37:23.182Z" data-timestamp="2026-03-30T22:37:23.182Z">2026-03-30T22:37:23.182Z</time></a></div><div class="message-content">
+<div class="user-content"><p><command-name>/exit</command-name>
+            <command-message>exit</command-message>
+            <command-args></command-args></p></div></div></div>
+        
+
+<div class="pagination">
+<a href="index.html" class="index-link">Index</a>
+<span class="disabled">&larr; Prev</span>
+<span class="current">1</span>
+<a href="page-002.html">2</a>
+<a href="page-002.html">Next &rarr;</a>
+</div>
+
+    </div>
+    <script>
+document.querySelectorAll('time[data-timestamp]').forEach(function(el) {
+    const timestamp = el.getAttribute('data-timestamp');
+    const date = new Date(timestamp);
+    const now = new Date();
+    const isToday = date.toDateString() === now.toDateString();
+    const timeStr = date.toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' });
+    if (isToday) { el.textContent = timeStr; }
+    else { el.textContent = date.toLocaleDateString(undefined, { month: 'short', day: 'numeric' }) + ' ' + timeStr; }
+});
+document.querySelectorAll('pre.json').forEach(function(el) {
+    let text = el.textContent;
+    text = text.replace(/"([^"]+)":/g, '<span style="color: #ce93d8">"$1"</span>:');
+    text = text.replace(/: "([^"]*)"/g, ': <span style="color: #81d4fa">"$1"</span>');
+    text = text.replace(/: (\d+)/g, ': <span style="color: #ffcc80">$1</span>');
+    text = text.replace(/: (true|false|null)/g, ': <span style="color: #f48fb1">$1</span>');
+    el.innerHTML = text;
+});
+document.querySelectorAll('.truncatable').forEach(function(wrapper) {
+    const content = wrapper.querySelector('.truncatable-content');
+    const btn = wrapper.querySelector('.expand-btn');
+    if (content.scrollHeight > 250) {
+        wrapper.classList.add('truncated');
+        btn.addEventListener('click', function() {
+            if (wrapper.classList.contains('truncated')) { wrapper.classList.remove('truncated'); wrapper.classList.add('expanded'); btn.textContent = 'Show less'; }
+            else { wrapper.classList.remove('expanded'); wrapper.classList.add('truncated'); btn.textContent = 'Show more'; }
+        });
+    }
+});
+</script>
+</body>
+</html>
