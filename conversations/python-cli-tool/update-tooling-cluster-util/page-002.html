@@ -1,0 +1,757 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Claude Code transcript - page 2</title>
+    <style>
+:root { --bg-color: #f5f5f5; --card-bg: #ffffff; --user-bg: #e3f2fd; --user-border: #1976d2; --assistant-bg: #f5f5f5; --assistant-border: #9e9e9e; --thinking-bg: #fff8e1; --thinking-border: #ffc107; --thinking-text: #666; --tool-bg: #f3e5f5; --tool-border: #9c27b0; --tool-result-bg: #e8f5e9; --tool-error-bg: #ffebee; --text-color: #212121; --text-muted: #757575; --code-bg: #263238; --code-text: #aed581; }
+* { box-sizing: border-box; }
+body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: var(--bg-color); color: var(--text-color); margin: 0; padding: 16px; line-height: 1.6; }
+.container { max-width: 800px; margin: 0 auto; }
+h1 { font-size: 1.5rem; margin-bottom: 24px; padding-bottom: 8px; border-bottom: 2px solid var(--user-border); }
+.header-row { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; border-bottom: 2px solid var(--user-border); padding-bottom: 8px; margin-bottom: 24px; }
+.header-row h1 { border-bottom: none; padding-bottom: 0; margin-bottom: 0; flex: 1; min-width: 200px; }
+.message { margin-bottom: 16px; border-radius: 12px; overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+.message.user { background: var(--user-bg); border-left: 4px solid var(--user-border); }
+.message.assistant { background: var(--card-bg); border-left: 4px solid var(--assistant-border); }
+.message.tool-reply { background: #fff8e1; border-left: 4px solid #ff9800; }
+.tool-reply .role-label { color: #e65100; }
+.tool-reply .tool-result { background: transparent; padding: 0; margin: 0; }
+.tool-reply .tool-result .truncatable.truncated::after { background: linear-gradient(to bottom, transparent, #fff8e1); }
+.message-header { display: flex; justify-content: space-between; align-items: center; padding: 8px 16px; background: rgba(0,0,0,0.03); font-size: 0.85rem; }
+.role-label { font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; }
+.user .role-label { color: var(--user-border); }
+time { color: var(--text-muted); font-size: 0.8rem; }
+.timestamp-link { color: inherit; text-decoration: none; }
+.timestamp-link:hover { text-decoration: underline; }
+.message:target { animation: highlight 2s ease-out; }
+@keyframes highlight { 0% { background-color: rgba(25, 118, 210, 0.2); } 100% { background-color: transparent; } }
+.message-content { padding: 16px; }
+.message-content p { margin: 0 0 12px 0; }
+.message-content p:last-child { margin-bottom: 0; }
+.thinking { background: var(--thinking-bg); border: 1px solid var(--thinking-border); border-radius: 8px; padding: 12px; margin: 12px 0; font-size: 0.9rem; color: var(--thinking-text); }
+.thinking-label { font-size: 0.75rem; font-weight: 600; text-transform: uppercase; color: #f57c00; margin-bottom: 8px; }
+.thinking p { margin: 8px 0; }
+.assistant-text { margin: 8px 0; }
+.tool-use { background: var(--tool-bg); border: 1px solid var(--tool-border); border-radius: 8px; padding: 12px; margin: 12px 0; }
+.tool-header { font-weight: 600; color: var(--tool-border); margin-bottom: 8px; display: flex; align-items: center; gap: 8px; }
+.tool-icon { font-size: 1.1rem; }
+.tool-description { font-size: 0.9rem; color: var(--text-muted); margin-bottom: 8px; font-style: italic; }
+.tool-result { background: var(--tool-result-bg); border-radius: 8px; padding: 12px; margin: 12px 0; }
+.tool-result.tool-error { background: var(--tool-error-bg); }
+.file-tool { border-radius: 8px; padding: 12px; margin: 12px 0; }
+.write-tool { background: linear-gradient(135deg, #e3f2fd 0%, #e8f5e9 100%); border: 1px solid #4caf50; }
+.edit-tool { background: linear-gradient(135deg, #fff3e0 0%, #fce4ec 100%); border: 1px solid #ff9800; }
+.file-tool-header { font-weight: 600; margin-bottom: 4px; display: flex; align-items: center; gap: 8px; font-size: 0.95rem; }
+.write-header { color: #2e7d32; }
+.edit-header { color: #e65100; }
+.file-tool-icon { font-size: 1rem; }
+.file-tool-path { font-family: monospace; background: rgba(0,0,0,0.08); padding: 2px 8px; border-radius: 4px; }
+.file-tool-fullpath { font-family: monospace; font-size: 0.8rem; color: var(--text-muted); margin-bottom: 8px; word-break: break-all; }
+.file-content { margin: 0; }
+.edit-section { display: flex; margin: 4px 0; border-radius: 4px; overflow: hidden; }
+.edit-label { padding: 8px 12px; font-weight: bold; font-family: monospace; display: flex; align-items: flex-start; }
+.edit-old { background: #fce4ec; }
+.edit-old .edit-label { color: #b71c1c; background: #f8bbd9; }
+.edit-old .edit-content { color: #880e4f; }
+.edit-new { background: #e8f5e9; }
+.edit-new .edit-label { color: #1b5e20; background: #a5d6a7; }
+.edit-new .edit-content { color: #1b5e20; }
+.edit-content { margin: 0; flex: 1; background: transparent; font-size: 0.85rem; }
+.edit-replace-all { font-size: 0.75rem; font-weight: normal; color: var(--text-muted); }
+.write-tool .truncatable.truncated::after { background: linear-gradient(to bottom, transparent, #e6f4ea); }
+.edit-tool .truncatable.truncated::after { background: linear-gradient(to bottom, transparent, #fff0e5); }
+.todo-list { background: linear-gradient(135deg, #e8f5e9 0%, #f1f8e9 100%); border: 1px solid #81c784; border-radius: 8px; padding: 12px; margin: 12px 0; }
+.todo-header { font-weight: 600; color: #2e7d32; margin-bottom: 10px; display: flex; align-items: center; gap: 8px; font-size: 0.95rem; }
+.todo-items { list-style: none; margin: 0; padding: 0; }
+.todo-item { display: flex; align-items: flex-start; gap: 10px; padding: 6px 0; border-bottom: 1px solid rgba(0,0,0,0.06); font-size: 0.9rem; }
+.todo-item:last-child { border-bottom: none; }
+.todo-icon { flex-shrink: 0; width: 20px; height: 20px; display: flex; align-items: center; justify-content: center; font-weight: bold; border-radius: 50%; }
+.todo-completed .todo-icon { color: #2e7d32; background: rgba(46, 125, 50, 0.15); }
+.todo-completed .todo-content { color: #558b2f; text-decoration: line-through; }
+.todo-in-progress .todo-icon { color: #f57c00; background: rgba(245, 124, 0, 0.15); }
+.todo-in-progress .todo-content { color: #e65100; font-weight: 500; }
+.todo-pending .todo-icon { color: #757575; background: rgba(0,0,0,0.05); }
+.todo-pending .todo-content { color: #616161; }
+pre { background: var(--code-bg); color: var(--code-text); padding: 12px; border-radius: 6px; overflow-x: auto; font-size: 0.85rem; line-height: 1.5; margin: 8px 0; white-space: pre-wrap; word-wrap: break-word; }
+pre.json { color: #e0e0e0; }
+code { background: rgba(0,0,0,0.08); padding: 2px 6px; border-radius: 4px; font-size: 0.9em; }
+pre code { background: none; padding: 0; }
+.user-content { margin: 0; }
+.truncatable { position: relative; }
+.truncatable.truncated .truncatable-content { max-height: 200px; overflow: hidden; }
+.truncatable.truncated::after { content: ''; position: absolute; bottom: 32px; left: 0; right: 0; height: 60px; background: linear-gradient(to bottom, transparent, var(--card-bg)); pointer-events: none; }
+.message.user .truncatable.truncated::after { background: linear-gradient(to bottom, transparent, var(--user-bg)); }
+.message.tool-reply .truncatable.truncated::after { background: linear-gradient(to bottom, transparent, #fff8e1); }
+.tool-use .truncatable.truncated::after { background: linear-gradient(to bottom, transparent, var(--tool-bg)); }
+.tool-result .truncatable.truncated::after { background: linear-gradient(to bottom, transparent, var(--tool-result-bg)); }
+.expand-btn { display: none; width: 100%; padding: 8px 16px; margin-top: 4px; background: rgba(0,0,0,0.05); border: 1px solid rgba(0,0,0,0.1); border-radius: 6px; cursor: pointer; font-size: 0.85rem; color: var(--text-muted); }
+.expand-btn:hover { background: rgba(0,0,0,0.1); }
+.truncatable.truncated .expand-btn, .truncatable.expanded .expand-btn { display: block; }
+.pagination { display: flex; justify-content: center; gap: 8px; margin: 24px 0; flex-wrap: wrap; }
+.pagination a, .pagination span { padding: 5px 10px; border-radius: 6px; text-decoration: none; font-size: 0.85rem; }
+.pagination a { background: var(--card-bg); color: var(--user-border); border: 1px solid var(--user-border); }
+.pagination a:hover { background: var(--user-bg); }
+.pagination .current { background: var(--user-border); color: white; }
+.pagination .disabled { color: var(--text-muted); border: 1px solid #ddd; }
+.pagination .index-link { background: var(--user-border); color: white; }
+details.continuation { margin-bottom: 16px; }
+details.continuation summary { cursor: pointer; padding: 12px 16px; background: var(--user-bg); border-left: 4px solid var(--user-border); border-radius: 12px; font-weight: 500; color: var(--text-muted); }
+details.continuation summary:hover { background: rgba(25, 118, 210, 0.15); }
+details.continuation[open] summary { border-radius: 12px 12px 0 0; margin-bottom: 0; }
+.index-item { margin-bottom: 16px; border-radius: 12px; overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,0.1); background: var(--user-bg); border-left: 4px solid var(--user-border); }
+.index-item a { display: block; text-decoration: none; color: inherit; }
+.index-item a:hover { background: rgba(25, 118, 210, 0.1); }
+.index-item-header { display: flex; justify-content: space-between; align-items: center; padding: 8px 16px; background: rgba(0,0,0,0.03); font-size: 0.85rem; }
+.index-item-number { font-weight: 600; color: var(--user-border); }
+.index-item-content { padding: 16px; }
+.index-item-stats { padding: 8px 16px 12px 32px; font-size: 0.85rem; color: var(--text-muted); border-top: 1px solid rgba(0,0,0,0.06); }
+.index-item-commit { margin-top: 6px; padding: 4px 8px; background: #fff3e0; border-radius: 4px; font-size: 0.85rem; color: #e65100; }
+.index-item-commit code { background: rgba(0,0,0,0.08); padding: 1px 4px; border-radius: 3px; font-size: 0.8rem; margin-right: 6px; }
+.commit-card { margin: 8px 0; padding: 10px 14px; background: #fff3e0; border-left: 4px solid #ff9800; border-radius: 6px; }
+.commit-card a { text-decoration: none; color: #5d4037; display: block; }
+.commit-card a:hover { color: #e65100; }
+.commit-card-hash { font-family: monospace; color: #e65100; font-weight: 600; margin-right: 8px; }
+.index-commit { margin-bottom: 12px; padding: 10px 16px; background: #fff3e0; border-left: 4px solid #ff9800; border-radius: 8px; box-shadow: 0 1px 2px rgba(0,0,0,0.05); }
+.index-commit a { display: block; text-decoration: none; color: inherit; }
+.index-commit a:hover { background: rgba(255, 152, 0, 0.1); margin: -10px -16px; padding: 10px 16px; border-radius: 8px; }
+.index-commit-header { display: flex; justify-content: space-between; align-items: center; font-size: 0.85rem; margin-bottom: 4px; }
+.index-commit-hash { font-family: monospace; color: #e65100; font-weight: 600; }
+.index-commit-msg { color: #5d4037; }
+.index-item-long-text { margin-top: 8px; padding: 12px; background: var(--card-bg); border-radius: 8px; border-left: 3px solid var(--assistant-border); }
+.index-item-long-text .truncatable.truncated::after { background: linear-gradient(to bottom, transparent, var(--card-bg)); }
+.index-item-long-text-content { color: var(--text-color); }
+#search-box { display: none; align-items: center; gap: 8px; }
+#search-box input { padding: 6px 12px; border: 1px solid var(--assistant-border); border-radius: 6px; font-size: 16px; width: 180px; }
+#search-box button, #modal-search-btn, #modal-close-btn { background: var(--user-border); color: white; border: none; border-radius: 6px; padding: 6px 10px; cursor: pointer; display: flex; align-items: center; justify-content: center; }
+#search-box button:hover, #modal-search-btn:hover { background: #1565c0; }
+#modal-close-btn { background: var(--text-muted); margin-left: 8px; }
+#modal-close-btn:hover { background: #616161; }
+#search-modal[open] { border: none; border-radius: 12px; box-shadow: 0 4px 24px rgba(0,0,0,0.2); padding: 0; width: 90vw; max-width: 900px; height: 80vh; max-height: 80vh; display: flex; flex-direction: column; }
+#search-modal::backdrop { background: rgba(0,0,0,0.5); }
+.search-modal-header { display: flex; align-items: center; gap: 8px; padding: 16px; border-bottom: 1px solid var(--assistant-border); background: var(--bg-color); border-radius: 12px 12px 0 0; }
+.search-modal-header input { flex: 1; padding: 8px 12px; border: 1px solid var(--assistant-border); border-radius: 6px; font-size: 16px; }
+#search-status { padding: 8px 16px; font-size: 0.85rem; color: var(--text-muted); border-bottom: 1px solid rgba(0,0,0,0.06); }
+#search-results { flex: 1; overflow-y: auto; padding: 16px; }
+.search-result { margin-bottom: 16px; border-radius: 8px; overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+.search-result a { display: block; text-decoration: none; color: inherit; }
+.search-result a:hover { background: rgba(25, 118, 210, 0.05); }
+.search-result-page { padding: 6px 12px; background: rgba(0,0,0,0.03); font-size: 0.8rem; color: var(--text-muted); border-bottom: 1px solid rgba(0,0,0,0.06); }
+.search-result-content { padding: 12px; }
+.search-result mark { background: #fff59d; padding: 1px 2px; border-radius: 2px; }
+@media (max-width: 600px) { body { padding: 8px; } .message, .index-item { border-radius: 8px; } .message-content, .index-item-content { padding: 12px; } pre { font-size: 0.8rem; padding: 8px; } #search-box input { width: 120px; } #search-modal[open] { width: 95vw; height: 90vh; } }
+</style>
+</head>
+<body>
+    <div class="container">
+        <h1><a href="index.html" style="color: inherit; text-decoration: none;">Claude Code transcript</a> - page 2/2</h1>
+        
+
+<div class="pagination">
+<a href="index.html" class="index-link">Index</a>
+<a href="page-001.html">&larr; Prev</a>
+<a href="page-001.html">1</a>
+<span class="current">2</span>
+<span class="disabled">Next &rarr;</span>
+</div>
+
+        
+<div class="message user" id="msg-2026-04-08T18-09-02-490Z"><div class="message-header"><span class="role-label">User</span><a href="#msg-2026-04-08T18-09-02-490Z" class="timestamp-link"><time datetime="2026-04-08T18:09:02.490Z" data-timestamp="2026-04-08T18:09:02.490Z">2026-04-08T18:09:02.490Z</time></a></div><div class="message-content">
+<div class="user-content"><p>Could you also add some documentation to the readme file similar to "machine" for things like build and install using uv?</p></div></div></div>
+<div class="message assistant" id="msg-2026-04-08T18-09-05-653Z"><div class="message-header"><span class="role-label">Assistant</span><a href="#msg-2026-04-08T18-09-05-653Z" class="timestamp-link"><time datetime="2026-04-08T18:09:05.653Z" data-timestamp="2026-04-08T18:09:05.653Z">2026-04-08T18:09:05.653Z</time></a></div><div class="message-content">
+<div class="tool-use" data-tool-id="toolu_01Q6zJjcbkZgbfKLrFYdLb4a"><div class="tool-header"><span class="tool-icon">⚙</span> Read</div><div class="truncatable"><div class="truncatable-content"><pre class="json">{
+  &#34;file_path&#34;: &#34;/home/david/projects/stirlingbridge/cluster/README.md&#34;
+}</pre></div><button class="expand-btn">Show more</button></div></div></div></div>
+<div class="message tool-reply" id="msg-2026-04-08T18-09-05-662Z"><div class="message-header"><span class="role-label">Tool reply</span><a href="#msg-2026-04-08T18-09-05-662Z" class="timestamp-link"><time datetime="2026-04-08T18:09:05.662Z" data-timestamp="2026-04-08T18:09:05.662Z">2026-04-08T18:09:05.662Z</time></a></div><div class="message-content"><div class="tool-result"><div class="truncatable"><div class="truncatable-content"><pre>1	# cluster
+2	Utility for provisioning k8s clusters
+3	</pre></div><button class="expand-btn">Show more</button></div></div></div></div>
+<div class="message assistant" id="msg-2026-04-08T18-09-05-702Z"><div class="message-header"><span class="role-label">Assistant</span><a href="#msg-2026-04-08T18-09-05-702Z" class="timestamp-link"><time datetime="2026-04-08T18:09:05.702Z" data-timestamp="2026-04-08T18:09:05.702Z">2026-04-08T18:09:05.702Z</time></a></div><div class="message-content">
+<div class="tool-use" data-tool-id="toolu_01PvCXpveg54uoDEofW733rL"><div class="tool-header"><span class="tool-icon">⚙</span> Read</div><div class="truncatable"><div class="truncatable-content"><pre class="json">{
+  &#34;file_path&#34;: &#34;/home/david/projects/bpi/machine/README.md&#34;
+}</pre></div><button class="expand-btn">Show more</button></div></div></div></div>
+<div class="message tool-reply" id="msg-2026-04-08T18-10-10-171Z"><div class="message-header"><span class="role-label">Tool reply</span><a href="#msg-2026-04-08T18-10-10-171Z" class="timestamp-link"><time datetime="2026-04-08T18:10:10.171Z" data-timestamp="2026-04-08T18:10:10.171Z">2026-04-08T18:10:10.171Z</time></a></div><div class="message-content"><div class="tool-result"><div class="truncatable"><div class="truncatable-content"><pre>1	# machine
+2	CLI utility to create and manage VMs
+3	
+4	Supports [DigitalOcean](https://www.digitalocean.com/) and [Vultr](https://www.vultr.com/) hosting platforms.
+5	
+6	## Prerequisites
+7	
+8	This project uses [uv](https://docs.astral.sh/uv/) for dependency management and builds.
+9	
+10	Install uv:
+11	```
+12	curl -LsSf https://astral.sh/uv/install.sh | sh
+13	```
+14	
+15	## Development Setup
+16	
+17	```
+18	uv sync
+19	```
+20	
+21	This creates a `.venv` virtual environment and installs all dependencies (including dev tools like ruff).
+22	
+23	Run the CLI during development:
+24	```
+25	uv run machine --help
+26	```
+27	
+28	Run the linter:
+29	```
+30	uv run ruff check machine/
+31	```
+32	
+33	## Build
+34	
+35	Build a self-contained executable using [shiv](https://github.com/linkedin/shiv):
+36	```
+37	./sh/build-package.sh
+38	```
+39	
+40	This produces `build/machine`, a single-file Python zipapp.
+41	
+42	## Install
+43	
+44	Install directly from the GitHub repository using uv:
+45	```
+46	uv tool install git+https://github.com/stirlingbridge/machine.git
+47	```
+48	
+49	Alternatively, download the `machine` binary from the [releases page](https://github.com/stirlingbridge/machine/releases), make it executable, and place it on your PATH:
+50	```
+51	chmod +x machine
+52	sudo mv machine /usr/local/bin/
+53	```
+54	
+55	## Usage
+56	
+57	### Config File
+58	Access token and other settings configured in the file `~/.machine/config.yml`. The config file contains a provider section (either `digital-ocean` or `vultr`) and a `machines` section.
+59	
+60	If only one provider section is present, it is auto-detected. If multiple provider sections exist, add a `provider:` key to select one explicitly:
+61	
+62	```yaml
+63	provider: vultr
+64	```
+65	
+66	#### DigitalOcean Config
+67	
+68	```yaml
+69	digital-ocean:
+70	    access-token: dop_v1_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+71	    ssh-key: my-ssh-key-name
+72	    dns-zone: example.com
+73	    machine-size: s-4vcpu-8gb
+74	    image: ubuntu-22-04-x64
+75	    region: nyc3
+76	    project: Infrastructure
+77	
+78	machines:
+79	    example:
+80	        new-user-name: alice
+81	        script-dir: /opt/setup-scripts
+82	        script-url: https://raw.githubusercontent.com/example/setup-machine.sh
+83	        script-path: /opt/setup-scripts/setup-machine.sh
+84	        script-args: &quot;-y&quot;
+85	```
+86	
+87	| Key | Required | Description |
+88	|-----|----------|-------------|
+89	| `access-token` | Yes | DigitalOcean API access token |
+90	| `ssh-key` | Yes | Name of the SSH key in your DigitalOcean account to use for new machines |
+91	| `dns-zone` | No | DNS zone for automatic DNS record creation/deletion |
+92	| `machine-size` | Yes | Default machine size slug (e.g. `s-4vcpu-8gb`) |
+93	| `image` | Yes | Default image name (e.g. `ubuntu-22-04-x64`) |
+94	| `region` | Yes | Default region code (e.g. `nyc3`) |
+95	| `project` | No | DigitalOcean project name to assign new machines to |
+96	
+97	Supported regions: `NYC1`, `NYC3`, `AMS3`, `SFO2`, `SFO3`, `SGP1`, `LON1`, `FRA1`, `TOR1`, `BLR1`, `SYD1`
+98	
+99	#### Vultr Config
+100	
+101	```yaml
+102	vultr:
+103	    api-key: ${VULTR_API_KEY}
+104	    ssh-key: my-ssh-key-name
+105	    dns-zone: example.com
+106	    machine-size: vc2-1c-1gb
+107	    image: 2136
+108	    region: ewr
+109	
+110	machines:
+111	    example:
+112	        new-user-name: alice
+113	        script-dir: /opt/setup-scripts
+114	        script-url: https://raw.githubusercontent.com/example/setup-machine.sh
+115	        script-path: /opt/setup-scripts/setup-machine.sh
+116	        script-args: &quot;-y&quot;
+117	```
+118	
+119	| Key | Required | Description |
+120	|-----|----------|-------------|
+121	| `api-key` | Yes | Vultr API key (from https://my.vultr.com/settings/#settingsapi) |
+122	| `ssh-key` | Yes | Name of the SSH key in your Vultr account to use for new machines |
+123	| `dns-zone` | No | DNS zone for automatic DNS record creation/deletion |
+124	| `machine-size` | Yes | Vultr plan slug (e.g. `vc2-1c-1gb`). Use `machine list-plans` or the Vultr API to list available plans |
+125	| `image` | Yes | Vultr OS ID (numeric, e.g. `2136` for Ubuntu 24.04). Use `machine list-os` or the Vultr API to list available OS IDs |
+126	| `region` | Yes | Vultr region code (e.g. `ewr`) |
+127	
+128	Supported regions: `ewr`, `ord`, `dfw`, `sea`, `lax`, `atl`, `ams`, `lhr`, `fra`, `sjc`, `syd`, `nrt`, `cdg`, `icn`, `mia`, `sgp`, `sto`, `mex`, `mad`, `sao`, `del`, `hnl`, `yto`, `blr`, `jnb`, `bom`, `tlv`
+129	
+130	**Note:** Vultr does not have a &quot;projects&quot; concept, so the `project` config key and the `projects` command are not applicable when using the Vultr provider.
+131	
+132	#### Machines Section
+133	
+134	**machines section:**
+135	
+136	Each entry under `machines:` defines a machine type that can be referenced with `create --type`:
+137	
+138	| Key | Required | Description |
+139	|-----|----------|-------------|
+140	| `new-user-name` | Yes | Username for the non-root user created on the machine |
+141	| `script-url` | No | URL to download an initialization script from |
+142	| `script-dir` | No | Directory to store the initialization script |
+143	| `script-path` | No | Full path for the initialization script |
+144	| `script-args` | No | Arguments passed to the initialization script (supports variable expansion) |
+145	
+146	If `script-url`, `script-dir`, and `script-path` are all provided, the script is downloaded and executed as the new user during cloud-init. The following variables are available for expansion in `script-args`:
+147	
+148	- `$MACHINE_SCRIPT_URL` — URL of the initialization script
+149	- `$MACHINE_SCRIPT_DIR` — directory path for the script
+150	- `$MACHINE_FQDN` — fully qualified domain name of the machine (if DNS is configured)
+151	
+152	#### Environment Variable Substitution
+153	
+154	Config values support environment variable substitution using `${VAR}` syntax, similar to Docker Compose files. This is useful for keeping secrets like API tokens out of the config file.
+155	
+156	Supported forms:
+157	- `${VAR}` — substitutes the value of `VAR`; errors if the variable is not set
+158	- `${VAR:-default}` — substitutes the value of `VAR`, or `default` if the variable is not set
+159	
+160	Examples:
+161	```yaml
+162	# DigitalOcean
+163	digital-ocean:
+164	    access-token: ${DO_API_TOKEN}
+165	    ssh-key: ${SSH_KEY_NAME:-my-ssh-key}
+166	    dns-zone: example.com
+167	    machine-size: ${MACHINE_SIZE:-s-4vcpu-8gb}
+168	    image: ubuntu-22-04-x64
+169	    region: ${DO_REGION:-nyc3}
+170	    project: Infrastructure
+171	```
+172	
+173	```yaml
+174	# Vultr
+175	vultr:
+176	    api-key: ${VULTR_API_KEY}
+177	    ssh-key: ${SSH_KEY_NAME:-my-ssh-key}
+178	    dns-zone: example.com
+179	    machine-size: ${MACHINE_SIZE:-vc2-1c-1gb}
+180	    image: 2136
+181	    region: ${VULTR_REGION:-ewr}
+182	```
+183	
+184	Substitution is applied to all string values throughout the config file, including the `machines` section.
+185	
+186	#### Advanced Machine Setup
+187	
+188	Examples of advanced machine setup scripts can be found in [the machine-provisioning repository](https://github.com/bozemanpass/machine-provisioning).
+189	
+190	### Session Management
+191	
+192	Each invocation of `machine` uses a session ID (auto-generated and stored in `~/.machine/session-id.yml`). Machines are tagged with their session ID on creation. By default, `list`, `status`, `list-domain`, and `destroy` only operate on machines from the current session. Use the `--all` flag to include machines from other sessions or machines not created by this tool.
+193	
+194	The session ID can be overridden with the global `--session-id` option.
+195	
+196	### Automatic Tagging
+197	
+198	Machines created by this tool are automatically tagged with:
+199	
+200	- `machine:created` — identifies the machine as created by this tool
+201	- `machine:type:&lt;type-name&gt;` — the machine type from the config
+202	- `machine:session:&lt;session-id&gt;` — the session that created the machine
+203	
+204	### Global Options
+205	```
+206	$ machine --help
+207	Usage: machine [OPTIONS] COMMAND [ARGS]...
+208	
+209	Options:
+210	  --debug               Enable debug output
+211	  --quiet               Suppress all non-essential output
+212	  --verbose             Enable verbose output
+213	  --dry-run             Run but do not do anything
+214	  --config-file &lt;PATH&gt;  Specify the config file (default
+215	                        ~/.machine/config.yml)
+216	  --session-id &lt;ID&gt;     Override the default session ID
+217	  -h, --help            Show this message and exit.
+218	
+219	Commands:
+220	  create       Create a machine
+221	  destroy      Destroy one or more machines
+222	  domains      List dns domains
+223	  list         List machines
+224	  list-domain  List domain records
+225	  projects     List projects
+226	  ssh-keys     List ssh keys
+227	  status       Machine status
+228	  types        List configured machine types
+229	  version      Display version
+230	```
+231	
+232	### Commands
+233	
+234	#### create
+235	
+236	Create a new machine on the configured provider. By default, the machine is initialized with cloud-init (using the specified `--type` from config) and a DNS A record is created.
+237	
+238	```
+239	$ machine create --help
+240	Usage: machine create [OPTIONS]
+241	
+242	  Create a machine
+243	
+244	Options:
+245	  -n, --name &lt;MACHINE-NAME&gt;         Name for new machine  [required]
+246	  -t, --tag &lt;TAG-TEXT&gt;              Tag to be applied to new machine
+247	  -m, --type &lt;MACHINE-TYPE&gt;        Machine type from config (required if --initialize)
+248	  -r, --region &lt;REGION-CODE&gt;       Region (overrides config default)
+249	  -s, --machine-size &lt;MACHINE-SLUG&gt;
+250	                                    Machine size (overrides config default)
+251	  -s, --image &lt;IMAGE-NAME&gt;         Image (overrides config default)
+252	  --wait-for-ip / --no-wait-for-ip Wait for IP address assignment (default: off)
+253	  --update-dns / --no-update-dns   Create DNS A record (default: on)
+254	  --initialize / --no-initialize   Initialize with cloud-init (default: on)
+255	  -o, --output &lt;FORMAT&gt;            Output format (json)
+256	  -h, --help                       Show this message and exit.
+257	```
+258	
+259	Output formats:
+260	- Default: human-readable status messages
+261	- `--output json`: JSON object with id, name, tags, region, ip, type
+262	
+263	JSON output example:
+264	```json
+265	{
+266	  &quot;id&quot;: &quot;12345678&quot;,
+267	  &quot;name&quot;: &quot;my-machine&quot;,
+268	  &quot;tags&quot;: [&quot;machine:created&quot;, &quot;machine:type:example&quot;, &quot;machine:session:abc12345&quot;],
+269	  &quot;region&quot;: &quot;nyc3&quot;,
+270	  &quot;ip&quot;: &quot;203.0.113.10&quot;,
+271	  &quot;type&quot;: &quot;example&quot;
+272	}
+273	```
+274	
+275	When `--update-dns` is enabled (the default), the command waits for the instance&#x27;s IP address and creates an A record in the configured `dns-zone` with a 5-minute TTL.
+276	
+277	When `--initialize` is enabled (the default), a cloud-config user-data payload is generated that creates a non-root user with sudo access, installs the SSH key, and optionally downloads and runs an initialization script.
+278	
+279	If a `project` is configured (DigitalOcean only), the machine is automatically assigned to that project.
+280	
+281	#### destroy
+282	
+283	Destroy one or more machines by instance ID. By default, requires confirmation and deletes associated DNS records.
+284	
+285	```
+286	$ machine destroy --help
+287	Usage: machine destroy [OPTIONS] [DROPLET-IDS]...
+288	
+289	  Destroy one or more machines
+290	
+291	Options:
+292	  --confirm / --no-confirm       Require confirmation (default: on)
+293	  --delete-dns / --no-delete-dns Delete associated DNS records (default: on)
+294	  --all                          Include machines not created by this tool
+295	                                 or by other sessions
+296	  -h, --help                     Show this message and exit.
+297	```
+298	
+299	Confirmation requires typing exactly `YES` (not &quot;y&quot;, &quot;yes&quot;, or &quot;Yes&quot;). Use `--no-confirm` to skip.
+300	
+301	Safety checks prevent destroying machines that were not created by this tool or that belong to a different session, unless `--all` is specified.
+302	
+303	#### list
+304	
+305	List machines with optional filtering.
+306	
+307	```
+308	$ machine list --help
+309	Usage: machine list [OPTIONS]
+310	
+311	  List machines
+312	
+313	Options:
+314	  --id &lt;MACHINE-ID&gt;       Filter by id
+315	  -n, --name &lt;MACHINE-NAME&gt;  Filter by name
+316	  -t, --tag &lt;TAG-TEXT&gt;    Filter by tag
+317	  -m, --type &lt;MACHINE-TYPE&gt;  Filter by type
+318	  -r, --region &lt;REGION&gt;   Filter by region
+319	  -o, --output &lt;FORMAT&gt;   Output format (json)
+320	  -q, --quiet             Only display machine IDs
+321	  --unique                Return an error if more than one match
+322	  --all                   Include all machines from all sessions
+323	  -h, --help              Show this message and exit.
+324	```
+325	
+326	Output formats:
+327	- Default: `name (id, region, type): ip_address`
+328	- `--quiet`: droplet IDs only
+329	- `--output json`: JSON array of machine objects
+330	
+331	JSON output example:
+332	```json
+333	[
+334	  {
+335	    &quot;id&quot;: &quot;12345678&quot;,
+336	    &quot;name&quot;: &quot;my-machine&quot;,
+337	    &quot;tags&quot;: [&quot;machine:created&quot;, &quot;machine:type:example&quot;, &quot;machine:session:abc12345&quot;],
+338	    &quot;region&quot;: &quot;nyc3&quot;,
+339	    &quot;ip&quot;: &quot;203.0.113.10&quot;,
+340	    &quot;type&quot;: &quot;example&quot;
+341	  }
+342	]
+343	```
+344	
+345	#### status
+346	
+347	Check the status of machines, including querying a custom status endpoint.
+348	
+349	```
+350	$ machine status --help
+351	Usage: machine status [OPTIONS]
+352	
+353	  Machine status
+354	
+355	Options:
+356	  --id &lt;MACHINE-ID&gt;          Filter by id
+357	  -n, --name &lt;MACHINE-NAME&gt;  Filter by name
+358	  -t, --tag &lt;TAG-TEXT&gt;       Filter by tag
+359	  -m, --type &lt;MACHINE-TYPE&gt;  Filter by type
+360	  -r, --region &lt;REGION&gt;      Filter by region
+361	  -o, --output &lt;FORMAT&gt;      Output format (json)
+362	  --status-check &lt;CHECK&gt;     Status check to perform (default: cloud-init-status)
+363	  -q, --quiet                Only display machine IDs
+364	  --all                      Include all machines from all sessions
+365	  -h, --help                 Show this message and exit.
+366	```
+367	
+368	Output formats:
+369	- Default: human-readable status line
+370	- `--output json`: JSON array of status objects
+371	
+372	JSON output example:
+373	```json
+374	[
+375	  {
+376	    &quot;name&quot;: &quot;my-machine&quot;,
+377	    &quot;id&quot;: &quot;12345678&quot;,
+378	    &quot;droplet-status&quot;: &quot;active&quot;,
+379	    &quot;cloud-init-status&quot;: &quot;done&quot;
+380	  }
+381	]
+382	```
+383	
+384	In addition to the provider-reported instance status, this command queries each machine at `http://&lt;ip&gt;:4242/cgi-bin/&lt;status-check&gt;` (default: `cloud-init-status`) for custom status information. If the endpoint is unreachable, the status is reported as `UNKNOWN`.
+385	
+386	#### list-domain
+387	
+388	List DNS records within a domain zone.
+389	
+390	```
+391	$ machine list-domain --help
+392	Usage: machine list-domain [OPTIONS] [ZONE]
+393	
+394	  List domain records
+395	
+396	Options:
+397	  -n, --name &lt;RECORD-NAME&gt;  Filter by record name
+398	  -m, --type &lt;RECORD-TYPE&gt;  Filter by record type (default: A and AAAA, use * for all)
+399	  -o, --output &lt;FORMAT&gt;     Output format (json)
+400	  -q, --quiet               Only display record names
+401	  --all                     Include all records from all sessions
+402	  -h, --help                Show this message and exit.
+403	```
+404	
+405	If `ZONE` is omitted, uses the `dns-zone` from config. By default, only shows A and AAAA records associated with machines from the current session.
+406	
+407	Output formats:
+408	- Default: `name\ttype\tdata`
+409	- `--quiet`: record names only
+410	- `--output json`: JSON array of record objects
+411	
+412	JSON output example:
+413	```json
+414	[
+415	  {
+416	    &quot;id&quot;: &quot;98765432&quot;,
+417	    &quot;droplet&quot;: {
+418	      &quot;id&quot;: &quot;12345678&quot;,
+419	      &quot;name&quot;: &quot;my-machine&quot;,
+420	      &quot;tags&quot;: [&quot;machine:created&quot;],
+421	      &quot;region&quot;: &quot;nyc3&quot;,
+422	      &quot;ip&quot;: &quot;203.0.113.10&quot;,
+423	      &quot;type&quot;: &quot;example&quot;
+424	    },
+425	    &quot;name&quot;: &quot;my-machine&quot;,
+426	    &quot;fqdn&quot;: &quot;my-machine.example.com&quot;,
+427	    &quot;zone&quot;: &quot;example.com&quot;,
+428	    &quot;data&quot;: &quot;203.0.113.10&quot;,
+429	    &quot;ttl&quot;: 300,
+430	    &quot;type&quot;: &quot;A&quot;
+431	  }
+432	]
+433	```
+434	
+435	#### domains
+436	
+437	List all DNS domains in your provider account.
+438	
+439	Options:
+440	- `-o, --output &lt;FORMAT&gt;`: Output format (`json`)
+441	
+442	JSON output example:
+443	```json
+444	[&quot;example.com&quot;, &quot;example.org&quot;]
+445	```
+446	
+447	#### ssh-keys
+448	
+449	List SSH keys in your provider account. Output format: `id: name (fingerprint)`
+450	
+451	#### projects
+452	
+453	List project names (DigitalOcean only).
+454	
+455	Options:
+456	- `-o, --output &lt;FORMAT&gt;`: Output format (`json`)
+457	
+458	JSON output example:
+459	```json
+460	[&quot;Infrastructure&quot;, &quot;Web Apps&quot;]
+461	```
+462	
+463	#### types
+464	
+465	List all machine types defined in the config file (from the `machines` section).
+466	
+467	Options:
+468	- `-o, --output &lt;FORMAT&gt;`: Output format (`json`)
+469	
+470	JSON output example:
+471	```json
+472	[&quot;example&quot;, &quot;webserver&quot;]
+473	```
+474	
+[result-id: r3]</pre></div><button class="expand-btn">Show more</button></div></div></div></div>
+<div class="message assistant" id="msg-2026-04-08T18-10-18-855Z"><div class="message-header"><span class="role-label">Assistant</span><a href="#msg-2026-04-08T18-10-18-855Z" class="timestamp-link"><time datetime="2026-04-08T18:10:18.855Z" data-timestamp="2026-04-08T18:10:18.855Z">2026-04-08T18:10:18.855Z</time></a></div><div class="message-content"><div class="file-tool write-tool" data-tool-id="toolu_01LMtUT4asZtPLFERS6CWw5n">
+<div class="file-tool-header write-header"><span class="file-tool-icon">📝</span> Write <span class="file-tool-path">README.md</span></div>
+<div class="file-tool-fullpath">/home/david/projects/stirlingbridge/cluster/README.md</div>
+<div class="truncatable"><div class="truncatable-content"><pre class="file-content"># cluster
+Utility for provisioning k8s clusters
+
+## Prerequisites
+
+This project uses [uv](https://docs.astral.sh/uv/) for dependency management and builds.
+
+Install uv:
+```
+curl -LsSf https://astral.sh/uv/install.sh | sh
+```
+
+## Development Setup
+
+```
+uv sync
+```
+
+This creates a `.venv` virtual environment and installs all dependencies (including dev tools like ruff).
+
+Run the CLI during development:
+```
+uv run cluster --help
+```
+
+Run the linter:
+```
+uv run ruff check cluster/
+```
+
+## Build
+
+Build a self-contained executable using [shiv](https://github.com/linkedin/shiv):
+```
+./sh/build-package.sh
+```
+
+This produces `build/cluster`, a single-file Python zipapp.
+
+## Install
+
+Install directly from the GitHub repository using uv:
+```
+uv tool install git+https://github.com/stirlingbridge/cluster.git
+```
+
+Alternatively, download the `cluster` binary from the [releases page](https://github.com/stirlingbridge/cluster/releases), make it executable, and place it on your PATH:
+```
+chmod +x cluster
+sudo mv cluster /usr/local/bin/
+```
+</pre></div><button class="expand-btn">Show more</button></div>
+</div></div></div>
+<div class="message tool-reply" id="msg-2026-04-08T18-10-28-099Z"><div class="message-header"><span class="role-label">Tool reply</span><a href="#msg-2026-04-08T18-10-28-099Z" class="timestamp-link"><time datetime="2026-04-08T18:10:28.099Z" data-timestamp="2026-04-08T18:10:28.099Z">2026-04-08T18:10:28.099Z</time></a></div><div class="message-content"><div class="tool-result"><div class="truncatable"><div class="truncatable-content"><pre>The file /home/david/projects/stirlingbridge/cluster/README.md has been updated successfully. (file state is current in your context — no need to Read it back)</pre></div><button class="expand-btn">Show more</button></div></div></div></div>
+<div class="message assistant" id="msg-2026-04-08T18-10-31-917Z"><div class="message-header"><span class="role-label">Assistant</span><a href="#msg-2026-04-08T18-10-31-917Z" class="timestamp-link"><time datetime="2026-04-08T18:10:31.917Z" data-timestamp="2026-04-08T18:10:31.917Z">2026-04-08T18:10:31.917Z</time></a></div><div class="message-content">
+<div class="assistant-text"><p>Done. The README now covers Prerequisites (uv install), Development Setup (<code>uv sync</code>, running the CLI, linting), Build (shiv), and Install (via <code>uv tool install</code> or downloading a release binary) -- matching the structure of machine's README but with cluster-specific details.</p></div></div></div>
+<div class="message user" id="msg-2026-04-08T18-10-39-813Z"><div class="message-header"><span class="role-label">User</span><a href="#msg-2026-04-08T18-10-39-813Z" class="timestamp-link"><time datetime="2026-04-08T18:10:39.813Z" data-timestamp="2026-04-08T18:10:39.813Z">2026-04-08T18:10:39.813Z</time></a></div><div class="message-content">
+<div class="user-content"><p><local-command-caveat>Caveat: The messages below were generated by the user while running local commands. DO NOT respond to these messages or otherwise consider them in your response unless the user explicitly asks you to.</local-command-caveat></p></div></div></div>
+<div class="message user" id="msg-2026-04-08T18-10-39-813Z"><div class="message-header"><span class="role-label">User</span><a href="#msg-2026-04-08T18-10-39-813Z" class="timestamp-link"><time datetime="2026-04-08T18:10:39.813Z" data-timestamp="2026-04-08T18:10:39.813Z">2026-04-08T18:10:39.813Z</time></a></div><div class="message-content">
+<div class="user-content"><p><command-name>/exit</command-name>
+            <command-message>exit</command-message>
+            <command-args></command-args></p></div></div></div>
+<div class="message user" id="msg-2026-04-08T18-10-39-813Z"><div class="message-header"><span class="role-label">User</span><a href="#msg-2026-04-08T18-10-39-813Z" class="timestamp-link"><time datetime="2026-04-08T18:10:39.813Z" data-timestamp="2026-04-08T18:10:39.813Z">2026-04-08T18:10:39.813Z</time></a></div><div class="message-content">
+<div class="user-content"><p><local-command-stdout>See ya!</local-command-stdout></p></div></div></div>
+        
+
+<div class="pagination">
+<a href="index.html" class="index-link">Index</a>
+<a href="page-001.html">&larr; Prev</a>
+<a href="page-001.html">1</a>
+<span class="current">2</span>
+<span class="disabled">Next &rarr;</span>
+</div>
+
+    </div>
+    <script>
+document.querySelectorAll('time[data-timestamp]').forEach(function(el) {
+    const timestamp = el.getAttribute('data-timestamp');
+    const date = new Date(timestamp);
+    const now = new Date();
+    const isToday = date.toDateString() === now.toDateString();
+    const timeStr = date.toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' });
+    if (isToday) { el.textContent = timeStr; }
+    else { el.textContent = date.toLocaleDateString(undefined, { month: 'short', day: 'numeric' }) + ' ' + timeStr; }
+});
+document.querySelectorAll('pre.json').forEach(function(el) {
+    let text = el.textContent;
+    text = text.replace(/"([^"]+)":/g, '<span style="color: #ce93d8">"$1"</span>:');
+    text = text.replace(/: "([^"]*)"/g, ': <span style="color: #81d4fa">"$1"</span>');
+    text = text.replace(/: (\d+)/g, ': <span style="color: #ffcc80">$1</span>');
+    text = text.replace(/: (true|false|null)/g, ': <span style="color: #f48fb1">$1</span>');
+    el.innerHTML = text;
+});
+document.querySelectorAll('.truncatable').forEach(function(wrapper) {
+    const content = wrapper.querySelector('.truncatable-content');
+    const btn = wrapper.querySelector('.expand-btn');
+    if (content.scrollHeight > 250) {
+        wrapper.classList.add('truncated');
+        btn.addEventListener('click', function() {
+            if (wrapper.classList.contains('truncated')) { wrapper.classList.remove('truncated'); wrapper.classList.add('expanded'); btn.textContent = 'Show less'; }
+            else { wrapper.classList.remove('expanded'); wrapper.classList.add('truncated'); btn.textContent = 'Show more'; }
+        });
+    }
+});
+</script>
+</body>
+</html>
