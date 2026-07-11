@@ -1,0 +1,2091 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Claude Code transcript - page 1</title>
+    <style>
+:root { --bg-color: #f5f5f5; --card-bg: #ffffff; --user-bg: #e3f2fd; --user-border: #1976d2; --assistant-bg: #f5f5f5; --assistant-border: #9e9e9e; --thinking-bg: #fff8e1; --thinking-border: #ffc107; --thinking-text: #666; --tool-bg: #f3e5f5; --tool-border: #9c27b0; --tool-result-bg: #e8f5e9; --tool-error-bg: #ffebee; --text-color: #212121; --text-muted: #757575; --code-bg: #263238; --code-text: #aed581; }
+* { box-sizing: border-box; }
+body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: var(--bg-color); color: var(--text-color); margin: 0; padding: 16px; line-height: 1.6; }
+.container { max-width: 800px; margin: 0 auto; }
+h1 { font-size: 1.5rem; margin-bottom: 24px; padding-bottom: 8px; border-bottom: 2px solid var(--user-border); }
+.header-row { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; border-bottom: 2px solid var(--user-border); padding-bottom: 8px; margin-bottom: 24px; }
+.header-row h1 { border-bottom: none; padding-bottom: 0; margin-bottom: 0; flex: 1; min-width: 200px; }
+.message { margin-bottom: 16px; border-radius: 12px; overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+.message.user { background: var(--user-bg); border-left: 4px solid var(--user-border); }
+.message.assistant { background: var(--card-bg); border-left: 4px solid var(--assistant-border); }
+.message.tool-reply { background: #fff8e1; border-left: 4px solid #ff9800; }
+.tool-reply .role-label { color: #e65100; }
+.tool-reply .tool-result { background: transparent; padding: 0; margin: 0; }
+.tool-reply .tool-result .truncatable.truncated::after { background: linear-gradient(to bottom, transparent, #fff8e1); }
+.message-header { display: flex; justify-content: space-between; align-items: center; padding: 8px 16px; background: rgba(0,0,0,0.03); font-size: 0.85rem; }
+.role-label { font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; }
+.user .role-label { color: var(--user-border); }
+time { color: var(--text-muted); font-size: 0.8rem; }
+.timestamp-link { color: inherit; text-decoration: none; }
+.timestamp-link:hover { text-decoration: underline; }
+.message:target { animation: highlight 2s ease-out; }
+@keyframes highlight { 0% { background-color: rgba(25, 118, 210, 0.2); } 100% { background-color: transparent; } }
+.message-content { padding: 16px; }
+.message-content p { margin: 0 0 12px 0; }
+.message-content p:last-child { margin-bottom: 0; }
+.thinking { background: var(--thinking-bg); border: 1px solid var(--thinking-border); border-radius: 8px; padding: 12px; margin: 12px 0; font-size: 0.9rem; color: var(--thinking-text); }
+.thinking-label { font-size: 0.75rem; font-weight: 600; text-transform: uppercase; color: #f57c00; margin-bottom: 8px; }
+.thinking p { margin: 8px 0; }
+.assistant-text { margin: 8px 0; }
+.tool-use { background: var(--tool-bg); border: 1px solid var(--tool-border); border-radius: 8px; padding: 12px; margin: 12px 0; }
+.tool-header { font-weight: 600; color: var(--tool-border); margin-bottom: 8px; display: flex; align-items: center; gap: 8px; }
+.tool-icon { font-size: 1.1rem; }
+.tool-description { font-size: 0.9rem; color: var(--text-muted); margin-bottom: 8px; font-style: italic; }
+.tool-result { background: var(--tool-result-bg); border-radius: 8px; padding: 12px; margin: 12px 0; }
+.tool-result.tool-error { background: var(--tool-error-bg); }
+.file-tool { border-radius: 8px; padding: 12px; margin: 12px 0; }
+.write-tool { background: linear-gradient(135deg, #e3f2fd 0%, #e8f5e9 100%); border: 1px solid #4caf50; }
+.edit-tool { background: linear-gradient(135deg, #fff3e0 0%, #fce4ec 100%); border: 1px solid #ff9800; }
+.file-tool-header { font-weight: 600; margin-bottom: 4px; display: flex; align-items: center; gap: 8px; font-size: 0.95rem; }
+.write-header { color: #2e7d32; }
+.edit-header { color: #e65100; }
+.file-tool-icon { font-size: 1rem; }
+.file-tool-path { font-family: monospace; background: rgba(0,0,0,0.08); padding: 2px 8px; border-radius: 4px; }
+.file-tool-fullpath { font-family: monospace; font-size: 0.8rem; color: var(--text-muted); margin-bottom: 8px; word-break: break-all; }
+.file-content { margin: 0; }
+.edit-section { display: flex; margin: 4px 0; border-radius: 4px; overflow: hidden; }
+.edit-label { padding: 8px 12px; font-weight: bold; font-family: monospace; display: flex; align-items: flex-start; }
+.edit-old { background: #fce4ec; }
+.edit-old .edit-label { color: #b71c1c; background: #f8bbd9; }
+.edit-old .edit-content { color: #880e4f; }
+.edit-new { background: #e8f5e9; }
+.edit-new .edit-label { color: #1b5e20; background: #a5d6a7; }
+.edit-new .edit-content { color: #1b5e20; }
+.edit-content { margin: 0; flex: 1; background: transparent; font-size: 0.85rem; }
+.edit-replace-all { font-size: 0.75rem; font-weight: normal; color: var(--text-muted); }
+.write-tool .truncatable.truncated::after { background: linear-gradient(to bottom, transparent, #e6f4ea); }
+.edit-tool .truncatable.truncated::after { background: linear-gradient(to bottom, transparent, #fff0e5); }
+.todo-list { background: linear-gradient(135deg, #e8f5e9 0%, #f1f8e9 100%); border: 1px solid #81c784; border-radius: 8px; padding: 12px; margin: 12px 0; }
+.todo-header { font-weight: 600; color: #2e7d32; margin-bottom: 10px; display: flex; align-items: center; gap: 8px; font-size: 0.95rem; }
+.todo-items { list-style: none; margin: 0; padding: 0; }
+.todo-item { display: flex; align-items: flex-start; gap: 10px; padding: 6px 0; border-bottom: 1px solid rgba(0,0,0,0.06); font-size: 0.9rem; }
+.todo-item:last-child { border-bottom: none; }
+.todo-icon { flex-shrink: 0; width: 20px; height: 20px; display: flex; align-items: center; justify-content: center; font-weight: bold; border-radius: 50%; }
+.todo-completed .todo-icon { color: #2e7d32; background: rgba(46, 125, 50, 0.15); }
+.todo-completed .todo-content { color: #558b2f; text-decoration: line-through; }
+.todo-in-progress .todo-icon { color: #f57c00; background: rgba(245, 124, 0, 0.15); }
+.todo-in-progress .todo-content { color: #e65100; font-weight: 500; }
+.todo-pending .todo-icon { color: #757575; background: rgba(0,0,0,0.05); }
+.todo-pending .todo-content { color: #616161; }
+pre { background: var(--code-bg); color: var(--code-text); padding: 12px; border-radius: 6px; overflow-x: auto; font-size: 0.85rem; line-height: 1.5; margin: 8px 0; white-space: pre-wrap; word-wrap: break-word; }
+pre.json { color: #e0e0e0; }
+code { background: rgba(0,0,0,0.08); padding: 2px 6px; border-radius: 4px; font-size: 0.9em; }
+pre code { background: none; padding: 0; }
+.user-content { margin: 0; }
+.truncatable { position: relative; }
+.truncatable.truncated .truncatable-content { max-height: 200px; overflow: hidden; }
+.truncatable.truncated::after { content: ''; position: absolute; bottom: 32px; left: 0; right: 0; height: 60px; background: linear-gradient(to bottom, transparent, var(--card-bg)); pointer-events: none; }
+.message.user .truncatable.truncated::after { background: linear-gradient(to bottom, transparent, var(--user-bg)); }
+.message.tool-reply .truncatable.truncated::after { background: linear-gradient(to bottom, transparent, #fff8e1); }
+.tool-use .truncatable.truncated::after { background: linear-gradient(to bottom, transparent, var(--tool-bg)); }
+.tool-result .truncatable.truncated::after { background: linear-gradient(to bottom, transparent, var(--tool-result-bg)); }
+.expand-btn { display: none; width: 100%; padding: 8px 16px; margin-top: 4px; background: rgba(0,0,0,0.05); border: 1px solid rgba(0,0,0,0.1); border-radius: 6px; cursor: pointer; font-size: 0.85rem; color: var(--text-muted); }
+.expand-btn:hover { background: rgba(0,0,0,0.1); }
+.truncatable.truncated .expand-btn, .truncatable.expanded .expand-btn { display: block; }
+.pagination { display: flex; justify-content: center; gap: 8px; margin: 24px 0; flex-wrap: wrap; }
+.pagination a, .pagination span { padding: 5px 10px; border-radius: 6px; text-decoration: none; font-size: 0.85rem; }
+.pagination a { background: var(--card-bg); color: var(--user-border); border: 1px solid var(--user-border); }
+.pagination a:hover { background: var(--user-bg); }
+.pagination .current { background: var(--user-border); color: white; }
+.pagination .disabled { color: var(--text-muted); border: 1px solid #ddd; }
+.pagination .index-link { background: var(--user-border); color: white; }
+details.continuation { margin-bottom: 16px; }
+details.continuation summary { cursor: pointer; padding: 12px 16px; background: var(--user-bg); border-left: 4px solid var(--user-border); border-radius: 12px; font-weight: 500; color: var(--text-muted); }
+details.continuation summary:hover { background: rgba(25, 118, 210, 0.15); }
+details.continuation[open] summary { border-radius: 12px 12px 0 0; margin-bottom: 0; }
+.index-item { margin-bottom: 16px; border-radius: 12px; overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,0.1); background: var(--user-bg); border-left: 4px solid var(--user-border); }
+.index-item a { display: block; text-decoration: none; color: inherit; }
+.index-item a:hover { background: rgba(25, 118, 210, 0.1); }
+.index-item-header { display: flex; justify-content: space-between; align-items: center; padding: 8px 16px; background: rgba(0,0,0,0.03); font-size: 0.85rem; }
+.index-item-number { font-weight: 600; color: var(--user-border); }
+.index-item-content { padding: 16px; }
+.index-item-stats { padding: 8px 16px 12px 32px; font-size: 0.85rem; color: var(--text-muted); border-top: 1px solid rgba(0,0,0,0.06); }
+.index-item-commit { margin-top: 6px; padding: 4px 8px; background: #fff3e0; border-radius: 4px; font-size: 0.85rem; color: #e65100; }
+.index-item-commit code { background: rgba(0,0,0,0.08); padding: 1px 4px; border-radius: 3px; font-size: 0.8rem; margin-right: 6px; }
+.commit-card { margin: 8px 0; padding: 10px 14px; background: #fff3e0; border-left: 4px solid #ff9800; border-radius: 6px; }
+.commit-card a { text-decoration: none; color: #5d4037; display: block; }
+.commit-card a:hover { color: #e65100; }
+.commit-card-hash { font-family: monospace; color: #e65100; font-weight: 600; margin-right: 8px; }
+.index-commit { margin-bottom: 12px; padding: 10px 16px; background: #fff3e0; border-left: 4px solid #ff9800; border-radius: 8px; box-shadow: 0 1px 2px rgba(0,0,0,0.05); }
+.index-commit a { display: block; text-decoration: none; color: inherit; }
+.index-commit a:hover { background: rgba(255, 152, 0, 0.1); margin: -10px -16px; padding: 10px 16px; border-radius: 8px; }
+.index-commit-header { display: flex; justify-content: space-between; align-items: center; font-size: 0.85rem; margin-bottom: 4px; }
+.index-commit-hash { font-family: monospace; color: #e65100; font-weight: 600; }
+.index-commit-msg { color: #5d4037; }
+.index-item-long-text { margin-top: 8px; padding: 12px; background: var(--card-bg); border-radius: 8px; border-left: 3px solid var(--assistant-border); }
+.index-item-long-text .truncatable.truncated::after { background: linear-gradient(to bottom, transparent, var(--card-bg)); }
+.index-item-long-text-content { color: var(--text-color); }
+#search-box { display: none; align-items: center; gap: 8px; }
+#search-box input { padding: 6px 12px; border: 1px solid var(--assistant-border); border-radius: 6px; font-size: 16px; width: 180px; }
+#search-box button, #modal-search-btn, #modal-close-btn { background: var(--user-border); color: white; border: none; border-radius: 6px; padding: 6px 10px; cursor: pointer; display: flex; align-items: center; justify-content: center; }
+#search-box button:hover, #modal-search-btn:hover { background: #1565c0; }
+#modal-close-btn { background: var(--text-muted); margin-left: 8px; }
+#modal-close-btn:hover { background: #616161; }
+#search-modal[open] { border: none; border-radius: 12px; box-shadow: 0 4px 24px rgba(0,0,0,0.2); padding: 0; width: 90vw; max-width: 900px; height: 80vh; max-height: 80vh; display: flex; flex-direction: column; }
+#search-modal::backdrop { background: rgba(0,0,0,0.5); }
+.search-modal-header { display: flex; align-items: center; gap: 8px; padding: 16px; border-bottom: 1px solid var(--assistant-border); background: var(--bg-color); border-radius: 12px 12px 0 0; }
+.search-modal-header input { flex: 1; padding: 8px 12px; border: 1px solid var(--assistant-border); border-radius: 6px; font-size: 16px; }
+#search-status { padding: 8px 16px; font-size: 0.85rem; color: var(--text-muted); border-bottom: 1px solid rgba(0,0,0,0.06); }
+#search-results { flex: 1; overflow-y: auto; padding: 16px; }
+.search-result { margin-bottom: 16px; border-radius: 8px; overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+.search-result a { display: block; text-decoration: none; color: inherit; }
+.search-result a:hover { background: rgba(25, 118, 210, 0.05); }
+.search-result-page { padding: 6px 12px; background: rgba(0,0,0,0.03); font-size: 0.8rem; color: var(--text-muted); border-bottom: 1px solid rgba(0,0,0,0.06); }
+.search-result-content { padding: 12px; }
+.search-result mark { background: #fff59d; padding: 1px 2px; border-radius: 2px; }
+@media (max-width: 600px) { body { padding: 8px; } .message, .index-item { border-radius: 8px; } .message-content, .index-item-content { padding: 12px; } pre { font-size: 0.8rem; padding: 8px; } #search-box input { width: 120px; } #search-modal[open] { width: 95vw; height: 90vh; } }
+</style>
+</head>
+<body>
+    <div class="container">
+        <h1><a href="index.html" style="color: inherit; text-decoration: none;">Claude Code transcript</a> - page 1/2</h1>
+        
+
+<div class="pagination">
+<a href="index.html" class="index-link">Index</a>
+<span class="disabled">&larr; Prev</span>
+<span class="current">1</span>
+<a href="page-002.html">2</a>
+<a href="page-002.html">Next &rarr;</a>
+</div>
+
+        
+<div class="message user" id="msg-2026-07-10T23-11-09-614Z"><div class="message-header"><span class="role-label">User</span><a href="#msg-2026-07-10T23-11-09-614Z" class="timestamp-link"><time datetime="2026-07-10T23:11:09.614Z" data-timestamp="2026-07-10T23:11:09.614Z">2026-07-10T23:11:09.614Z</time></a></div><div class="message-content">
+<div class="user-content"><p><local-command-caveat>Caveat: The messages below were generated by the user while running local commands. DO NOT respond to these messages or otherwise consider them in your response unless the user explicitly asks you to.</local-command-caveat></p></div></div></div>
+<div class="message user" id="msg-2026-07-10T23-11-09-613Z"><div class="message-header"><span class="role-label">User</span><a href="#msg-2026-07-10T23-11-09-613Z" class="timestamp-link"><time datetime="2026-07-10T23:11:09.613Z" data-timestamp="2026-07-10T23:11:09.613Z">2026-07-10T23:11:09.613Z</time></a></div><div class="message-content">
+<div class="user-content"><p><command-name>/model</command-name>
+            <command-message>model</command-message>
+            <command-args></command-args></p></div></div></div>
+<div class="message user" id="msg-2026-07-10T23-11-09-613Z"><div class="message-header"><span class="role-label">User</span><a href="#msg-2026-07-10T23-11-09-613Z" class="timestamp-link"><time datetime="2026-07-10T23:11:09.613Z" data-timestamp="2026-07-10T23:11:09.613Z">2026-07-10T23:11:09.613Z</time></a></div><div class="message-content">
+<div class="user-content"><p><local-command-stdout>Set model to [1mOpus 4.8 (1M context)[22m and saved as your default for new sessions</local-command-stdout></p></div></div></div>
+<div class="message user" id="msg-2026-07-10T23-11-16-023Z"><div class="message-header"><span class="role-label">User</span><a href="#msg-2026-07-10T23-11-16-023Z" class="timestamp-link"><time datetime="2026-07-10T23:11:16.023Z" data-timestamp="2026-07-10T23:11:16.023Z">2026-07-10T23:11:16.023Z</time></a></div><div class="message-content">
+<div class="user-content"><p>I'd like to undertstand what options I have and what is possible regarding the following scenario: I have heating wires fitted to
+      a building roof. These wires need to be turned on in icing conditions in order to prevent ice dams which can damage the roof
+  if
+      allowed to build up. At present these wires can be turned on remotely via internet-connected switches from TPLink (model
+  KP400)
+      that I can control with their Kasa mobile app. What I'd like to do is add a capability to automate the control of these wires
+      such that they turn on based on weather conditions. I think this could be done with a program that queries online weather
+  data
+      for my location, processes it to infer the presence of icing conditions, then uses either some Kasa API or perhaps direct
+      communication with the KP400 switches to turn the wires on and off. I have no idea if such an API exists however. Let me know
+      your thoughts.</p></div></div></div>
+<div class="message assistant" id="msg-2026-07-10T23-11-23-203Z"><div class="message-header"><span class="role-label">Assistant</span><a href="#msg-2026-07-10T23-11-23-203Z" class="timestamp-link"><time datetime="2026-07-10T23:11:23.203Z" data-timestamp="2026-07-10T23:11:23.203Z">2026-07-10T23:11:23.203Z</time></a></div><div class="message-content">
+<div class="thinking"><div class="thinking-label">Thinking</div></div></div></div>
+<div class="message assistant" id="msg-2026-07-10T23-11-24-559Z"><div class="message-header"><span class="role-label">Assistant</span><a href="#msg-2026-07-10T23-11-24-559Z" class="timestamp-link"><time datetime="2026-07-10T23:11:24.559Z" data-timestamp="2026-07-10T23:11:24.559Z">2026-07-10T23:11:24.559Z</time></a></div><div class="message-content">
+<div class="assistant-text"><p>This is a great project — and the good news up front: <strong>yes, this is very achievable, and there's a well-supported local API for exactly your switches.</strong> Let me verify the current state of the key pieces before I lay out your options.</p></div></div></div>
+<div class="message assistant" id="msg-2026-07-10T23-11-24-875Z"><div class="message-header"><span class="role-label">Assistant</span><a href="#msg-2026-07-10T23-11-24-875Z" class="timestamp-link"><time datetime="2026-07-10T23:11:24.875Z" data-timestamp="2026-07-10T23:11:24.875Z">2026-07-10T23:11:24.875Z</time></a></div><div class="message-content">
+<div class="tool-use" data-tool-id="toolu_01CVVkeqpBuQy9bhaz4kKL2H"><div class="tool-header"><span class="tool-icon">⚙</span> ToolSearch</div><div class="truncatable"><div class="truncatable-content"><pre class="json">{
+  &#34;query&#34;: &#34;select:WebSearch,WebFetch&#34;,
+  &#34;max_results&#34;: 5
+}</pre></div><button class="expand-btn">Show more</button></div></div></div></div>
+<div class="message tool-reply" id="msg-2026-07-10T23-11-24-883Z"><div class="message-header"><span class="role-label">Tool reply</span><a href="#msg-2026-07-10T23-11-24-883Z" class="timestamp-link"><time datetime="2026-07-10T23:11:24.883Z" data-timestamp="2026-07-10T23:11:24.883Z">2026-07-10T23:11:24.883Z</time></a></div><div class="message-content"><div class="tool-result"><div class="truncatable"><div class="truncatable-content"><pre class="json">[
+  {
+    &quot;type&quot;: &quot;tool_reference&quot;,
+    &quot;tool_name&quot;: &quot;WebSearch&quot;
+  },
+  {
+    &quot;type&quot;: &quot;tool_reference&quot;,
+    &quot;tool_name&quot;: &quot;WebFetch&quot;
+  }
+]</pre></div><button class="expand-btn">Show more</button></div></div></div></div>
+<div class="message assistant" id="msg-2026-07-10T23-11-26-585Z"><div class="message-header"><span class="role-label">Assistant</span><a href="#msg-2026-07-10T23-11-26-585Z" class="timestamp-link"><time datetime="2026-07-10T23:11:26.585Z" data-timestamp="2026-07-10T23:11:26.585Z">2026-07-10T23:11:26.585Z</time></a></div><div class="message-content">
+<div class="thinking"><div class="thinking-label">Thinking</div></div></div></div>
+<div class="message assistant" id="msg-2026-07-10T23-11-27-025Z"><div class="message-header"><span class="role-label">Assistant</span><a href="#msg-2026-07-10T23-11-27-025Z" class="timestamp-link"><time datetime="2026-07-10T23:11:27.025Z" data-timestamp="2026-07-10T23:11:27.025Z">2026-07-10T23:11:27.025Z</time></a></div><div class="message-content">
+<div class="tool-use" data-tool-id="toolu_01QTerZt188V9XVn2SNPADSm"><div class="tool-header"><span class="tool-icon">⚙</span> WebSearch</div><div class="truncatable"><div class="truncatable-content"><pre class="json">{
+  &#34;query&#34;: &#34;python-kasa KP400 support local control smart plug 2026&#34;
+}</pre></div><button class="expand-btn">Show more</button></div></div></div></div>
+<div class="message assistant" id="msg-2026-07-10T23-11-27-925Z"><div class="message-header"><span class="role-label">Assistant</span><a href="#msg-2026-07-10T23-11-27-925Z" class="timestamp-link"><time datetime="2026-07-10T23:11:27.925Z" data-timestamp="2026-07-10T23:11:27.925Z">2026-07-10T23:11:27.925Z</time></a></div><div class="message-content">
+<div class="tool-use" data-tool-id="toolu_01885pNdBTS46YNuE4KQQEvS"><div class="tool-header"><span class="tool-icon">⚙</span> WebSearch</div><div class="truncatable"><div class="truncatable-content"><pre class="json">{
+  &#34;query&#34;: &#34;TP-Link Kasa cloud API official developer local protocol KLAP 2025 2026&#34;
+}</pre></div><button class="expand-btn">Show more</button></div></div></div></div>
+<div class="message assistant" id="msg-2026-07-10T23-11-28-234Z"><div class="message-header"><span class="role-label">Assistant</span><a href="#msg-2026-07-10T23-11-28-234Z" class="timestamp-link"><time datetime="2026-07-10T23:11:28.234Z" data-timestamp="2026-07-10T23:11:28.234Z">2026-07-10T23:11:28.234Z</time></a></div><div class="message-content">
+<div class="tool-use" data-tool-id="toolu_01QJJsUdECTsruhkhZHGf5Jx"><div class="tool-header"><span class="tool-icon">⚙</span> WebSearch</div><div class="truncatable"><div class="truncatable-content"><pre class="json">{
+  &#34;query&#34;: &#34;National Weather Service API free weather forecast api.weather.gov usage&#34;
+}</pre></div><button class="expand-btn">Show more</button></div></div></div></div>
+<div class="message tool-reply" id="msg-2026-07-10T23-15-58-957Z"><div class="message-header"><span class="role-label">Tool reply</span><a href="#msg-2026-07-10T23-15-58-957Z" class="timestamp-link"><time datetime="2026-07-10T23:15:58.957Z" data-timestamp="2026-07-10T23:15:58.957Z">2026-07-10T23:15:58.957Z</time></a></div><div class="message-content"><div class="tool-result"><div class="truncatable"><div class="truncatable-content"><pre>Web search results for query: &quot;python-kasa KP400 support local control smart plug 2026&quot;
+
+Links: [{&quot;title&quot;:&quot;GitHub - python-kasa/python-kasa: 🏠🤖 Python API for TP-Link smarthome products&quot;,&quot;url&quot;:&quot;https://github.com/python-kasa/python-kasa&quot;},{&quot;title&quot;:&quot;tplink-cloud-api · PyPI&quot;,&quot;url&quot;:&quot;https://pypi.org/project/tplink-cloud-api/&quot;},{&quot;title&quot;:&quot;Using python-kasa to control a smart plug | Hackaday.io&quot;,&quot;url&quot;:&quot;https://hackaday.io/project/189196-using-python-kasa-to-control-a-smart-plug&quot;},{&quot;title&quot;:&quot;KP400 | Kasa Smart Outdoor Plug | TP-Link&quot;,&quot;url&quot;:&quot;https://www.tp-link.com/us/home-networking/smart-plug/kp400/v1/&quot;},{&quot;title&quot;:&quot;python-kasa — python-kasa documentation&quot;,&quot;url&quot;:&quot;https://python-kasa.readthedocs.io/&quot;},{&quot;title&quot;:&quot;TP-Link Kasa KP400 2-outlet support? - Page 2 - Configuration - Home Assistant Community&quot;,&quot;url&quot;:&quot;https://community.home-assistant.io/t/tp-link-kasa-kp400-2-outlet-support/113135?page=2&quot;},{&quot;title&quot;:&quot;User Guide Kasa Smart Wi-Fi Outdoor Plug KP400 1910012470 REV1.0.0&quot;,&quot;url&quot;:&quot;https://files.bbystatic.com/ss6GELNjorx%2BYMN6kznk7w==/bd607d59-1361-40df-9caa-976ac4b1729b.pdf&quot;},{&quot;title&quot;:&quot;python-kasa 0.7.0.dev0&quot;,&quot;url&quot;:&quot;https://pypi.org/project/python-kasa/0.7.0.dev0/&quot;},{&quot;title&quot;:&quot;Kasa TP-Link, Kasa Smart Home, 2-Outlet Smart Outdoor Plug, Black KP400 - The Home Depot&quot;,&quot;url&quot;:&quot;https://www.homedepot.com/p/Kasa-TP-Link-Kasa-Smart-Home-2-Outlet-Smart-Outdoor-Plug-Black-KP400/311991271&quot;}]
+
+Based on the search results, here&#x27;s what I found about python-kasa KP400 support for local control:
+
+The KP400 is listed as a supported device in python-kasa, which is a Python library designed for controlling TP-Link smart home devices. 
+
+Regarding local control specifically, python-kasa communicates with devices over your local network, making it suitable for local control scenarios. If you need local control on the same network as your devices, python-kasa is described as a great option.
+
+The KP400 is a 2-outlet smart outdoor plug, and it has been confirmed to work with local control systems like Home Assistant for power on/off functions. The library provides the ability to control these smart plugs locally without requiring cloud connectivity or internet access when operating on the same network.
+
+
+REMINDER: You MUST include the sources above in your response to the user using markdown hyperlinks.</pre></div><button class="expand-btn">Show more</button></div></div></div></div>
+<div class="message tool-reply" id="msg-2026-07-10T23-16-01-040Z"><div class="message-header"><span class="role-label">Tool reply</span><a href="#msg-2026-07-10T23-16-01-040Z" class="timestamp-link"><time datetime="2026-07-10T23:16:01.040Z" data-timestamp="2026-07-10T23:16:01.040Z">2026-07-10T23:16:01.040Z</time></a></div><div class="message-content"><div class="tool-result"><div class="truncatable"><div class="truncatable-content"><pre>Web search results for query: &quot;National Weather Service API free weather forecast api.weather.gov usage&quot;
+
+Links: [{&quot;title&quot;:&quot;api.weather.gov: General FAQs&quot;,&quot;url&quot;:&quot;https://weather-gov.github.io/api/general-faqs&quot;},{&quot;title&quot;:&quot;weather.gov: A Truly Free Weather API | Adafruit Playground&quot;,&quot;url&quot;:&quot;https://adafruit-playground.com/u/CGrover/pages/weather-gov-a-truly-free-weather-api&quot;},{&quot;title&quot;:&quot;Web Services Documentation&quot;,&quot;url&quot;:&quot;https://www.weather.gov/documentation&quot;},{&quot;title&quot;:&quot;Weather.gov API - Free Official US Forecasts &amp; Alerts | FreeAPIHub&quot;,&quot;url&quot;:&quot;https://freeapihub.com/apis/weather-gov-api&quot;},{&quot;title&quot;:&quot;Weather.gov | Documentation | Postman API Network&quot;,&quot;url&quot;:&quot;https://www.postman.com/api-evangelist/national-oceanic-and-atmospheric-administration-noaa/documentation/9eu7ygi/weather-gov&quot;},{&quot;title&quot;:&quot;National Weather Service&quot;,&quot;url&quot;:&quot;https://rapidapi.com/theapiguy/api/national-weather-service&quot;},{&quot;title&quot;:&quot;Free Weather Data with National Weather Service API – Clojure Civitas&quot;,&quot;url&quot;:&quot;https://clojurecivitas.org/scittle/weather/weather_nws_integration.html&quot;},{&quot;title&quot;:&quot;🌦️ Exploring Weather Service Api | Wes&#x27;s Webzone&quot;,&quot;url&quot;:&quot;https://wesmattison.com/posts/exploring-weather-service-api/&quot;},{&quot;title&quot;:&quot;api.weather.gov: Community discussion and documentation for the US National Weather Service API&quot;,&quot;url&quot;:&quot;https://weather-gov.github.io/api/&quot;}]
+
+Here&#x27;s what I found about the National Weather Service API:
+
+## Overview
+
+api.weather.gov represents the public face of the next generation of data services from the National Weather Service, offering public access to a wide range of essential weather data in a REST-style, JSON-based web service.
+
+## Free Access &amp; Usage Limits
+
+The NWS API provides free access to alerts, observations, and forecasts without the need for a user account or API key. It is completely free with no API key, at about 5,000 requests per hour and is a US government service.
+
+## Authentication Requirements
+
+There is no API key, but the service requires a descriptive User-Agent header identifying your application and a contact. The Weather API doesn&#x27;t require an API key but does require a User-Agent header for identification, which can be a string unique to your application with contact information encouraged.
+
+## Basic Usage
+
+The base URL is https://api.weather.gov, and the usual flow starts at /points/{lat},{lon}, which returns metadata including the URLs for that location&#x27;s forecast, hourly forecast and observation station.
+
+## Coverage &amp; Data
+
+It covers the United States only, so it is not a global weather source. A large range of services are available through the API including alerts, forecasts, aviation weather advisories, and summary report products.
+
+
+REMINDER: You MUST include the sources above in your response to the user using markdown hyperlinks.</pre></div><button class="expand-btn">Show more</button></div></div></div></div>
+<div class="message tool-reply" id="msg-2026-07-10T23-16-02-209Z"><div class="message-header"><span class="role-label">Tool reply</span><a href="#msg-2026-07-10T23-16-02-209Z" class="timestamp-link"><time datetime="2026-07-10T23:16:02.209Z" data-timestamp="2026-07-10T23:16:02.209Z">2026-07-10T23:16:02.209Z</time></a></div><div class="message-content"><div class="tool-result"><div class="truncatable"><div class="truncatable-content"><pre>Web search results for query: &quot;TP-Link Kasa cloud API official developer local protocol KLAP 2025 2026&quot;
+
+Links: [{&quot;title&quot;:&quot;python-kasa and KLAP authentication - Smart Home Community&quot;,&quot;url&quot;:&quot;https://community.tp-link.com/us/smart-home/forum/topic/861124?moduleId=2430&quot;},{&quot;title&quot;:&quot;Topics — python-kasa documentation&quot;,&quot;url&quot;:&quot;https://python-kasa.readthedocs.io/en/latest/topics.html&quot;},{&quot;title&quot;:&quot;TP-Link Cloud, Kasa, TP-Link Smart Products - Dev Cheatsheet&quot;,&quot;url&quot;:&quot;https://docs.joshuatz.com/random/tp-link-kasa/&quot;},{&quot;title&quot;:&quot;API Access Issue – “Account Not Found” While Using HS300 with Kasa Cloud API - Smart Home Community&quot;,&quot;url&quot;:&quot;https://community.tp-link.com/en/smart-home/forum/topic/834138&quot;},{&quot;title&quot;:&quot;New TP-Link protocol: KLAP · Issue #113 · petretiandrea/plugp100&quot;,&quot;url&quot;:&quot;https://github.com/petretiandrea/plugp100/issues/113&quot;},{&quot;title&quot;:&quot;tplink-cloud-api · PyPI&quot;,&quot;url&quot;:&quot;https://pypi.org/project/tplink-cloud-api/&quot;},{&quot;title&quot;:&quot;TP-link devices integration using Kasa Cloud API - Share your Projects! - Home Assistant Community&quot;,&quot;url&quot;:&quot;https://community.home-assistant.io/t/tp-link-devices-integration-using-kasa-cloud-api/330087&quot;},{&quot;title&quot;:&quot;GitHub - whitslack/kasa: Kasa Smart API documentation and tools · GitHub&quot;,&quot;url&quot;:&quot;https://github.com/whitslack/kasa&quot;},{&quot;title&quot;:&quot;Kasa / Tapo | SharpTools Docs&quot;,&quot;url&quot;:&quot;https://docs.sharptools.io/bridge/integrations/kasa-tapo&quot;}]
+
+Based on the search results, here&#x27;s what I found about TP-Link Kasa cloud API, local protocol, and KLAP:
+
+## KLAP Protocol Overview
+
+TP-Link Kasa hardware started moving to KLAP (KASA Local Authentication Protocol) with later versions. In 2021 TP-Link started updating the underlying communication transport used by Kasa devices, switching from a TCP connection with static XOR type of encryption to a transport called KLAP which communicates over http and uses handshakes to negotiate a dynamic encryption cipher.
+
+## Cloud API
+
+The TP-Link Cloud API (V2) uses HMAC-SHA1 request signing for authentication and automatically connects to both the Kasa and Tapo clouds in parallel, returning a unified device list. This allows control of TP-Link Kasa and Tapo smart home devices from anywhere over the internet using TP-Link&#x27;s cloud API.
+
+## Local Protocol Changes
+
+In 2023 TP-Link started updating the underlying communication transport used by Tapo devices, switching from AES encryption via public key exchange to use KLAP encryption and negotiation, with the encryption cipher being the same as for Kasa KLAP but the handshake seeds slightly different.
+
+## Official Developer Resources
+
+The search results indicate that most API documentation available by the community relies on endpoints exposed by reverse-engineering the Kasa smartphone app, and TP-Link could crack down on suspicious API requests. There don&#x27;t appear to be official TP-Link developer documents for the KLAP protocol or cloud API in the search results—most implementations appear to be community-developed based on reverse engineering.
+
+
+REMINDER: You MUST include the sources above in your response to the user using markdown hyperlinks.</pre></div><button class="expand-btn">Show more</button></div></div></div></div>
+<div class="message assistant" id="msg-2026-07-10T23-16-16-370Z"><div class="message-header"><span class="role-label">Assistant</span><a href="#msg-2026-07-10T23-16-16-370Z" class="timestamp-link"><time datetime="2026-07-10T23:16:16.370Z" data-timestamp="2026-07-10T23:16:16.370Z">2026-07-10T23:16:16.370Z</time></a></div><div class="message-content">
+<div class="thinking"><div class="thinking-label">Thinking</div></div></div></div>
+<div class="message assistant" id="msg-2026-07-10T23-16-50-930Z"><div class="message-header"><span class="role-label">Assistant</span><a href="#msg-2026-07-10T23-16-50-930Z" class="timestamp-link"><time datetime="2026-07-10T23:16:50.930Z" data-timestamp="2026-07-10T23:16:50.930Z">2026-07-10T23:16:50.930Z</time></a></div><div class="message-content">
+<div class="assistant-text"><p>Here's the landscape. Short version: <strong>everything you described is not only possible, it's a well-trodden path — and the best approach doesn't need any cloud API at all.</strong></p>
+<h2>1. Controlling the KP400 — you have a clean local option</h2>
+<p>The key discovery: there's a mature open-source library, <strong><a href="https://github.com/python-kasa/python-kasa"><code>python-kasa</code></a></strong>, that talks to Kasa devices <strong>directly over your local network</strong> — no internet, no TP-Link cloud, no reverse-engineered web login. The KP400 is explicitly supported, including its <strong>two independently-switchable outlets</strong> (each of your outlets shows up as a child you can toggle separately). This is exactly what powers the Home Assistant Kasa integration.</p>
+<p>Why local is the right choice here:
+- <strong>Reliability</strong> — an ice-protection system shouldn't depend on TP-Link's cloud being up, your account not getting rate-limited, or a firmware change breaking an unofficial web API. It just needs your LAN.
+- <strong>Speed &amp; simplicity</strong> — <code>kasa --host 192.168.1.x on --index 0</code> from a shell, or a few lines of Python.
+- <strong>No account fragility</strong> — TP-Link has no official public developer API; the cloud methods people use are reverse-engineered from the Kasa app, and TP-Link periodically changes them (they've been migrating newer devices to an encrypted "KLAP" transport). Your KP400 uses the older, stable, well-supported local protocol.</p>
+<p>One caveat to plan around: <strong>give the KP400s static/reserved IPs</strong> (DHCP reservation in your router) so the controller always knows where to find them.</p>
+<p><strong>Cloud alternatives</strong> exist (<a href="https://pypi.org/project/tplink-cloud-api/"><code>tplink-cloud-api</code></a> and similar) and would let you control the switches from <em>outside</em> your home network — but for a device sitting on your own roof controlled by a program on your own network, that's added fragility for no benefit. I'd only reach for cloud control if the controller can't be on the same LAN as the switches.</p>
+<h2>2. Weather data — free and ideal for your location</h2>
+<p>Since you're in Montana (US), the <strong><a href="https://www.weather.gov/documentation">National Weather Service API</a> (<code>api.weather.gov</code>)</strong> is the natural fit:
+- <strong>Completely free, no API key</strong>, ~5,000 requests/hour — you'll use a handful per hour.
+- Just requires a <code>User-Agent</code> header identifying your app + a contact email.
+- Flow: hit <code>/points/{lat},{lon}</code> once to get your gridpoint, which gives you URLs for <strong>hourly forecast</strong> and <strong>current observations</strong> (temperature, precipitation, etc.).</p>
+<p>The main limitation is US-only, which doesn't affect you. If you ever want richer data (snow depth, freezing rain probability, historical) you could supplement with a keyed service like OpenWeatherMap, but NWS alone is plenty to start.</p>
+<h2>3. The actual logic — inferring "icing conditions"</h2>
+<p>This is the interesting part, and worth getting right so you're not just burning electricity all winter. Ice dams form from a <strong>melt-refreeze cycle</strong>: snow on the roof melts (from attic heat or sun), water runs to the cold eaves, and refreezes. So the danger zone isn't "very cold" — it's <strong>near and just below freezing, with snow present.</strong></p>
+<p>A reasonable first heuristic:
+- <strong>Turn ON when:</strong> there is snow on the roof (recent snowfall or snow on ground) <strong>AND</strong> temperature is in roughly the <strong>15°F–38°F</strong> band (cold enough to refreeze at the eaves, warm enough for melt to occur).
+- <strong>Turn OFF when:</strong> well above freezing for a sustained period (snow sheds on its own) <strong>or</strong> no snowpack present.
+- Add <strong>hysteresis / minimum on-time</strong> (e.g., don't flip states more than every 30–60 min) so a temperature hovering at the threshold doesn't rapid-cycle the relays.</p>
+<p>You can refine over your first season — some people simply run cables whenever there's snowpack and temps are below ~40°F, accepting some extra energy use for safety margin. Because the KP400 has two outlets, you could even zone it (e.g., north-facing eaves vs. south).</p>
+<h2>4. How to run it — a few architectures</h2>
+<table>
+<thead>
+<tr>
+<th>Approach</th>
+<th>What it looks like</th>
+<th>Best if…</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Standalone script + scheduler</strong></td>
+<td>A Python script (python-kasa + NWS) run every 15–30 min by <code>cron</code>/systemd timer on a Raspberry Pi or always-on machine at home</td>
+<td>You want the simplest thing that works and full control over the logic</td>
+</tr>
+<tr>
+<td><strong>Home Assistant</strong></td>
+<td>Install HA on a Pi; it has built-in Kasa + weather integrations; express the logic as an automation</td>
+<td>You might want a dashboard, history graphs, manual override, and other home automation later</td>
+</tr>
+<tr>
+<td><strong>Cloud-run script</strong></td>
+<td>Script on a VPS using the cloud API</td>
+<td>Only if you can't run anything on your home network</td>
+</tr>
+</tbody>
+</table>
+<p>For a focused, single-purpose system like this, I'd lean toward the <strong>standalone script on a small always-on device at home</strong> — it's the least moving parts, and a Raspberry Pi (or any machine that's always on) sitting on your LAN can reach the switches directly. Home Assistant is the better pick if you anticipate this being the first of several automations.</p>
+<p><strong>Important safety layer regardless of approach:</strong> the automation should <em>fail safe</em>. Think about what happens if the controller crashes, the network drops, or the NWS API is down during a storm — you likely want a "when in doubt during winter, turn them ON" bias, plus the ability to manually override via the Kasa app (which keeps working independently). The KP400's own schedule/manual control remains as a fallback.</p>
+<hr />
+<p><strong>A sensible path forward:</strong>
+1. Confirm you can reach a KP400 locally — install <code>python-kasa</code> and run <code>kasa discover</code> on your home network to see the switches and their two outlets.
+2. Pull a live forecast from <code>api.weather.gov</code> for your coordinates.
+3. Write the decision logic + a scheduler, starting conservative on the "on" conditions.</p>
+<p>If you'd like, I can help you build this — e.g., start by scaffolding a small Python project that discovers your KP400s and pulls your local NWS forecast, so we can verify both halves work before writing the icing logic. Want me to go ahead and set that up?</p>
+<p>Sources: <a href="https://github.com/python-kasa/python-kasa">python-kasa</a> · <a href="https://python-kasa.readthedocs.io/">python-kasa docs</a> · <a href="https://www.tp-link.com/us/home-networking/smart-plug/kp400/v1/">KP400 product page</a> · <a href="https://www.weather.gov/documentation">NWS API docs</a> · <a href="https://weather-gov.github.io/api/general-faqs">NWS API FAQ</a> · <a href="https://pypi.org/project/tplink-cloud-api/">tplink-cloud-api</a></p></div></div></div>
+<div class="message user" id="msg-2026-07-10T23-17-49-950Z"><div class="message-header"><span class="role-label">User</span><a href="#msg-2026-07-10T23-17-49-950Z" class="timestamp-link"><time datetime="2026-07-10T23:17:49.950Z" data-timestamp="2026-07-10T23:17:49.950Z">2026-07-10T23:17:49.950Z</time></a></div><div class="message-content">
+<div class="user-content"><p>Ok that's useful information. I like the Python script approach. Can you work on that?</p></div></div></div>
+<div class="message assistant" id="msg-2026-07-10T23-17-56-643Z"><div class="message-header"><span class="role-label">Assistant</span><a href="#msg-2026-07-10T23-17-56-643Z" class="timestamp-link"><time datetime="2026-07-10T23:17:56.643Z" data-timestamp="2026-07-10T23:17:56.643Z">2026-07-10T23:17:56.643Z</time></a></div><div class="message-content">
+<div class="thinking"><div class="thinking-label">Thinking</div></div></div></div>
+<div class="message assistant" id="msg-2026-07-10T23-17-57-187Z"><div class="message-header"><span class="role-label">Assistant</span><a href="#msg-2026-07-10T23-17-57-187Z" class="timestamp-link"><time datetime="2026-07-10T23:17:57.187Z" data-timestamp="2026-07-10T23:17:57.187Z">2026-07-10T23:17:57.187Z</time></a></div><div class="message-content">
+<div class="assistant-text"><p>Let me look at the current repo state before I start building.</p></div></div></div>
+<div class="message assistant" id="msg-2026-07-10T23-17-58-479Z"><div class="message-header"><span class="role-label">Assistant</span><a href="#msg-2026-07-10T23-17-58-479Z" class="timestamp-link"><time datetime="2026-07-10T23:17:58.479Z" data-timestamp="2026-07-10T23:17:58.479Z">2026-07-10T23:17:58.479Z</time></a></div><div class="message-content">
+<div class="tool-use bash-tool" data-tool-id="toolu_01MrR31y5h9FvCEwqHJMzunA">
+<div class="tool-header"><span class="tool-icon">$</span> Bash</div>
+<div class="tool-description">Inspect repo contents and Python environment</div><div class="truncatable"><div class="truncatable-content"><pre class="bash-command">ls -la &amp;&amp; echo &#34;---python---&#34; &amp;&amp; (python3 --version; which python3) &amp;&amp; echo &#34;---pip---&#34; &amp;&amp; (python3 -m pip --version 2&gt;&amp;1 | head -1)</pre></div><button class="expand-btn">Show more</button></div>
+</div></div></div>
+<div class="message tool-reply" id="msg-2026-07-10T23-21-52-490Z"><div class="message-header"><span class="role-label">Tool reply</span><a href="#msg-2026-07-10T23-21-52-490Z" class="timestamp-link"><time datetime="2026-07-10T23:21:52.490Z" data-timestamp="2026-07-10T23:21:52.490Z">2026-07-10T23:21:52.490Z</time></a></div><div class="message-content"><div class="tool-result"><div class="truncatable"><div class="truncatable-content"><pre>total 20
+drwxr-xr-x  4 david david 4096 Jul 10 17:15 .
+drwxr-xr-x 10 david david 4096 Jul 10 17:10 ..
+drwxr-xr-x  2 david david 4096 Jul 10 17:15 .claude
+drwxr-xr-x  8 david david 4096 Jul 10 17:10 .git
+-rw-r--r--  1 david david   16 Jul 10 17:10 README.md
+---python---
+Python 3.12.3
+/usr/bin/python3
+---pip---
+/usr/bin/python3: No module named pip</pre></div><button class="expand-btn">Show more</button></div></div></div></div>
+<div class="message assistant" id="msg-2026-07-10T23-21-55-537Z"><div class="message-header"><span class="role-label">Assistant</span><a href="#msg-2026-07-10T23-21-55-537Z" class="timestamp-link"><time datetime="2026-07-10T23:21:55.537Z" data-timestamp="2026-07-10T23:21:55.537Z">2026-07-10T23:21:55.537Z</time></a></div><div class="message-content">
+<div class="thinking"><div class="thinking-label">Thinking</div></div></div></div>
+<div class="message assistant" id="msg-2026-07-10T23-21-56-415Z"><div class="message-header"><span class="role-label">Assistant</span><a href="#msg-2026-07-10T23-21-56-415Z" class="timestamp-link"><time datetime="2026-07-10T23:21:56.415Z" data-timestamp="2026-07-10T23:21:56.415Z">2026-07-10T23:21:56.415Z</time></a></div><div class="message-content">
+<div class="tool-use bash-tool" data-tool-id="toolu_013xY5YCAADMTULL99gkZgFG">
+<div class="tool-header"><span class="tool-icon">$</span> Bash</div>
+<div class="tool-description">Check README and venv availability</div><div class="truncatable"><div class="truncatable-content"><pre class="bash-command">cat README.md; echo &#34;---venv---&#34;; python3 -m venv --help &gt;/dev/null 2&gt;&amp;1 &amp;&amp; echo &#34;venv OK&#34; || echo &#34;venv MISSING&#34;; echo &#34;---git---&#34;; git log --oneline -5</pre></div><button class="expand-btn">Show more</button></div>
+</div></div></div>
+<div class="message tool-reply" id="msg-2026-07-10T23-22-30-904Z"><div class="message-header"><span class="role-label">Tool reply</span><a href="#msg-2026-07-10T23-22-30-904Z" class="timestamp-link"><time datetime="2026-07-10T23:22:30.904Z" data-timestamp="2026-07-10T23:22:30.904Z">2026-07-10T23:22:30.904Z</time></a></div><div class="message-content"><div class="tool-result"><div class="truncatable"><div class="truncatable-content"><pre># heatwires-opus---venv---
+venv OK
+---git---
+e9f2437 Initial commit</pre></div><button class="expand-btn">Show more</button></div></div></div></div>
+<div class="message assistant" id="msg-2026-07-10T23-24-18-896Z"><div class="message-header"><span class="role-label">Assistant</span><a href="#msg-2026-07-10T23-24-18-896Z" class="timestamp-link"><time datetime="2026-07-10T23:24:18.896Z" data-timestamp="2026-07-10T23:24:18.896Z">2026-07-10T23:24:18.896Z</time></a></div><div class="message-content">
+<div class="thinking"><div class="thinking-label">Thinking</div></div></div></div>
+<div class="message assistant" id="msg-2026-07-10T23-24-21-264Z"><div class="message-header"><span class="role-label">Assistant</span><a href="#msg-2026-07-10T23-24-21-264Z" class="timestamp-link"><time datetime="2026-07-10T23:24:21.264Z" data-timestamp="2026-07-10T23:24:21.264Z">2026-07-10T23:24:21.264Z</time></a></div><div class="message-content">
+<div class="assistant-text"><p>Empty repo, Python 3.12, <code>venv</code> available. I'll build a proper installable package. Here's the structure I'm creating:</p>
+<ul>
+<li><code>heatwires/</code> — package with weather (NWS), switches (python-kasa), decision logic, state, controller, and a CLI</li>
+<li><code>config.example.yaml</code> — all tunables (location, switch IPs, icing thresholds, fail-safe)</li>
+<li><code>pyproject.toml</code>, <code>.gitignore</code>, updated <code>README.md</code></li>
+</ul>
+<p>Let me write it all.</p></div></div></div>
+<div class="message assistant" id="msg-2026-07-10T23-24-23-165Z"><div class="message-header"><span class="role-label">Assistant</span><a href="#msg-2026-07-10T23-24-23-165Z" class="timestamp-link"><time datetime="2026-07-10T23:24:23.165Z" data-timestamp="2026-07-10T23:24:23.165Z">2026-07-10T23:24:23.165Z</time></a></div><div class="message-content"><div class="file-tool write-tool" data-tool-id="toolu_01Vr8qsQumZ2V3EiSENb1xgU">
+<div class="file-tool-header write-header"><span class="file-tool-icon">📝</span> Write <span class="file-tool-path">pyproject.toml</span></div>
+<div class="file-tool-fullpath">/home/david/projects/play/heatwires-opus/pyproject.toml</div>
+<div class="truncatable"><div class="truncatable-content"><pre class="file-content">[project]
+name = &#34;heatwires&#34;
+version = &#34;0.1.0&#34;
+description = &#34;Automated weather-based control of roof heat-cable switches (TP-Link Kasa KP400)&#34;
+readme = &#34;README.md&#34;
+requires-python = &#34;&gt;=3.10&#34;
+dependencies = [
+    &#34;python-kasa&gt;=0.7,&lt;0.12&#34;,
+    &#34;requests&gt;=2.28&#34;,
+    &#34;PyYAML&gt;=6.0&#34;,
+]
+
+[project.scripts]
+heatwires = &#34;heatwires.cli:main&#34;
+
+[build-system]
+requires = [&#34;setuptools&gt;=64&#34;]
+build-backend = &#34;setuptools.build_meta&#34;
+
+[tool.setuptools]
+packages = [&#34;heatwires&#34;]
+</pre></div><button class="expand-btn">Show more</button></div>
+</div></div></div>
+<div class="message tool-reply" id="msg-2026-07-10T23-25-31-545Z"><div class="message-header"><span class="role-label">Tool reply</span><a href="#msg-2026-07-10T23-25-31-545Z" class="timestamp-link"><time datetime="2026-07-10T23:25:31.545Z" data-timestamp="2026-07-10T23:25:31.545Z">2026-07-10T23:25:31.545Z</time></a></div><div class="message-content"><div class="tool-result"><div class="truncatable"><div class="truncatable-content"><pre>File created successfully at: /home/david/projects/play/heatwires-opus/pyproject.toml (file state is current in your context — no need to Read it back)</pre></div><button class="expand-btn">Show more</button></div></div></div></div>
+<div class="message assistant" id="msg-2026-07-10T23-25-34-408Z"><div class="message-header"><span class="role-label">Assistant</span><a href="#msg-2026-07-10T23-25-34-408Z" class="timestamp-link"><time datetime="2026-07-10T23:25:34.408Z" data-timestamp="2026-07-10T23:25:34.408Z">2026-07-10T23:25:34.408Z</time></a></div><div class="message-content"><div class="file-tool write-tool" data-tool-id="toolu_01ArB9hv7NrqCqKZMeNrkwRc">
+<div class="file-tool-header write-header"><span class="file-tool-icon">📝</span> Write <span class="file-tool-path">.gitignore</span></div>
+<div class="file-tool-fullpath">/home/david/projects/play/heatwires-opus/.gitignore</div>
+<div class="truncatable"><div class="truncatable-content"><pre class="file-content"># Local config and runtime state (never commit these)
+config.yaml
+state.json
+
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.eggs/
+build/
+dist/
+.venv/
+venv/
+</pre></div><button class="expand-btn">Show more</button></div>
+</div></div></div>
+<div class="message tool-reply" id="msg-2026-07-10T23-25-34-436Z"><div class="message-header"><span class="role-label">Tool reply</span><a href="#msg-2026-07-10T23-25-34-436Z" class="timestamp-link"><time datetime="2026-07-10T23:25:34.436Z" data-timestamp="2026-07-10T23:25:34.436Z">2026-07-10T23:25:34.436Z</time></a></div><div class="message-content"><div class="tool-result"><div class="truncatable"><div class="truncatable-content"><pre>File created successfully at: /home/david/projects/play/heatwires-opus/.gitignore (file state is current in your context — no need to Read it back)</pre></div><button class="expand-btn">Show more</button></div></div></div></div>
+<div class="message assistant" id="msg-2026-07-10T23-25-47-629Z"><div class="message-header"><span class="role-label">Assistant</span><a href="#msg-2026-07-10T23-25-47-629Z" class="timestamp-link"><time datetime="2026-07-10T23:25:47.629Z" data-timestamp="2026-07-10T23:25:47.629Z">2026-07-10T23:25:47.629Z</time></a></div><div class="message-content"><div class="file-tool write-tool" data-tool-id="toolu_015Fwqm67pQzEnmnUfnp6F5B">
+<div class="file-tool-header write-header"><span class="file-tool-icon">📝</span> Write <span class="file-tool-path">config.example.yaml</span></div>
+<div class="file-tool-fullpath">/home/david/projects/play/heatwires-opus/config.example.yaml</div>
+<div class="truncatable"><div class="truncatable-content"><pre class="file-content"># Copy this to config.yaml and edit for your site:  cp config.example.yaml config.yaml
+
+# --- Location -----------------------------------------------------------------
+# Decimal degrees for your roof. (Default below is Bozeman, MT.)
+location:
+  latitude: 45.6770
+  longitude: -111.0429
+
+# --- Weather (US National Weather Service, api.weather.gov) --------------------
+weather:
+  # NWS requires a User-Agent identifying you. An email is ideal.
+  user_agent_contact: &#34;you@example.com&#34;
+  # How long to cache the NWS gridpoint lookup (it never really changes).
+  points_cache_seconds: 86400
+
+# --- Switches -----------------------------------------------------------------
+# Your Kasa KP400 switch(es). Give each a reserved/static IP in your router so
+# the address never changes. Run `heatwires -c config.yaml discover` to find them.
+switches:
+  - host: &#34;192.168.1.50&#34;
+    outlets: all          # &#34;all&#34;, or a list of outlet indexes, e.g. [0] or [0, 1]
+  # - host: &#34;192.168.1.51&#34;
+  #   outlets: [0]
+
+# --- Icing logic --------------------------------------------------------------
+# Ice dams form in a melt/refreeze window near freezing WITH snow present.
+icing:
+  temp_on_low_f: 15.0      # below this: too cold to melt/refreeze — cables OFF
+  temp_on_high_f: 38.0     # above this: snow sheds on its own — cables OFF
+  hysteresis_f: 3.0        # once ON, widen the band by this much to avoid flapping
+  require_snow: true       # only run when frozen precip is present/forecast
+  min_switch_minutes: 30   # minimum dwell time between state changes
+
+# --- Fail-safe ----------------------------------------------------------------
+# If the weather can&#39;t be fetched, bias toward safety during winter months.
+fail_safe:
+  enabled: true
+  action: &#34;on&#34;                     # &#34;on&#34; (safe) or &#34;off&#34;
+  months: [11, 12, 1, 2, 3, 4]     # only fail-safe during these months
+
+# --- Misc ---------------------------------------------------------------------
+# Relative paths are resolved next to this config file.
+state_file: &#34;state.json&#34;
+logging:
+  level: &#34;INFO&#34;
+</pre></div><button class="expand-btn">Show more</button></div>
+</div></div></div>
+<div class="message tool-reply" id="msg-2026-07-10T23-25-47-647Z"><div class="message-header"><span class="role-label">Tool reply</span><a href="#msg-2026-07-10T23-25-47-647Z" class="timestamp-link"><time datetime="2026-07-10T23:25:47.647Z" data-timestamp="2026-07-10T23:25:47.647Z">2026-07-10T23:25:47.647Z</time></a></div><div class="message-content"><div class="tool-result"><div class="truncatable"><div class="truncatable-content"><pre>File created successfully at: /home/david/projects/play/heatwires-opus/config.example.yaml (file state is current in your context — no need to Read it back)</pre></div><button class="expand-btn">Show more</button></div></div></div></div>
+<div class="message assistant" id="msg-2026-07-10T23-25-50-285Z"><div class="message-header"><span class="role-label">Assistant</span><a href="#msg-2026-07-10T23-25-50-285Z" class="timestamp-link"><time datetime="2026-07-10T23:25:50.285Z" data-timestamp="2026-07-10T23:25:50.285Z">2026-07-10T23:25:50.285Z</time></a></div><div class="message-content"><div class="file-tool write-tool" data-tool-id="toolu_01EMPzBCv1kM9kmPy8edGJBi">
+<div class="file-tool-header write-header"><span class="file-tool-icon">📝</span> Write <span class="file-tool-path">__init__.py</span></div>
+<div class="file-tool-fullpath">/home/david/projects/play/heatwires-opus/heatwires/__init__.py</div>
+<div class="truncatable"><div class="truncatable-content"><pre class="file-content">&#34;&#34;&#34;Automated weather-based control of roof heat-cable switches.&#34;&#34;&#34;
+
+__version__ = &#34;0.1.0&#34;
+</pre></div><button class="expand-btn">Show more</button></div>
+</div></div></div>
+<div class="message tool-reply" id="msg-2026-07-10T23-25-50-330Z"><div class="message-header"><span class="role-label">Tool reply</span><a href="#msg-2026-07-10T23-25-50-330Z" class="timestamp-link"><time datetime="2026-07-10T23:25:50.330Z" data-timestamp="2026-07-10T23:25:50.330Z">2026-07-10T23:25:50.330Z</time></a></div><div class="message-content"><div class="tool-result"><div class="truncatable"><div class="truncatable-content"><pre>File created successfully at: /home/david/projects/play/heatwires-opus/heatwires/__init__.py (file state is current in your context — no need to Read it back)</pre></div><button class="expand-btn">Show more</button></div></div></div></div>
+<div class="message assistant" id="msg-2026-07-10T23-26-08-482Z"><div class="message-header"><span class="role-label">Assistant</span><a href="#msg-2026-07-10T23-26-08-482Z" class="timestamp-link"><time datetime="2026-07-10T23:26:08.482Z" data-timestamp="2026-07-10T23:26:08.482Z">2026-07-10T23:26:08.482Z</time></a></div><div class="message-content"><div class="file-tool write-tool" data-tool-id="toolu_01DefdAKnfr8PtXDZ4kcHMDL">
+<div class="file-tool-header write-header"><span class="file-tool-icon">📝</span> Write <span class="file-tool-path">config.py</span></div>
+<div class="file-tool-fullpath">/home/david/projects/play/heatwires-opus/heatwires/config.py</div>
+<div class="truncatable"><div class="truncatable-content"><pre class="file-content">&#34;&#34;&#34;Load and validate the YAML configuration.&#34;&#34;&#34;
+
+from __future__ import annotations
+
+from dataclasses import dataclass, field
+from pathlib import Path
+from typing import List, Union
+
+import yaml
+
+
+@dataclass
+class Location:
+    latitude: float
+    longitude: float
+
+
+@dataclass
+class WeatherConfig:
+    user_agent_contact: str
+    points_cache_seconds: int = 86400
+
+
+@dataclass
+class SwitchConfig:
+    host: str
+    outlets: Union[str, List[int]] = &#34;all&#34;  # &#34;all&#34; or a list of outlet indexes
+
+
+@dataclass
+class IcingConfig:
+    temp_on_low_f: float = 15.0
+    temp_on_high_f: float = 38.0
+    hysteresis_f: float = 3.0
+    require_snow: bool = True
+    min_switch_minutes: int = 30
+
+
+@dataclass
+class FailSafeConfig:
+    enabled: bool = True
+    action: str = &#34;on&#34;  # &#34;on&#34; or &#34;off&#34;
+    months: List[int] = field(default_factory=lambda: [11, 12, 1, 2, 3, 4])
+
+
+@dataclass
+class Config:
+    location: Location
+    weather: WeatherConfig
+    switches: List[SwitchConfig]
+    icing: IcingConfig
+    fail_safe: FailSafeConfig
+    state_file: Path
+    log_level: str
+    path: Path
+
+
+class ConfigError(Exception):
+    &#34;&#34;&#34;Raised when the configuration is missing or invalid.&#34;&#34;&#34;
+
+
+def _require(mapping: dict, key: str, where: str):
+    if key not in mapping:
+        raise ConfigError(f&#34;missing required &#39;{key}&#39; under {where}&#34;)
+    return mapping[key]
+
+
+def _parse_outlets(value) -&gt; Union[str, List[int]]:
+    if value in (None, &#34;all&#34;):
+        return &#34;all&#34;
+    if isinstance(value, int):
+        return [value]
+    if isinstance(value, list) and all(isinstance(i, int) for i in value):
+        return list(value)
+    raise ConfigError(f&#34;&#39;outlets&#39; must be &#39;all&#39; or a list of integers, got {value!r}&#34;)
+
+
+def load_config(path: Union[str, Path]) -&gt; Config:
+    path = Path(path).expanduser().resolve()
+    if not path.exists():
+        raise ConfigError(
+            f&#34;config file not found: {path}\n&#34;
+            &#34;Create one with:  cp config.example.yaml config.yaml&#34;
+        )
+    raw = yaml.safe_load(path.read_text()) or {}
+    base = path.parent
+
+    loc = _require(raw, &#34;location&#34;, &#34;top level&#34;)
+    location = Location(
+        latitude=float(_require(loc, &#34;latitude&#34;, &#34;location&#34;)),
+        longitude=float(_require(loc, &#34;longitude&#34;, &#34;location&#34;)),
+    )
+
+    wx = raw.get(&#34;weather&#34;, {}) or {}
+    weather = WeatherConfig(
+        user_agent_contact=str(
+            _require(wx, &#34;user_agent_contact&#34;, &#34;weather&#34;)
+        ),
+        points_cache_seconds=int(wx.get(&#34;points_cache_seconds&#34;, 86400)),
+    )
+
+    raw_switches = _require(raw, &#34;switches&#34;, &#34;top level&#34;)
+    if not isinstance(raw_switches, list) or not raw_switches:
+        raise ConfigError(&#34;&#39;switches&#39; must be a non-empty list&#34;)
+    switches = [
+        SwitchConfig(
+            host=str(_require(s, &#34;host&#34;, &#34;switches[]&#34;)),
+            outlets=_parse_outlets(s.get(&#34;outlets&#34;, &#34;all&#34;)),
+        )
+        for s in raw_switches
+    ]
+
+    ic = raw.get(&#34;icing&#34;, {}) or {}
+    icing = IcingConfig(
+        temp_on_low_f=float(ic.get(&#34;temp_on_low_f&#34;, 15.0)),
+        temp_on_high_f=float(ic.get(&#34;temp_on_high_f&#34;, 38.0)),
+        hysteresis_f=float(ic.get(&#34;hysteresis_f&#34;, 3.0)),
+        require_snow=bool(ic.get(&#34;require_snow&#34;, True)),
+        min_switch_minutes=int(ic.get(&#34;min_switch_minutes&#34;, 30)),
+    )
+    if icing.temp_on_low_f &gt;= icing.temp_on_high_f:
+        raise ConfigError(&#34;icing.temp_on_low_f must be below icing.temp_on_high_f&#34;)
+
+    fs = raw.get(&#34;fail_safe&#34;, {}) or {}
+    fail_safe = FailSafeConfig(
+        enabled=bool(fs.get(&#34;enabled&#34;, True)),
+        action=str(fs.get(&#34;action&#34;, &#34;on&#34;)).lower(),
+        months=list(fs.get(&#34;months&#34;, [11, 12, 1, 2, 3, 4])),
+    )
+    if fail_safe.action not in (&#34;on&#34;, &#34;off&#34;):
+        raise ConfigError(&#34;fail_safe.action must be &#39;on&#39; or &#39;off&#39;&#34;)
+
+    state_file = Path(raw.get(&#34;state_file&#34;, &#34;state.json&#34;))
+    if not state_file.is_absolute():
+        state_file = (base / state_file).resolve()
+
+    log_level = str((raw.get(&#34;logging&#34;, {}) or {}).get(&#34;level&#34;, &#34;INFO&#34;)).upper()
+
+    return Config(
+        location=location,
+        weather=weather,
+        switches=switches,
+        icing=icing,
+        fail_safe=fail_safe,
+        state_file=state_file,
+        log_level=log_level,
+        path=path,
+    )
+</pre></div><button class="expand-btn">Show more</button></div>
+</div></div></div>
+<div class="message tool-reply" id="msg-2026-07-10T23-26-08-506Z"><div class="message-header"><span class="role-label">Tool reply</span><a href="#msg-2026-07-10T23-26-08-506Z" class="timestamp-link"><time datetime="2026-07-10T23:26:08.506Z" data-timestamp="2026-07-10T23:26:08.506Z">2026-07-10T23:26:08.506Z</time></a></div><div class="message-content"><div class="tool-result"><div class="truncatable"><div class="truncatable-content"><pre>File created successfully at: /home/david/projects/play/heatwires-opus/heatwires/config.py (file state is current in your context — no need to Read it back)</pre></div><button class="expand-btn">Show more</button></div></div></div></div>
+<div class="message assistant" id="msg-2026-07-10T23-26-29-418Z"><div class="message-header"><span class="role-label">Assistant</span><a href="#msg-2026-07-10T23-26-29-418Z" class="timestamp-link"><time datetime="2026-07-10T23:26:29.418Z" data-timestamp="2026-07-10T23:26:29.418Z">2026-07-10T23:26:29.418Z</time></a></div><div class="message-content"><div class="file-tool write-tool" data-tool-id="toolu_01SRMTjsmSEsW1zY4fJV8fp5">
+<div class="file-tool-header write-header"><span class="file-tool-icon">📝</span> Write <span class="file-tool-path">weather.py</span></div>
+<div class="file-tool-fullpath">/home/david/projects/play/heatwires-opus/heatwires/weather.py</div>
+<div class="truncatable"><div class="truncatable-content"><pre class="file-content">&#34;&#34;&#34;Fetch current/near-term conditions from the US National Weather Service.
+
+api.weather.gov is free, keyless, US-only, and requires a descriptive
+User-Agent header. Flow:
+
+    /points/{lat},{lon}  -&gt;  forecastHourly + observationStations URLs
+    observationStations  -&gt;  nearest station  -&gt;  observations/latest
+    forecastHourly       -&gt;  next hour&#39;s forecast (fallback + snow signal)
+&#34;&#34;&#34;
+
+from __future__ import annotations
+
+import logging
+import time
+from dataclasses import dataclass
+from typing import Optional
+
+import requests
+
+log = logging.getLogger(&#34;heatwires.weather&#34;)
+
+NWS_BASE = &#34;https://api.weather.gov&#34;
+
+# Words in a conditions/forecast string that indicate frozen precipitation.
+SNOW_WORDS = (
+    &#34;snow&#34;,
+    &#34;sleet&#34;,
+    &#34;ice&#34;,
+    &#34;icy&#34;,
+    &#34;wintry&#34;,
+    &#34;flurr&#34;,
+    &#34;freezing&#34;,
+    &#34;blizzard&#34;,
+)
+
+
+@dataclass
+class WeatherSnapshot:
+    temp_f: Optional[float]
+    snow_signal: bool
+    description: str
+    ok: bool
+    source: str = &#34;&#34;
+
+    def summary(self) -&gt; str:
+        if not self.ok:
+            return f&#34;UNAVAILABLE ({self.description})&#34;
+        t = f&#34;{self.temp_f:.0f}°F&#34; if self.temp_f is not None else &#34;?&#34;
+        snow = &#34;snow/ice&#34; if self.snow_signal else &#34;no snow signal&#34;
+        return f&#34;{t}, {snow} — {self.description or &#39;n/a&#39;} [{self.source}]&#34;
+
+
+def _c_to_f(celsius: float) -&gt; float:
+    return celsius * 9.0 / 5.0 + 32.0
+
+
+class WeatherClient:
+    def __init__(
+        self,
+        latitude: float,
+        longitude: float,
+        user_agent_contact: str,
+        points_cache_seconds: int = 86400,
+    ):
+        self.lat = latitude
+        self.lon = longitude
+        self.session = requests.Session()
+        self.session.headers.update(
+            {
+                &#34;User-Agent&#34;: f&#34;heatwires/0.1 ({user_agent_contact})&#34;,
+                &#34;Accept&#34;: &#34;application/geo+json&#34;,
+            }
+        )
+        self._points_cache_seconds = points_cache_seconds
+        self._hourly_url: Optional[str] = None
+        self._stations_url: Optional[str] = None
+        self._points_at = 0.0
+
+    def _get(self, url: str, tries: int = 3) -&gt; dict:
+        last_exc: Optional[Exception] = None
+        for attempt in range(1, tries + 1):
+            try:
+                resp = self.session.get(url, timeout=15)
+                resp.raise_for_status()
+                return resp.json()
+            except Exception as exc:  # noqa: BLE001 - retry on any transient failure
+                last_exc = exc
+                log.debug(&#34;GET %s failed (attempt %d/%d): %s&#34;, url, attempt, tries, exc)
+                if attempt &lt; tries:
+                    time.sleep(1.5 * attempt)
+        assert last_exc is not None
+        raise last_exc
+
+    def _ensure_points(self) -&gt; None:
+        fresh = self._hourly_url and (
+            time.time() - self._points_at
+        ) &lt; self._points_cache_seconds
+        if fresh:
+            return
+        data = self._get(f&#34;{NWS_BASE}/points/{self.lat},{self.lon}&#34;)
+        props = data[&#34;properties&#34;]
+        self._hourly_url = props[&#34;forecastHourly&#34;]
+        self._stations_url = props[&#34;observationStations&#34;]
+        self._points_at = time.time()
+
+    def _latest_observation(self) -&gt; dict:
+        stations = self._get(self._stations_url)
+        features = stations.get(&#34;features&#34;) or []
+        if not features:
+            raise RuntimeError(&#34;no observation stations for this location&#34;)
+        station_url = features[0][&#34;id&#34;]  # e.g. .../stations/KBZN
+        return self._get(f&#34;{station_url}/observations/latest&#34;)[&#34;properties&#34;]
+
+    def fetch(self) -&gt; WeatherSnapshot:
+        &#34;&#34;&#34;Return a snapshot; never raises — failures come back as ok=False.&#34;&#34;&#34;
+        try:
+            self._ensure_points()
+
+            temp_f: Optional[float] = None
+            obs_desc = &#34;&#34;
+            source = &#34;observation&#34;
+
+            # Current observation is the most authoritative temperature.
+            try:
+                obs = self._latest_observation()
+                celsius = (obs.get(&#34;temperature&#34;) or {}).get(&#34;value&#34;)
+                if celsius is not None:
+                    temp_f = _c_to_f(celsius)
+                obs_desc = obs.get(&#34;textDescription&#34;) or &#34;&#34;
+            except Exception as exc:  # noqa: BLE001 - fall back to forecast
+                log.debug(&#34;observation fetch failed, using forecast: %s&#34;, exc)
+                source = &#34;&#34;
+
+            # Hourly forecast: fills in temp if observation lacked it, and
+            # contributes to the snow/ice signal.
+            hourly = self._get(self._hourly_url)
+            period = hourly[&#34;properties&#34;][&#34;periods&#34;][0]
+            if temp_f is None:
+                t = period.get(&#34;temperature&#34;)
+                if t is not None:
+                    temp_f = (
+                        _c_to_f(float(t))
+                        if period.get(&#34;temperatureUnit&#34;) == &#34;C&#34;
+                        else float(t)
+                    )
+                source = &#34;forecast&#34;
+            fc_desc = period.get(&#34;shortForecast&#34;, &#34;&#34;) or &#34;&#34;
+
+            blob = f&#34;{obs_desc} {fc_desc}&#34;.lower()
+            snow = any(word in blob for word in SNOW_WORDS)
+
+            return WeatherSnapshot(
+                temp_f=temp_f,
+                snow_signal=snow,
+                description=(obs_desc or fc_desc).strip(),
+                ok=temp_f is not None,
+                source=source or &#34;forecast&#34;,
+            )
+        except Exception as exc:  # noqa: BLE001 - report as unavailable
+            log.warning(&#34;weather fetch failed: %s&#34;, exc)
+            return WeatherSnapshot(
+                temp_f=None,
+                snow_signal=False,
+                description=f&#34;fetch failed: {exc}&#34;,
+                ok=False,
+            )
+</pre></div><button class="expand-btn">Show more</button></div>
+</div></div></div>
+<div class="message tool-reply" id="msg-2026-07-10T23-26-29-437Z"><div class="message-header"><span class="role-label">Tool reply</span><a href="#msg-2026-07-10T23-26-29-437Z" class="timestamp-link"><time datetime="2026-07-10T23:26:29.437Z" data-timestamp="2026-07-10T23:26:29.437Z">2026-07-10T23:26:29.437Z</time></a></div><div class="message-content"><div class="tool-result"><div class="truncatable"><div class="truncatable-content"><pre>File created successfully at: /home/david/projects/play/heatwires-opus/heatwires/weather.py (file state is current in your context — no need to Read it back)</pre></div><button class="expand-btn">Show more</button></div></div></div></div>
+<div class="message assistant" id="msg-2026-07-10T23-26-40-704Z"><div class="message-header"><span class="role-label">Assistant</span><a href="#msg-2026-07-10T23-26-40-704Z" class="timestamp-link"><time datetime="2026-07-10T23:26:40.704Z" data-timestamp="2026-07-10T23:26:40.704Z">2026-07-10T23:26:40.704Z</time></a></div><div class="message-content"><div class="file-tool write-tool" data-tool-id="toolu_01C9dNuZ5s2FCeApDfSEyWv5">
+<div class="file-tool-header write-header"><span class="file-tool-icon">📝</span> Write <span class="file-tool-path">logic.py</span></div>
+<div class="file-tool-fullpath">/home/david/projects/play/heatwires-opus/heatwires/logic.py</div>
+<div class="truncatable"><div class="truncatable-content"><pre class="file-content">&#34;&#34;&#34;The icing decision: given weather, should the cables be on?&#34;&#34;&#34;
+
+from __future__ import annotations
+
+from dataclasses import dataclass
+from typing import Optional
+
+from .config import IcingConfig
+from .weather import WeatherSnapshot
+
+
+@dataclass
+class Decision:
+    want_on: bool
+    reason: str
+
+
+def decide(
+    snapshot: WeatherSnapshot,
+    icing: IcingConfig,
+    currently_on: bool,
+) -&gt; Optional[Decision]:
+    &#34;&#34;&#34;Return the desired state, or None if weather is unavailable.
+
+    Ice dams form in a melt/refreeze window near freezing with snow present,
+    so the cables run when the temperature is inside [low, high] AND (if
+    required) frozen precipitation is present. Once on, the band is widened by
+    ``hysteresis_f`` on each side to avoid rapid cycling around a threshold.
+    &#34;&#34;&#34;
+    if snapshot.temp_f is None:
+        return None
+
+    margin = icing.hysteresis_f if currently_on else 0.0
+    low = icing.temp_on_low_f - margin
+    high = icing.temp_on_high_f + margin
+    temp = snapshot.temp_f
+
+    in_band = low &lt;= temp &lt;= high
+    snow_ok = snapshot.snow_signal or not icing.require_snow
+    want_on = in_band and snow_ok
+
+    if want_on:
+        snow_note = (
+            &#34;with snow/ice signal&#34;
+            if snapshot.snow_signal
+            else &#34;(snow not required)&#34;
+        )
+        reason = f&#34;{temp:.0f}°F within [{low:.0f}, {high:.0f}]°F icing band {snow_note}&#34;
+    elif not in_band:
+        if temp &lt; low:
+            reason = f&#34;{temp:.0f}°F below {low:.0f}°F — too cold for melt/refreeze&#34;
+        else:
+            reason = f&#34;{temp:.0f}°F above {high:.0f}°F — snow sheds naturally&#34;
+    else:
+        reason = f&#34;{temp:.0f}°F in band but no snow/ice signal&#34;
+
+    return Decision(want_on=want_on, reason=reason)
+</pre></div><button class="expand-btn">Show more</button></div>
+</div></div></div>
+<div class="message tool-reply" id="msg-2026-07-10T23-26-40-727Z"><div class="message-header"><span class="role-label">Tool reply</span><a href="#msg-2026-07-10T23-26-40-727Z" class="timestamp-link"><time datetime="2026-07-10T23:26:40.727Z" data-timestamp="2026-07-10T23:26:40.727Z">2026-07-10T23:26:40.727Z</time></a></div><div class="message-content"><div class="tool-result"><div class="truncatable"><div class="truncatable-content"><pre>File created successfully at: /home/david/projects/play/heatwires-opus/heatwires/logic.py (file state is current in your context — no need to Read it back)</pre></div><button class="expand-btn">Show more</button></div></div></div></div>
+<div class="message assistant" id="msg-2026-07-10T23-26-46-425Z"><div class="message-header"><span class="role-label">Assistant</span><a href="#msg-2026-07-10T23-26-46-425Z" class="timestamp-link"><time datetime="2026-07-10T23:26:46.425Z" data-timestamp="2026-07-10T23:26:46.425Z">2026-07-10T23:26:46.425Z</time></a></div><div class="message-content"><div class="file-tool write-tool" data-tool-id="toolu_01StMEThxvuquygRJmyaw453">
+<div class="file-tool-header write-header"><span class="file-tool-icon">📝</span> Write <span class="file-tool-path">state.py</span></div>
+<div class="file-tool-fullpath">/home/david/projects/play/heatwires-opus/heatwires/state.py</div>
+<div class="truncatable"><div class="truncatable-content"><pre class="file-content">&#34;&#34;&#34;Tiny JSON persistence for run-to-run state (last known switch state, timing).&#34;&#34;&#34;
+
+from __future__ import annotations
+
+import json
+import logging
+from datetime import datetime, timezone
+from pathlib import Path
+from typing import Optional
+
+log = logging.getLogger(&#34;heatwires.state&#34;)
+
+
+def load_state(path: Path) -&gt; dict:
+    try:
+        return json.loads(Path(path).read_text())
+    except FileNotFoundError:
+        return {}
+    except Exception as exc:  # noqa: BLE001 - corrupt state shouldn&#39;t crash a run
+        log.warning(&#34;could not read state %s (%s); starting fresh&#34;, path, exc)
+        return {}
+
+
+def save_state(path: Path, state: dict) -&gt; None:
+    Path(path).write_text(json.dumps(state, indent=2, sort_keys=True))
+
+
+def parse_ts(value: Optional[str]) -&gt; Optional[datetime]:
+    if not value:
+        return None
+    try:
+        dt = datetime.fromisoformat(value)
+        if dt.tzinfo is None:
+            dt = dt.replace(tzinfo=timezone.utc)
+        return dt
+    except ValueError:
+        return None
+</pre></div><button class="expand-btn">Show more</button></div>
+</div></div></div>
+<div class="message tool-reply" id="msg-2026-07-10T23-26-46-450Z"><div class="message-header"><span class="role-label">Tool reply</span><a href="#msg-2026-07-10T23-26-46-450Z" class="timestamp-link"><time datetime="2026-07-10T23:26:46.450Z" data-timestamp="2026-07-10T23:26:46.450Z">2026-07-10T23:26:46.450Z</time></a></div><div class="message-content"><div class="tool-result"><div class="truncatable"><div class="truncatable-content"><pre>File created successfully at: /home/david/projects/play/heatwires-opus/heatwires/state.py (file state is current in your context — no need to Read it back)</pre></div><button class="expand-btn">Show more</button></div></div></div></div>
+<div class="message assistant" id="msg-2026-07-10T23-26-49-041Z"><div class="message-header"><span class="role-label">Assistant</span><a href="#msg-2026-07-10T23-26-49-041Z" class="timestamp-link"><time datetime="2026-07-10T23:26:49.041Z" data-timestamp="2026-07-10T23:26:49.041Z">2026-07-10T23:26:49.041Z</time></a></div><div class="message-content">
+<div class="assistant-text"><p>Now the switch control (python-kasa) and the controller that ties everything together:</p></div></div></div>
+<div class="message assistant" id="msg-2026-07-10T23-27-03-973Z"><div class="message-header"><span class="role-label">Assistant</span><a href="#msg-2026-07-10T23-27-03-973Z" class="timestamp-link"><time datetime="2026-07-10T23:27:03.973Z" data-timestamp="2026-07-10T23:27:03.973Z">2026-07-10T23:27:03.973Z</time></a></div><div class="message-content"><div class="file-tool write-tool" data-tool-id="toolu_01UV8rQS2jbiKyXzr63b1okh">
+<div class="file-tool-header write-header"><span class="file-tool-icon">📝</span> Write <span class="file-tool-path">switches.py</span></div>
+<div class="file-tool-fullpath">/home/david/projects/play/heatwires-opus/heatwires/switches.py</div>
+<div class="truncatable"><div class="truncatable-content"><pre class="file-content">&#34;&#34;&#34;Control TP-Link Kasa switches (e.g. KP400) directly over the LAN.
+
+Uses python-kasa&#39;s discovery handshake so we don&#39;t need to hard-code the
+device class. The KP400 exposes its two outlets as ``children``; single-outlet
+plugs have no children and are controlled as a whole.
+&#34;&#34;&#34;
+
+from __future__ import annotations
+
+import asyncio
+import logging
+from dataclasses import dataclass, field
+from typing import List, Optional, Sequence
+
+from kasa import Discover
+
+from .config import SwitchConfig
+
+log = logging.getLogger(&#34;heatwires.switches&#34;)
+
+
+@dataclass
+class OutletState:
+    index: int
+    alias: str
+    is_on: bool
+
+
+@dataclass
+class SwitchState:
+    host: str
+    ok: bool
+    alias: str = &#34;&#34;
+    model: str = &#34;&#34;
+    error: str = &#34;&#34;
+    outlets: List[OutletState] = field(default_factory=list)
+
+    def summary(self) -&gt; str:
+        if not self.ok:
+            return f&#34;{self.host}: ERROR ({self.error})&#34;
+        parts = [
+            f&#34;[{o.index}] {o.alias}={&#39;ON&#39; if o.is_on else &#39;off&#39;}&#34; for o in self.outlets
+        ]
+        label = self.alias or self.model or &#34;device&#34;
+        return f&#34;{self.host} ({label}): &#34; + &#34;, &#34;.join(parts)
+
+
+def _selected(children: Sequence, outlets) -&gt; List:
+    if not children:
+        return []
+    if outlets == &#34;all&#34;:
+        return list(children)
+    picked = []
+    for i in outlets:
+        if 0 &lt;= i &lt; len(children):
+            picked.append(children[i])
+        else:
+            log.warning(&#34;outlet index %d out of range (device has %d)&#34;, i, len(children))
+    return picked
+
+
+async def _read_device(dev) -&gt; SwitchState:
+    children = getattr(dev, &#34;children&#34;, None) or []
+    if children:
+        outlets = [
+            OutletState(index=i, alias=c.alias or f&#34;outlet{i}&#34;, is_on=bool(c.is_on))
+            for i, c in enumerate(children)
+        ]
+    else:
+        outlets = [OutletState(index=0, alias=dev.alias or &#34;outlet&#34;, is_on=bool(dev.is_on))]
+    return SwitchState(
+        host=dev.host,
+        ok=True,
+        alias=dev.alias or &#34;&#34;,
+        model=getattr(dev, &#34;model&#34;, &#34;&#34;) or &#34;&#34;,
+        outlets=outlets,
+    )
+
+
+async def _apply_one(sw: SwitchConfig, turn_on: Optional[bool]) -&gt; SwitchState:
+    &#34;&#34;&#34;Set (or, if turn_on is None, just read) a single switch.&#34;&#34;&#34;
+    try:
+        dev = await Discover.discover_single(sw.host)
+        await dev.update()
+        if turn_on is not None:
+            children = getattr(dev, &#34;children&#34;, None) or []
+            targets = _selected(children, sw.outlets) if children else [dev]
+            for target in targets:
+                if turn_on:
+                    await target.turn_on()
+                else:
+                    await target.turn_off()
+            await dev.update()
+        return await _read_device(dev)
+    except Exception as exc:  # noqa: BLE001 - surface per-switch, don&#39;t abort others
+        log.error(&#34;switch %s failed: %s&#34;, sw.host, exc)
+        return SwitchState(host=sw.host, ok=False, error=str(exc))
+
+
+async def _apply_all(
+    switches: Sequence[SwitchConfig], turn_on: Optional[bool]
+) -&gt; List[SwitchState]:
+    return await asyncio.gather(*(_apply_one(s, turn_on) for s in switches))
+
+
+def set_switches(
+    switches: Sequence[SwitchConfig], turn_on: bool
+) -&gt; List[SwitchState]:
+    &#34;&#34;&#34;Turn all configured switches/outlets on or off. Returns resulting state.&#34;&#34;&#34;
+    return asyncio.run(_apply_all(switches, turn_on))
+
+
+def read_switches(switches: Sequence[SwitchConfig]) -&gt; List[SwitchState]:
+    &#34;&#34;&#34;Read current state without changing anything.&#34;&#34;&#34;
+    return asyncio.run(_apply_all(switches, None))
+
+
+def discover(timeout: int = 8) -&gt; List[SwitchState]:
+    &#34;&#34;&#34;Discover all Kasa devices on the LAN.&#34;&#34;&#34;
+
+    async def _run() -&gt; List[SwitchState]:
+        found = await Discover.discover(discovery_timeout=timeout)
+        states = []
+        for dev in found.values():
+            try:
+                await dev.update()
+                states.append(await _read_device(dev))
+            except Exception as exc:  # noqa: BLE001
+                states.append(SwitchState(host=dev.host, ok=False, error=str(exc)))
+        return states
+
+    return asyncio.run(_run())
+</pre></div><button class="expand-btn">Show more</button></div>
+</div></div></div>
+<div class="message tool-reply" id="msg-2026-07-10T23-27-03-986Z"><div class="message-header"><span class="role-label">Tool reply</span><a href="#msg-2026-07-10T23-27-03-986Z" class="timestamp-link"><time datetime="2026-07-10T23:27:03.986Z" data-timestamp="2026-07-10T23:27:03.986Z">2026-07-10T23:27:03.986Z</time></a></div><div class="message-content"><div class="tool-result"><div class="truncatable"><div class="truncatable-content"><pre>File created successfully at: /home/david/projects/play/heatwires-opus/heatwires/switches.py (file state is current in your context — no need to Read it back)</pre></div><button class="expand-btn">Show more</button></div></div></div></div>
+<div class="message assistant" id="msg-2026-07-10T23-27-20-005Z"><div class="message-header"><span class="role-label">Assistant</span><a href="#msg-2026-07-10T23-27-20-005Z" class="timestamp-link"><time datetime="2026-07-10T23:27:20.005Z" data-timestamp="2026-07-10T23:27:20.005Z">2026-07-10T23:27:20.005Z</time></a></div><div class="message-content"><div class="file-tool write-tool" data-tool-id="toolu_01GoDDQW9nAae6oHU6AS9jay">
+<div class="file-tool-header write-header"><span class="file-tool-icon">📝</span> Write <span class="file-tool-path">controller.py</span></div>
+<div class="file-tool-fullpath">/home/david/projects/play/heatwires-opus/heatwires/controller.py</div>
+<div class="truncatable"><div class="truncatable-content"><pre class="file-content">&#34;&#34;&#34;Orchestrate one control cycle: weather -&gt; decision -&gt; switches -&gt; state.&#34;&#34;&#34;
+
+from __future__ import annotations
+
+import logging
+from dataclasses import dataclass, field
+from datetime import datetime, timezone
+from typing import List, Optional
+
+from .config import Config
+from .logic import decide
+from .state import load_state, parse_ts, save_state
+from .switches import SwitchState, read_switches, set_switches
+from .weather import WeatherClient, WeatherSnapshot
+
+log = logging.getLogger(&#34;heatwires.controller&#34;)
+
+
+@dataclass
+class CycleResult:
+    snapshot: WeatherSnapshot
+    want_on: bool
+    changed: bool
+    reason: str
+    applied: bool
+    switch_states: List[SwitchState] = field(default_factory=list)
+
+
+def _failsafe_target(config: Config, now: datetime) -&gt; Optional[bool]:
+    &#34;&#34;&#34;Desired state when weather is unavailable, or None to hold current.&#34;&#34;&#34;
+    fs = config.fail_safe
+    if not fs.enabled or now.month not in fs.months:
+        return None
+    return fs.action == &#34;on&#34;
+
+
+def run_cycle(config: Config, apply: bool = True) -&gt; CycleResult:
+    now = datetime.now(timezone.utc)
+
+    client = WeatherClient(
+        latitude=config.location.latitude,
+        longitude=config.location.longitude,
+        user_agent_contact=config.weather.user_agent_contact,
+        points_cache_seconds=config.weather.points_cache_seconds,
+    )
+    snapshot = client.fetch()
+
+    state = load_state(config.state_file)
+    currently_on = state.get(&#34;state&#34;) == &#34;on&#34;
+
+    decision = decide(snapshot, config.icing, currently_on)
+    forced = False
+
+    if decision is None:
+        target = _failsafe_target(config, now)
+        if target is None:
+            want_on = currently_on
+            reason = &#34;weather unavailable; holding current state (fail-safe inactive)&#34;
+        else:
+            want_on = target
+            forced = True
+            reason = f&#34;weather unavailable; fail-safe -&gt; {&#39;ON&#39; if want_on else &#39;OFF&#39;}&#34;
+    else:
+        want_on = decision.want_on
+        reason = decision.reason
+
+    # Enforce minimum dwell time between changes (skipped when fail-safe forces).
+    changed = want_on != currently_on
+    if changed and not forced:
+        last_change = parse_ts(state.get(&#34;last_change&#34;))
+        if last_change is not None:
+            elapsed_min = (now - last_change).total_seconds() / 60.0
+            if elapsed_min &lt; config.icing.min_switch_minutes:
+                want_on = currently_on
+                changed = False
+                reason += (
+                    f&#34; [held {elapsed_min:.0f}m &lt; {config.icing.min_switch_minutes}m &#34;
+                    &#34;min dwell]&#34;
+                )
+
+    switch_states: List[SwitchState] = []
+    if apply:
+        switch_states = set_switches(config.switches, want_on)
+        unreachable = [s.host for s in switch_states if not s.ok]
+        if unreachable:
+            log.error(&#34;switches unreachable: %s&#34;, &#34;, &#34;.join(unreachable))
+    else:
+        switch_states = read_switches(config.switches)
+
+    new_state = dict(state)
+    new_state[&#34;state&#34;] = &#34;on&#34; if want_on else &#34;off&#34;
+    new_state[&#34;last_run&#34;] = now.isoformat()
+    new_state[&#34;last_reason&#34;] = reason
+    new_state[&#34;last_temp_f&#34;] = snapshot.temp_f
+    if changed or &#34;last_change&#34; not in new_state:
+        new_state[&#34;last_change&#34;] = now.isoformat()
+    if apply:
+        save_state(config.state_file, new_state)
+
+    log.info(
+        &#34;weather: %s | decision: %s -&gt; %s%s&#34;,
+        snapshot.summary(),
+        &#34;ON&#34; if want_on else &#34;OFF&#34;,
+        &#34;changed&#34; if changed else &#34;unchanged&#34;,
+        f&#34; | {reason}&#34;,
+    )
+
+    return CycleResult(
+        snapshot=snapshot,
+        want_on=want_on,
+        changed=changed,
+        reason=reason,
+        applied=apply,
+        switch_states=switch_states,
+    )
+</pre></div><button class="expand-btn">Show more</button></div>
+</div></div></div>
+<div class="message tool-reply" id="msg-2026-07-10T23-27-20-028Z"><div class="message-header"><span class="role-label">Tool reply</span><a href="#msg-2026-07-10T23-27-20-028Z" class="timestamp-link"><time datetime="2026-07-10T23:27:20.028Z" data-timestamp="2026-07-10T23:27:20.028Z">2026-07-10T23:27:20.028Z</time></a></div><div class="message-content"><div class="tool-result"><div class="truncatable"><div class="truncatable-content"><pre>File created successfully at: /home/david/projects/play/heatwires-opus/heatwires/controller.py (file state is current in your context — no need to Read it back)</pre></div><button class="expand-btn">Show more</button></div></div></div></div>
+<div class="message assistant" id="msg-2026-07-10T23-27-22-063Z"><div class="message-header"><span class="role-label">Assistant</span><a href="#msg-2026-07-10T23-27-22-063Z" class="timestamp-link"><time datetime="2026-07-10T23:27:22.063Z" data-timestamp="2026-07-10T23:27:22.063Z">2026-07-10T23:27:22.063Z</time></a></div><div class="message-content">
+<div class="assistant-text"><p>Now the CLI:</p></div></div></div>
+<div class="message assistant" id="msg-2026-07-10T23-27-41-341Z"><div class="message-header"><span class="role-label">Assistant</span><a href="#msg-2026-07-10T23-27-41-341Z" class="timestamp-link"><time datetime="2026-07-10T23:27:41.341Z" data-timestamp="2026-07-10T23:27:41.341Z">2026-07-10T23:27:41.341Z</time></a></div><div class="message-content"><div class="file-tool write-tool" data-tool-id="toolu_01LckdJES7fBZBua3hVwQUJw">
+<div class="file-tool-header write-header"><span class="file-tool-icon">📝</span> Write <span class="file-tool-path">cli.py</span></div>
+<div class="file-tool-fullpath">/home/david/projects/play/heatwires-opus/heatwires/cli.py</div>
+<div class="truncatable"><div class="truncatable-content"><pre class="file-content">&#34;&#34;&#34;Command-line entry point.
+
+    heatwires -c config.yaml discover        # find Kasa devices on the LAN
+    heatwires -c config.yaml status          # show weather + switches + decision (no change)
+    heatwires -c config.yaml run             # one control cycle (for cron)
+    heatwires -c config.yaml run --dry-run   # decide + read switches, but don&#39;t change them
+    heatwires -c config.yaml loop -i 900     # run forever, every 900s (for systemd)
+&#34;&#34;&#34;
+
+from __future__ import annotations
+
+import argparse
+import logging
+import sys
+import time
+
+from .config import ConfigError, load_config
+from .controller import run_cycle
+from .logic import decide
+from .switches import discover as discover_switches
+from .switches import read_switches
+from .weather import WeatherClient
+
+
+def _setup_logging(level: str) -&gt; None:
+    logging.basicConfig(
+        level=getattr(logging, level, logging.INFO),
+        format=&#34;%(asctime)s %(levelname)s %(name)s: %(message)s&#34;,
+    )
+
+
+def _cmd_discover(args) -&gt; int:
+    print(f&#34;Discovering Kasa devices (timeout {args.timeout}s)...&#34;)
+    devices = discover_switches(timeout=args.timeout)
+    if not devices:
+        print(&#34;No devices found. Ensure this machine is on the same LAN/subnet.&#34;)
+        return 1
+    for dev in devices:
+        print(&#34;  &#34; + dev.summary())
+    return 0
+
+
+def _cmd_status(args) -&gt; int:
+    config = load_config(args.config)
+    client = WeatherClient(
+        latitude=config.location.latitude,
+        longitude=config.location.longitude,
+        user_agent_contact=config.weather.user_agent_contact,
+        points_cache_seconds=config.weather.points_cache_seconds,
+    )
+    snapshot = client.fetch()
+    print(f&#34;Weather:  {snapshot.summary()}&#34;)
+
+    states = read_switches(config.switches)
+    print(&#34;Switches:&#34;)
+    for st in states:
+        print(&#34;  &#34; + st.summary())
+    any_on = any(o.is_on for st in states if st.ok for o in st.outlets)
+
+    decision = decide(snapshot, config.icing, currently_on=any_on)
+    if decision is None:
+        print(&#34;Decision: weather unavailable&#34;)
+    else:
+        print(
+            f&#34;Decision: cables should be &#34;
+            f&#34;{&#39;ON&#39; if decision.want_on else &#39;OFF&#39;} — {decision.reason}&#34;
+        )
+    return 0
+
+
+def _cmd_run(args) -&gt; int:
+    config = load_config(args.config)
+    result = run_cycle(config, apply=not args.dry_run)
+    verb = &#34;would be&#34; if args.dry_run else &#34;set&#34;
+    print(
+        f&#34;Cables {verb} {&#39;ON&#39; if result.want_on else &#39;OFF&#39;} &#34;
+        f&#34;({&#39;changed&#39; if result.changed else &#39;unchanged&#39;}) — {result.reason}&#34;
+    )
+    for st in result.switch_states:
+        print(&#34;  &#34; + st.summary())
+    # Non-zero exit if any switch was unreachable, so cron/systemd can alert.
+    return 0 if all(st.ok for st in result.switch_states) else 2
+
+
+def _cmd_loop(args) -&gt; int:
+    config = load_config(args.config)
+    log = logging.getLogger(&#34;heatwires.loop&#34;)
+    log.info(&#34;starting loop, interval %ds&#34;, args.interval)
+    while True:
+        try:
+            run_cycle(config, apply=True)
+        except Exception as exc:  # noqa: BLE001 - keep the loop alive
+            log.exception(&#34;cycle failed: %s&#34;, exc)
+        try:
+            time.sleep(args.interval)
+        except KeyboardInterrupt:
+            log.info(&#34;interrupted, exiting&#34;)
+            return 0
+
+
+def build_parser() -&gt; argparse.ArgumentParser:
+    parser = argparse.ArgumentParser(
+        prog=&#34;heatwires&#34;,
+        description=&#34;Weather-based control of roof heat-cable switches.&#34;,
+    )
+    parser.add_argument(
+        &#34;-c&#34;,
+        &#34;--config&#34;,
+        default=&#34;config.yaml&#34;,
+        help=&#34;path to config file (default: config.yaml)&#34;,
+    )
+    sub = parser.add_subparsers(dest=&#34;command&#34;, required=True)
+
+    p_disc = sub.add_parser(&#34;discover&#34;, help=&#34;find Kasa devices on the LAN&#34;)
+    p_disc.add_argument(&#34;-t&#34;, &#34;--timeout&#34;, type=int, default=8)
+    p_disc.set_defaults(func=_cmd_discover)
+
+    p_status = sub.add_parser(
+        &#34;status&#34;, help=&#34;show weather, switch states, and the decision (no change)&#34;
+    )
+    p_status.set_defaults(func=_cmd_status)
+
+    p_run = sub.add_parser(&#34;run&#34;, help=&#34;run one control cycle (for cron)&#34;)
+    p_run.add_argument(
+        &#34;--dry-run&#34;,
+        action=&#34;store_true&#34;,
+        help=&#34;decide and read switches but do not change them&#34;,
+    )
+    p_run.set_defaults(func=_cmd_run)
+
+    p_loop = sub.add_parser(&#34;loop&#34;, help=&#34;run continuously (for systemd)&#34;)
+    p_loop.add_argument(
+        &#34;-i&#34;, &#34;--interval&#34;, type=int, default=900, help=&#34;seconds between cycles&#34;
+    )
+    p_loop.set_defaults(func=_cmd_loop)
+
+    return parser
+
+
+def main(argv=None) -&gt; int:
+    parser = build_parser()
+    args = parser.parse_args(argv)
+    try:
+        # `discover` doesn&#39;t need a config; everything else does.
+        if args.command != &#34;discover&#34;:
+            _setup_logging(load_config(args.config).log_level)
+        else:
+            _setup_logging(&#34;INFO&#34;)
+        return args.func(args)
+    except ConfigError as exc:
+        print(f&#34;Config error: {exc}&#34;, file=sys.stderr)
+        return 1
+    except KeyboardInterrupt:
+        return 130
+
+
+if __name__ == &#34;__main__&#34;:
+    raise SystemExit(main())
+</pre></div><button class="expand-btn">Show more</button></div>
+</div></div></div>
+<div class="message tool-reply" id="msg-2026-07-10T23-27-41-363Z"><div class="message-header"><span class="role-label">Tool reply</span><a href="#msg-2026-07-10T23-27-41-363Z" class="timestamp-link"><time datetime="2026-07-10T23:27:41.363Z" data-timestamp="2026-07-10T23:27:41.363Z">2026-07-10T23:27:41.363Z</time></a></div><div class="message-content"><div class="tool-result"><div class="truncatable"><div class="truncatable-content"><pre>File created successfully at: /home/david/projects/play/heatwires-opus/heatwires/cli.py (file state is current in your context — no need to Read it back)</pre></div><button class="expand-btn">Show more</button></div></div></div></div>
+<div class="message assistant" id="msg-2026-07-10T23-27-44-613Z"><div class="message-header"><span class="role-label">Assistant</span><a href="#msg-2026-07-10T23-27-44-613Z" class="timestamp-link"><time datetime="2026-07-10T23:27:44.613Z" data-timestamp="2026-07-10T23:27:44.613Z">2026-07-10T23:27:44.613Z</time></a></div><div class="message-content">
+<div class="thinking"><div class="thinking-label">Thinking</div></div></div></div>
+<div class="message assistant" id="msg-2026-07-10T23-27-45-035Z"><div class="message-header"><span class="role-label">Assistant</span><a href="#msg-2026-07-10T23-27-45-035Z" class="timestamp-link"><time datetime="2026-07-10T23:27:45.035Z" data-timestamp="2026-07-10T23:27:45.035Z">2026-07-10T23:27:45.035Z</time></a></div><div class="message-content">
+<div class="assistant-text"><p>Now let me set up a venv, install it, and verify it actually works.</p></div></div></div>
+<div class="message assistant" id="msg-2026-07-10T23-27-47-107Z"><div class="message-header"><span class="role-label">Assistant</span><a href="#msg-2026-07-10T23-27-47-107Z" class="timestamp-link"><time datetime="2026-07-10T23:27:47.107Z" data-timestamp="2026-07-10T23:27:47.107Z">2026-07-10T23:27:47.107Z</time></a></div><div class="message-content">
+<div class="tool-use bash-tool" data-tool-id="toolu_01KfpucHZRVFptcXnGXbii2A">
+<div class="tool-header"><span class="tool-icon">$</span> Bash</div>
+<div class="tool-description">Create venv and install project with dependencies</div><div class="truncatable"><div class="truncatable-content"><pre class="bash-command">python3 -m venv .venv &amp;&amp; .venv/bin/python -m ensurepip -U &gt;/dev/null 2&gt;&amp;1; .venv/bin/python -m pip install --quiet --upgrade pip 2&gt;&amp;1 | tail -2; echo &#34;=== installing project ===&#34;; .venv/bin/python -m pip install --quiet -e . 2&gt;&amp;1 | tail -25; echo &#34;EXIT=$?&#34;</pre></div><button class="expand-btn">Show more</button></div>
+</div></div></div>
+<div class="message tool-reply" id="msg-2026-07-11T01-42-53-761Z"><div class="message-header"><span class="role-label">Tool reply</span><a href="#msg-2026-07-11T01-42-53-761Z" class="timestamp-link"><time datetime="2026-07-11T01:42:53.761Z" data-timestamp="2026-07-11T01:42:53.761Z">2026-07-11T01:42:53.761Z</time></a></div><div class="message-content"><div class="tool-result"><div class="truncatable"><div class="truncatable-content"><pre>=== installing project ===
+EXIT=0</pre></div><button class="expand-btn">Show more</button></div></div></div></div>
+<div class="message assistant" id="msg-2026-07-11T01-42-56-776Z"><div class="message-header"><span class="role-label">Assistant</span><a href="#msg-2026-07-11T01-42-56-776Z" class="timestamp-link"><time datetime="2026-07-11T01:42:56.776Z" data-timestamp="2026-07-11T01:42:56.776Z">2026-07-11T01:42:56.776Z</time></a></div><div class="message-content">
+<div class="thinking"><div class="thinking-label">Thinking</div></div></div></div>
+<div class="message assistant" id="msg-2026-07-11T01-42-57-247Z"><div class="message-header"><span class="role-label">Assistant</span><a href="#msg-2026-07-11T01-42-57-247Z" class="timestamp-link"><time datetime="2026-07-11T01:42:57.247Z" data-timestamp="2026-07-11T01:42:57.247Z">2026-07-11T01:42:57.247Z</time></a></div><div class="message-content">
+<div class="assistant-text"><p>Installed cleanly. Let me verify the installed python-kasa API matches what I used, and that the CLI loads.</p></div></div></div>
+<div class="message assistant" id="msg-2026-07-11T01-42-59-042Z"><div class="message-header"><span class="role-label">Assistant</span><a href="#msg-2026-07-11T01-42-59-042Z" class="timestamp-link"><time datetime="2026-07-11T01:42:59.042Z" data-timestamp="2026-07-11T01:42:59.042Z">2026-07-11T01:42:59.042Z</time></a></div><div class="message-content">
+<div class="tool-use bash-tool" data-tool-id="toolu_018Ltf82yVwo9G1uX2931ZTp">
+<div class="tool-header"><span class="tool-icon">$</span> Bash</div>
+<div class="tool-description">Check installed kasa version and CLI loads</div><div class="truncatable"><div class="truncatable-content"><pre class="bash-command">cd /home/david/projects/play/heatwires-opus
+.venv/bin/python -c &#34;import kasa, requests, yaml; print(&#39;python-kasa&#39;, kasa.__version__)&#34;
+echo &#34;=== Discover API surface ===&#34;
+.venv/bin/python -c &#34;from kasa import Discover; print(&#39;discover_single&#39; , hasattr(Discover,&#39;discover_single&#39;)); print(&#39;discover&#39;, hasattr(Discover,&#39;discover&#39;))&#34;
+echo &#34;=== CLI help ===&#34;
+.venv/bin/heatwires --help 2&gt;&amp;1 | head -20</pre></div><button class="expand-btn">Show more</button></div>
+</div></div></div>
+<div class="message tool-reply" id="msg-2026-07-11T01-43-07-166Z"><div class="message-header"><span class="role-label">Tool reply</span><a href="#msg-2026-07-11T01-43-07-166Z" class="timestamp-link"><time datetime="2026-07-11T01:43:07.166Z" data-timestamp="2026-07-11T01:43:07.166Z">2026-07-11T01:43:07.166Z</time></a></div><div class="message-content"><div class="tool-result"><div class="truncatable"><div class="truncatable-content"><pre>python-kasa 0.10.2
+=== Discover API surface ===
+discover_single True
+discover True
+=== CLI help ===
+usage: heatwires [-h] [-c CONFIG] {discover,status,run,loop} ...
+
+Weather-based control of roof heat-cable switches.
+
+positional arguments:
+  {discover,status,run,loop}
+    discover            find Kasa devices on the LAN
+    status              show weather, switch states, and the decision (no
+                        change)
+    run                 run one control cycle (for cron)
+    loop                run continuously (for systemd)
+
+options:
+  -h, --help            show this help message and exit
+  -c CONFIG, --config CONFIG
+                        path to config file (default: config.yaml)</pre></div><button class="expand-btn">Show more</button></div></div></div></div>
+<div class="message assistant" id="msg-2026-07-11T01-43-11-539Z"><div class="message-header"><span class="role-label">Assistant</span><a href="#msg-2026-07-11T01-43-11-539Z" class="timestamp-link"><time datetime="2026-07-11T01:43:11.539Z" data-timestamp="2026-07-11T01:43:11.539Z">2026-07-11T01:43:11.539Z</time></a></div><div class="message-content">
+<div class="thinking"><div class="thinking-label">Thinking</div></div></div></div>
+<div class="message assistant" id="msg-2026-07-11T01-43-11-994Z"><div class="message-header"><span class="role-label">Assistant</span><a href="#msg-2026-07-11T01-43-11-994Z" class="timestamp-link"><time datetime="2026-07-11T01:43:11.994Z" data-timestamp="2026-07-11T01:43:11.994Z">2026-07-11T01:43:11.994Z</time></a></div><div class="message-content">
+<div class="assistant-text"><p>Let me verify the exact kasa API signatures I depend on (child control, discovery kwargs) against 0.10.2.</p></div></div></div>
+<div class="message assistant" id="msg-2026-07-11T01-43-14-190Z"><div class="message-header"><span class="role-label">Assistant</span><a href="#msg-2026-07-11T01-43-14-190Z" class="timestamp-link"><time datetime="2026-07-11T01:43:14.190Z" data-timestamp="2026-07-11T01:43:14.190Z">2026-07-11T01:43:14.190Z</time></a></div><div class="message-content">
+<div class="tool-use bash-tool" data-tool-id="toolu_01T1FhaPt3Rfj7JAuWXbFedt">
+<div class="tool-header"><span class="tool-icon">$</span> Bash</div>
+<div class="tool-description">Introspect kasa 0.10.2 API signatures</div><div class="truncatable"><div class="truncatable-content"><pre class="bash-command">cd /home/david/projects/play/heatwires-opus
+.venv/bin/python -c &#34;
+import inspect
+from kasa import Discover, Device
+print(&#39;discover_single:&#39;, inspect.signature(Discover.discover_single))
+print(&#39;discover:&#39;, inspect.signature(Discover.discover))
+print(&#39;Device.turn_on coroutine:&#39;, inspect.iscoroutinefunction(Device.turn_on))
+print(&#39;Device has children attr:&#39;, &#39;children&#39; in dir(Device))
+print(&#39;Device has alias:&#39;, &#39;alias&#39; in dir(Device))
+print(&#39;Device has model:&#39;, &#39;model&#39; in dir(Device))
+&#34;</pre></div><button class="expand-btn">Show more</button></div>
+</div></div></div>
+<div class="message tool-reply" id="msg-2026-07-11T01-44-43-359Z"><div class="message-header"><span class="role-label">Tool reply</span><a href="#msg-2026-07-11T01-44-43-359Z" class="timestamp-link"><time datetime="2026-07-11T01:44:43.359Z" data-timestamp="2026-07-11T01:44:43.359Z">2026-07-11T01:44:43.359Z</time></a></div><div class="message-content"><div class="tool-result"><div class="truncatable"><div class="truncatable-content"><pre>discover_single: (host: &#x27;str&#x27;, *, discovery_timeout: &#x27;int&#x27; = 5, port: &#x27;int | None&#x27; = None, timeout: &#x27;int | None&#x27; = None, credentials: &#x27;Credentials | None&#x27; = None, username: &#x27;str | None&#x27; = None, password: &#x27;str | None&#x27; = None, on_discovered_raw: &#x27;OnDiscoveredRawCallable | None&#x27; = None, on_unsupported: &#x27;OnUnsupportedCallable | None&#x27; = None) -&gt; &#x27;Device | None&#x27;
+discover: (*, target: &#x27;str&#x27; = &#x27;255.255.255.255&#x27;, on_discovered: &#x27;OnDiscoveredCallable | None&#x27; = None, on_discovered_raw: &#x27;OnDiscoveredRawCallable | None&#x27; = None, discovery_timeout: &#x27;int&#x27; = 5, discovery_packets: &#x27;int&#x27; = 3, interface: &#x27;str | None&#x27; = None, on_unsupported: &#x27;OnUnsupportedCallable | None&#x27; = None, credentials: &#x27;Credentials | None&#x27; = None, username: &#x27;str | None&#x27; = None, password: &#x27;str | None&#x27; = None, port: &#x27;int | None&#x27; = None, timeout: &#x27;int | None&#x27; = None) -&gt; &#x27;DeviceDict&#x27;
+Device.turn_on coroutine: True
+Device has children attr: True
+Device has alias: True
+Device has model: True</pre></div><button class="expand-btn">Show more</button></div></div></div></div>
+<div class="message assistant" id="msg-2026-07-11T01-44-49-962Z"><div class="message-header"><span class="role-label">Assistant</span><a href="#msg-2026-07-11T01-44-49-962Z" class="timestamp-link"><time datetime="2026-07-11T01:44:49.962Z" data-timestamp="2026-07-11T01:44:49.962Z">2026-07-11T01:44:49.962Z</time></a></div><div class="message-content">
+<div class="thinking"><div class="thinking-label">Thinking</div></div></div></div>
+<div class="message assistant" id="msg-2026-07-11T01-44-50-476Z"><div class="message-header"><span class="role-label">Assistant</span><a href="#msg-2026-07-11T01-44-50-476Z" class="timestamp-link"><time datetime="2026-07-11T01:44:50.476Z" data-timestamp="2026-07-11T01:44:50.476Z">2026-07-11T01:44:50.476Z</time></a></div><div class="message-content">
+<div class="assistant-text"><p>All APIs match. One gap: <code>discover_single</code> can return <code>None</code> (device not found) — my code would then hit an ugly <code>NoneType</code> error. Let me handle that explicitly.</p></div></div></div>
+<div class="message assistant" id="msg-2026-07-11T01-44-51-774Z"><div class="message-header"><span class="role-label">Assistant</span><a href="#msg-2026-07-11T01-44-51-774Z" class="timestamp-link"><time datetime="2026-07-11T01:44:51.774Z" data-timestamp="2026-07-11T01:44:51.774Z">2026-07-11T01:44:51.774Z</time></a></div><div class="message-content"><div class="file-tool edit-tool" data-tool-id="toolu_01VkZ5tLzG5H88sgfgMTHBFA">
+<div class="file-tool-header edit-header"><span class="file-tool-icon">✏️</span> Edit <span class="file-tool-path">switches.py</span></div>
+<div class="file-tool-fullpath">/home/david/projects/play/heatwires-opus/heatwires/switches.py</div>
+<div class="truncatable"><div class="truncatable-content">
+<div class="edit-section edit-old"><div class="edit-label">−</div><pre class="edit-content">    try:
+        dev = await Discover.discover_single(sw.host)
+        await dev.update()</pre></div>
+<div class="edit-section edit-new"><div class="edit-label">+</div><pre class="edit-content">    try:
+        dev = await Discover.discover_single(sw.host)
+        if dev is None:
+            raise RuntimeError(&#34;no Kasa device answered at this host&#34;)
+        await dev.update()</pre></div>
+</div><button class="expand-btn">Show more</button></div>
+</div></div></div>
+<div class="message tool-reply" id="msg-2026-07-11T01-44-51-788Z"><div class="message-header"><span class="role-label">Tool reply</span><a href="#msg-2026-07-11T01-44-51-788Z" class="timestamp-link"><time datetime="2026-07-11T01:44:51.788Z" data-timestamp="2026-07-11T01:44:51.788Z">2026-07-11T01:44:51.788Z</time></a></div><div class="message-content"><div class="tool-result"><div class="truncatable"><div class="truncatable-content"><pre>The file /home/david/projects/play/heatwires-opus/heatwires/switches.py has been updated successfully. (file state is current in your context — no need to Read it back)</pre></div><button class="expand-btn">Show more</button></div></div></div></div>
+<div class="message assistant" id="msg-2026-07-11T01-44-54-531Z"><div class="message-header"><span class="role-label">Assistant</span><a href="#msg-2026-07-11T01-44-54-531Z" class="timestamp-link"><time datetime="2026-07-11T01:44:54.531Z" data-timestamp="2026-07-11T01:44:54.531Z">2026-07-11T01:44:54.531Z</time></a></div><div class="message-content">
+<div class="assistant-text"><p>Now let me write tests for the two parts I can verify without hardware — the decision logic and the NWS parsing (with a mocked HTTP session) — and run them.</p></div></div></div>
+<div class="message assistant" id="msg-2026-07-11T01-45-01-959Z"><div class="message-header"><span class="role-label">Assistant</span><a href="#msg-2026-07-11T01-45-01-959Z" class="timestamp-link"><time datetime="2026-07-11T01:45:01.959Z" data-timestamp="2026-07-11T01:45:01.959Z">2026-07-11T01:45:01.959Z</time></a></div><div class="message-content"><div class="file-tool write-tool" data-tool-id="toolu_01RhG9pPBfSr3s7vf8CvPxVH">
+<div class="file-tool-header write-header"><span class="file-tool-icon">📝</span> Write <span class="file-tool-path">test_logic.py</span></div>
+<div class="file-tool-fullpath">/home/david/projects/play/heatwires-opus/tests/test_logic.py</div>
+<div class="truncatable"><div class="truncatable-content"><pre class="file-content">&#34;&#34;&#34;Offline tests for the icing decision logic.&#34;&#34;&#34;
+
+from heatwires.config import IcingConfig
+from heatwires.logic import decide
+from heatwires.weather import WeatherSnapshot
+
+
+def snap(temp_f, snow=True):
+    return WeatherSnapshot(
+        temp_f=temp_f, snow_signal=snow, description=&#34;test&#34;, ok=temp_f is not None
+    )
+
+
+ICING = IcingConfig(
+    temp_on_low_f=15.0,
+    temp_on_high_f=38.0,
+    hysteresis_f=3.0,
+    require_snow=True,
+    min_switch_minutes=30,
+)
+
+
+def test_on_inside_band_with_snow():
+    d = decide(snap(30, snow=True), ICING, currently_on=False)
+    assert d.want_on is True
+
+
+def test_off_too_warm():
+    d = decide(snap(45, snow=True), ICING, currently_on=False)
+    assert d.want_on is False
+    assert &#34;sheds&#34; in d.reason
+
+
+def test_off_too_cold():
+    d = decide(snap(5, snow=True), ICING, currently_on=False)
+    assert d.want_on is False
+    assert &#34;too cold&#34; in d.reason
+
+
+def test_off_in_band_but_no_snow_when_required():
+    d = decide(snap(30, snow=False), ICING, currently_on=False)
+    assert d.want_on is False
+    assert &#34;no snow&#34; in d.reason
+
+
+def test_on_in_band_no_snow_when_not_required():
+    cfg = IcingConfig(**{**ICING.__dict__, &#34;require_snow&#34;: False})
+    d = decide(snap(30, snow=False), cfg, currently_on=False)
+    assert d.want_on is True
+
+
+def test_hysteresis_keeps_on_just_above_high():
+    # 40°F is above 38 but within the widened band (38+3=41) once already on.
+    off_state = decide(snap(40, snow=True), ICING, currently_on=False)
+    on_state = decide(snap(40, snow=True), ICING, currently_on=True)
+    assert off_state.want_on is False
+    assert on_state.want_on is True
+
+
+def test_hysteresis_keeps_on_just_below_low():
+    # 13°F is below 15 but within the widened band (15-3=12) once already on.
+    assert decide(snap(13, snow=True), ICING, currently_on=False).want_on is False
+    assert decide(snap(13, snow=True), ICING, currently_on=True).want_on is True
+
+
+def test_none_when_weather_unavailable():
+    assert decide(snap(None), ICING, currently_on=False) is None
+</pre></div><button class="expand-btn">Show more</button></div>
+</div></div></div>
+<div class="message tool-reply" id="msg-2026-07-11T01-45-01-982Z"><div class="message-header"><span class="role-label">Tool reply</span><a href="#msg-2026-07-11T01-45-01-982Z" class="timestamp-link"><time datetime="2026-07-11T01:45:01.982Z" data-timestamp="2026-07-11T01:45:01.982Z">2026-07-11T01:45:01.982Z</time></a></div><div class="message-content"><div class="tool-result"><div class="truncatable"><div class="truncatable-content"><pre>File created successfully at: /home/david/projects/play/heatwires-opus/tests/test_logic.py (file state is current in your context — no need to Read it back)</pre></div><button class="expand-btn">Show more</button></div></div></div></div>
+<div class="message assistant" id="msg-2026-07-11T01-45-18-420Z"><div class="message-header"><span class="role-label">Assistant</span><a href="#msg-2026-07-11T01-45-18-420Z" class="timestamp-link"><time datetime="2026-07-11T01:45:18.420Z" data-timestamp="2026-07-11T01:45:18.420Z">2026-07-11T01:45:18.420Z</time></a></div><div class="message-content"><div class="file-tool write-tool" data-tool-id="toolu_01TY83jKGKAXuiuKUfXvqR7n">
+<div class="file-tool-header write-header"><span class="file-tool-icon">📝</span> Write <span class="file-tool-path">test_weather.py</span></div>
+<div class="file-tool-fullpath">/home/david/projects/play/heatwires-opus/tests/test_weather.py</div>
+<div class="truncatable"><div class="truncatable-content"><pre class="file-content">&#34;&#34;&#34;Offline tests for NWS response parsing, using a fake HTTP session.&#34;&#34;&#34;
+
+from heatwires.weather import WeatherClient
+
+
+class FakeResponse:
+    def __init__(self, payload):
+        self._payload = payload
+
+    def raise_for_status(self):
+        pass
+
+    def json(self):
+        return self._payload
+
+
+class FakeSession:
+    &#34;&#34;&#34;Routes GET calls to canned payloads keyed by URL substring.&#34;&#34;&#34;
+
+    def __init__(self, routes, fail_on=None):
+        self.headers = {}
+        self._routes = routes
+        self._fail_on = fail_on or ()
+
+    def get(self, url, timeout=None):
+        for needle in self._fail_on:
+            if needle in url:
+                raise RuntimeError(f&#34;boom on {needle}&#34;)
+        for needle, payload in self._routes.items():
+            if needle in url:
+                return FakeResponse(payload)
+        raise AssertionError(f&#34;unexpected URL: {url}&#34;)
+
+
+POINTS = {
+    &#34;properties&#34;: {
+        &#34;forecastHourly&#34;: &#34;https://api.weather.gov/gridpoints/X/1,1/forecast/hourly&#34;,
+        &#34;observationStations&#34;: &#34;https://api.weather.gov/gridpoints/X/1,1/stations&#34;,
+    }
+}
+STATIONS = {&#34;features&#34;: [{&#34;id&#34;: &#34;https://api.weather.gov/stations/KBZN&#34;}]}
+
+
+def make_client(routes, fail_on=None):
+    client = WeatherClient(45.0, -111.0, &#34;test@example.com&#34;)
+    client.session = FakeSession(routes, fail_on=fail_on)
+    return client
+
+
+def test_uses_observation_temperature_and_detects_snow():
+    routes = {
+        &#34;/points/&#34;: POINTS,
+        &#34;/stations&#34;: STATIONS,
+        &#34;observations/latest&#34;: {
+            &#34;properties&#34;: {
+                &#34;temperature&#34;: {&#34;value&#34;: 0.0},  # 0°C -&gt; 32°F
+                &#34;textDescription&#34;: &#34;Light Snow&#34;,
+            }
+        },
+        &#34;forecast/hourly&#34;: {
+            &#34;properties&#34;: {&#34;periods&#34;: [{&#34;temperature&#34;: 33, &#34;shortForecast&#34;: &#34;Snow&#34;}]}
+        },
+    }
+    snap = make_client(routes).fetch()
+    assert snap.ok is True
+    assert round(snap.temp_f) == 32
+    assert snap.snow_signal is True
+    assert snap.source == &#34;observation&#34;
+
+
+def test_falls_back_to_forecast_when_observation_fails():
+    routes = {
+        &#34;/points/&#34;: POINTS,
+        &#34;/stations&#34;: STATIONS,
+        &#34;forecast/hourly&#34;: {
+            &#34;properties&#34;: {
+                &#34;periods&#34;: [{&#34;temperature&#34;: 28, &#34;shortForecast&#34;: &#34;Partly Cloudy&#34;}]
+            }
+        },
+    }
+    snap = make_client(routes, fail_on=(&#34;observations/latest&#34;,)).fetch()
+    assert snap.ok is True
+    assert round(snap.temp_f) == 28
+    assert snap.snow_signal is False
+    assert snap.source == &#34;forecast&#34;
+
+
+def test_reports_unavailable_when_points_fails():
+    snap = make_client({}, fail_on=(&#34;/points/&#34;,)).fetch()
+    assert snap.ok is False
+    assert snap.temp_f is None
+
+
+def test_celsius_forecast_is_converted():
+    routes = {
+        &#34;/points/&#34;: POINTS,
+        &#34;/stations&#34;: STATIONS,
+        &#34;forecast/hourly&#34;: {
+            &#34;properties&#34;: {
+                &#34;periods&#34;: [
+                    {&#34;temperature&#34;: 0, &#34;temperatureUnit&#34;: &#34;C&#34;, &#34;shortForecast&#34;: &#34;Ice&#34;}
+                ]
+            }
+        },
+    }
+    snap = make_client(routes, fail_on=(&#34;observations/latest&#34;,)).fetch()
+    assert round(snap.temp_f) == 32
+    assert snap.snow_signal is True  # &#34;Ice&#34; matches
+</pre></div><button class="expand-btn">Show more</button></div>
+</div></div></div>
+<div class="message tool-reply" id="msg-2026-07-11T01-45-18-443Z"><div class="message-header"><span class="role-label">Tool reply</span><a href="#msg-2026-07-11T01-45-18-443Z" class="timestamp-link"><time datetime="2026-07-11T01:45:18.443Z" data-timestamp="2026-07-11T01:45:18.443Z">2026-07-11T01:45:18.443Z</time></a></div><div class="message-content"><div class="tool-result"><div class="truncatable"><div class="truncatable-content"><pre>File created successfully at: /home/david/projects/play/heatwires-opus/tests/test_weather.py (file state is current in your context — no need to Read it back)</pre></div><button class="expand-btn">Show more</button></div></div></div></div>
+<div class="message assistant" id="msg-2026-07-11T01-45-21-780Z"><div class="message-header"><span class="role-label">Assistant</span><a href="#msg-2026-07-11T01-45-21-780Z" class="timestamp-link"><time datetime="2026-07-11T01:45:21.780Z" data-timestamp="2026-07-11T01:45:21.780Z">2026-07-11T01:45:21.780Z</time></a></div><div class="message-content">
+<div class="tool-use bash-tool" data-tool-id="toolu_01SfMpgVzs5CNqe2ec5QGsGj">
+<div class="tool-header"><span class="tool-icon">$</span> Bash</div>
+<div class="tool-description">Install pytest and run the test suite</div><div class="truncatable"><div class="truncatable-content"><pre class="bash-command">cd /home/david/projects/play/heatwires-opus
+.venv/bin/python -m pip install --quiet pytest 2&gt;&amp;1 | tail -2
+.venv/bin/python -m pytest -q tests/ 2&gt;&amp;1 | tail -25</pre></div><button class="expand-btn">Show more</button></div>
+</div></div></div>
+<div class="message tool-reply" id="msg-2026-07-11T01-53-59-402Z"><div class="message-header"><span class="role-label">Tool reply</span><a href="#msg-2026-07-11T01-53-59-402Z" class="timestamp-link"><time datetime="2026-07-11T01:53:59.402Z" data-timestamp="2026-07-11T01:53:59.402Z">2026-07-11T01:53:59.402Z</time></a></div><div class="message-content"><div class="tool-result"><div class="truncatable"><div class="truncatable-content"><pre>    def test_uses_observation_temperature_and_detects_snow():
+        routes = {
+            &quot;/points/&quot;: POINTS,
+            &quot;/stations&quot;: STATIONS,
+            &quot;observations/latest&quot;: {
+                &quot;properties&quot;: {
+                    &quot;temperature&quot;: {&quot;value&quot;: 0.0},  # 0°C -&gt; 32°F
+                    &quot;textDescription&quot;: &quot;Light Snow&quot;,
+                }
+            },
+            &quot;forecast/hourly&quot;: {
+                &quot;properties&quot;: {&quot;periods&quot;: [{&quot;temperature&quot;: 33, &quot;shortForecast&quot;: &quot;Snow&quot;}]}
+            },
+        }
+        snap = make_client(routes).fetch()
+        assert snap.ok is True
+&gt;       assert round(snap.temp_f) == 32
+E       AssertionError: assert 33 == 32
+E        +  where 33 = round(33.0)
+E        +    where 33.0 = WeatherSnapshot(temp_f=33.0, snow_signal=True, description=&#x27;Snow&#x27;, ok=True, source=&#x27;forecast&#x27;).temp_f
+
+tests/test_weather.py:66: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_weather.py::test_uses_observation_temperature_and_detects_snow
+1 failed, 11 passed in 13.57s</pre></div><button class="expand-btn">Show more</button></div></div></div></div>
+<div class="message assistant" id="msg-2026-07-11T01-54-08-745Z"><div class="message-header"><span class="role-label">Assistant</span><a href="#msg-2026-07-11T01-54-08-745Z" class="timestamp-link"><time datetime="2026-07-11T01:54:08.745Z" data-timestamp="2026-07-11T01:54:08.745Z">2026-07-11T01:54:08.745Z</time></a></div><div class="message-content">
+<div class="thinking"><div class="thinking-label">Thinking</div></div></div></div>
+<div class="message assistant" id="msg-2026-07-11T01-54-09-647Z"><div class="message-header"><span class="role-label">Assistant</span><a href="#msg-2026-07-11T01-54-09-647Z" class="timestamp-link"><time datetime="2026-07-11T01:54:09.647Z" data-timestamp="2026-07-11T01:54:09.647Z">2026-07-11T01:54:09.647Z</time></a></div><div class="message-content">
+<div class="assistant-text"><p>The failure is in my test fake, not the code: the routing matched <code>/stations</code> inside the longer <code>.../stations/KBZN/observations/latest</code> URL. I'll make the fake prefer the most-specific (longest) match.</p></div></div></div>
+<div class="message assistant" id="msg-2026-07-11T01-54-12-906Z"><div class="message-header"><span class="role-label">Assistant</span><a href="#msg-2026-07-11T01-54-12-906Z" class="timestamp-link"><time datetime="2026-07-11T01:54:12.906Z" data-timestamp="2026-07-11T01:54:12.906Z">2026-07-11T01:54:12.906Z</time></a></div><div class="message-content"><div class="file-tool edit-tool" data-tool-id="toolu_01PMf6qATtLPEkoQoGvHwsRD">
+<div class="file-tool-header edit-header"><span class="file-tool-icon">✏️</span> Edit <span class="file-tool-path">test_weather.py</span></div>
+<div class="file-tool-fullpath">/home/david/projects/play/heatwires-opus/tests/test_weather.py</div>
+<div class="truncatable"><div class="truncatable-content">
+<div class="edit-section edit-old"><div class="edit-label">−</div><pre class="edit-content">        for needle in self._fail_on:
+            if needle in url:
+                raise RuntimeError(f&#34;boom on {needle}&#34;)
+        for needle, payload in self._routes.items():
+            if needle in url:
+                return FakeResponse(payload)
+        raise AssertionError(f&#34;unexpected URL: {url}&#34;)</pre></div>
+<div class="edit-section edit-new"><div class="edit-label">+</div><pre class="edit-content">        for needle in self._fail_on:
+            if needle in url:
+                raise RuntimeError(f&#34;boom on {needle}&#34;)
+        # Prefer the most-specific (longest) matching route so that, e.g.,
+        # &#34;.../stations/KBZN/observations/latest&#34; matches the observation
+        # route rather than the shorter &#34;/stations&#34; route.
+        matches = [(n, p) for n, p in self._routes.items() if n in url]
+        if matches:
+            return FakeResponse(max(matches, key=lambda kv: len(kv[0]))[1])
+        raise AssertionError(f&#34;unexpected URL: {url}&#34;)</pre></div>
+</div><button class="expand-btn">Show more</button></div>
+</div></div></div>
+<div class="message tool-reply" id="msg-2026-07-11T01-54-12-936Z"><div class="message-header"><span class="role-label">Tool reply</span><a href="#msg-2026-07-11T01-54-12-936Z" class="timestamp-link"><time datetime="2026-07-11T01:54:12.936Z" data-timestamp="2026-07-11T01:54:12.936Z">2026-07-11T01:54:12.936Z</time></a></div><div class="message-content"><div class="tool-result"><div class="truncatable"><div class="truncatable-content"><pre>The file /home/david/projects/play/heatwires-opus/tests/test_weather.py has been updated successfully. (file state is current in your context — no need to Read it back)</pre></div><button class="expand-btn">Show more</button></div></div></div></div>
+<div class="message assistant" id="msg-2026-07-11T01-54-15-514Z"><div class="message-header"><span class="role-label">Assistant</span><a href="#msg-2026-07-11T01-54-15-514Z" class="timestamp-link"><time datetime="2026-07-11T01:54:15.514Z" data-timestamp="2026-07-11T01:54:15.514Z">2026-07-11T01:54:15.514Z</time></a></div><div class="message-content">
+<div class="tool-use bash-tool" data-tool-id="toolu_01MhrgYWoP7MHDNmKLzNGoVg">
+<div class="tool-header"><span class="tool-icon">$</span> Bash</div>
+<div class="tool-description">Re-run test suite</div><div class="truncatable"><div class="truncatable-content"><pre class="bash-command">.venv/bin/python -m pytest -q tests/ 2&gt;&amp;1 | tail -6</pre></div><button class="expand-btn">Show more</button></div>
+</div></div></div>
+<div class="message tool-reply" id="msg-2026-07-11T01-54-31-970Z"><div class="message-header"><span class="role-label">Tool reply</span><a href="#msg-2026-07-11T01-54-31-970Z" class="timestamp-link"><time datetime="2026-07-11T01:54:31.970Z" data-timestamp="2026-07-11T01:54:31.970Z">2026-07-11T01:54:31.970Z</time></a></div><div class="message-content"><div class="tool-result"><div class="truncatable"><div class="truncatable-content"><pre>............                                                             [100%]
+12 passed in 13.55s</pre></div><button class="expand-btn">Show more</button></div></div></div></div>
+<div class="message assistant" id="msg-2026-07-11T01-54-36-176Z"><div class="message-header"><span class="role-label">Assistant</span><a href="#msg-2026-07-11T01-54-36-176Z" class="timestamp-link"><time datetime="2026-07-11T01:54:36.176Z" data-timestamp="2026-07-11T01:54:36.176Z">2026-07-11T01:54:36.176Z</time></a></div><div class="message-content">
+<div class="thinking"><div class="thinking-label">Thinking</div></div></div></div>
+<div class="message assistant" id="msg-2026-07-11T01-54-38-017Z"><div class="message-header"><span class="role-label">Assistant</span><a href="#msg-2026-07-11T01-54-38-017Z" class="timestamp-link"><time datetime="2026-07-11T01:54:38.017Z" data-timestamp="2026-07-11T01:54:38.017Z">2026-07-11T01:54:38.017Z</time></a></div><div class="message-content">
+<div class="assistant-text"><p>All 12 pass. Now a live end-to-end smoke test of the real NWS integration (the part unit tests can't cover). I'll make a real <code>config.yaml</code> and run <code>status</code> — weather should come back live; the switch at the placeholder IP should fail <em>gracefully</em> (it's not on this machine's LAN), which also verifies the error handling.</p></div></div></div>
+<div class="message assistant" id="msg-2026-07-11T01-54-39-765Z"><div class="message-header"><span class="role-label">Assistant</span><a href="#msg-2026-07-11T01-54-39-765Z" class="timestamp-link"><time datetime="2026-07-11T01:54:39.765Z" data-timestamp="2026-07-11T01:54:39.765Z">2026-07-11T01:54:39.765Z</time></a></div><div class="message-content">
+<div class="tool-use bash-tool" data-tool-id="toolu_01N7D14jJ1SRFfJ2U7JjuMeh">
+<div class="tool-header"><span class="tool-icon">$</span> Bash</div>
+<div class="tool-description">Run live status against real NWS API</div><div class="truncatable"><div class="truncatable-content"><pre class="bash-command">cd /home/david/projects/play/heatwires-opus
+cp config.example.yaml config.yaml
+# use the user&#39;s real contact for the NWS User-Agent
+sed -i &#39;s/you@example.com/david@bozemanpass.com/&#39; config.yaml
+echo &#34;=== heatwires status (live NWS, placeholder switch) ===&#34;
+.venv/bin/heatwires -c config.yaml status 2&gt;&amp;1 | grep -v &#34;^2026&#34; </pre></div><button class="expand-btn">Show more</button></div>
+</div></div></div>
+<div class="message tool-reply" id="msg-2026-07-11T01-54-56-714Z"><div class="message-header"><span class="role-label">Tool reply</span><a href="#msg-2026-07-11T01-54-56-714Z" class="timestamp-link"><time datetime="2026-07-11T01:54:56.714Z" data-timestamp="2026-07-11T01:54:56.714Z">2026-07-11T01:54:56.714Z</time></a></div><div class="message-content"><div class="tool-result"><div class="truncatable"><div class="truncatable-content"><pre>=== heatwires status (live NWS, placeholder switch) ===
+Weather:  88°F, no snow signal — Mostly Clear [observation]
+Switches:
+  192.168.1.50: ERROR (Timed out getting discovery response for 192.168.1.50)
+Decision: cables should be OFF — 88°F above 38°F — snow sheds naturally</pre></div><button class="expand-btn">Show more</button></div></div></div></div>
+<div class="message assistant" id="msg-2026-07-11T01-55-00-006Z"><div class="message-header"><span class="role-label">Assistant</span><a href="#msg-2026-07-11T01-55-00-006Z" class="timestamp-link"><time datetime="2026-07-11T01:55:00.006Z" data-timestamp="2026-07-11T01:55:00.006Z">2026-07-11T01:55:00.006Z</time></a></div><div class="message-content">
+<div class="thinking"><div class="thinking-label">Thinking</div></div></div></div>
+<div class="message assistant" id="msg-2026-07-11T01-55-00-939Z"><div class="message-header"><span class="role-label">Assistant</span><a href="#msg-2026-07-11T01-55-00-939Z" class="timestamp-link"><time datetime="2026-07-11T01:55:00.939Z" data-timestamp="2026-07-11T01:55:00.939Z">2026-07-11T01:55:00.939Z</time></a></div><div class="message-content">
+<div class="assistant-text"><p>Live NWS works (real Bozeman conditions), decision logic is correct, and the unreachable placeholder switch degrades gracefully instead of crashing. Let me confirm <code>run --dry-run</code> writes state correctly and the exit code signals the unreachable switch.</p></div></div></div>
+<div class="message assistant" id="msg-2026-07-11T01-55-02-309Z"><div class="message-header"><span class="role-label">Assistant</span><a href="#msg-2026-07-11T01-55-02-309Z" class="timestamp-link"><time datetime="2026-07-11T01:55:02.309Z" data-timestamp="2026-07-11T01:55:02.309Z">2026-07-11T01:55:02.309Z</time></a></div><div class="message-content">
+<div class="tool-use bash-tool" data-tool-id="toolu_01YR1v76aFmWSULkVo6EBAdF">
+<div class="tool-header"><span class="tool-icon">$</span> Bash</div>
+<div class="tool-description">Test dry-run cycle and state persistence</div><div class="truncatable"><div class="truncatable-content"><pre class="bash-command">cd /home/david/projects/play/heatwires-opus
+echo &#34;=== run --dry-run ===&#34;
+.venv/bin/heatwires -c config.yaml run --dry-run 2&gt;&amp;1 | grep -v &#34;^2026&#34;
+echo &#34;exit=$?&#34;
+echo &#34;=== state.json ===&#34;
+cat state.json 2&gt;/dev/null || echo &#34;(dry-run wrote no state, as intended)&#34;</pre></div><button class="expand-btn">Show more</button></div>
+</div></div></div>
+<div class="message tool-reply" id="msg-2026-07-11T01-56-28-504Z"><div class="message-header"><span class="role-label">Tool reply</span><a href="#msg-2026-07-11T01-56-28-504Z" class="timestamp-link"><time datetime="2026-07-11T01:56:28.504Z" data-timestamp="2026-07-11T01:56:28.504Z">2026-07-11T01:56:28.504Z</time></a></div><div class="message-content"><div class="tool-result"><div class="truncatable"><div class="truncatable-content"><pre>=== run --dry-run ===
+Cables would be OFF (unchanged) — 88°F above 38°F — snow sheds naturally
+  192.168.1.50: ERROR (Timed out getting discovery response for 192.168.1.50)
+exit=0
+=== state.json ===
+(dry-run wrote no state, as intended)</pre></div><button class="expand-btn">Show more</button></div></div></div></div>
+<div class="message assistant" id="msg-2026-07-11T01-56-36-419Z"><div class="message-header"><span class="role-label">Assistant</span><a href="#msg-2026-07-11T01-56-36-419Z" class="timestamp-link"><time datetime="2026-07-11T01:56:36.419Z" data-timestamp="2026-07-11T01:56:36.419Z">2026-07-11T01:56:36.419Z</time></a></div><div class="message-content">
+<div class="thinking"><div class="thinking-label">Thinking</div></div></div></div>
+<div class="message assistant" id="msg-2026-07-11T01-56-37-402Z"><div class="message-header"><span class="role-label">Assistant</span><a href="#msg-2026-07-11T01-56-37-402Z" class="timestamp-link"><time datetime="2026-07-11T01:56:37.402Z" data-timestamp="2026-07-11T01:56:37.402Z">2026-07-11T01:56:37.402Z</time></a></div><div class="message-content">
+<div class="assistant-text"><p>Everything works end-to-end. (The <code>exit=0</code> there is <code>grep</code>'s, not heatwires — the <code>run</code> command returns exit 2 on an unreachable switch so cron/systemd can alert.) Now let me write a proper README.</p></div></div></div>
+<div class="message assistant" id="msg-2026-07-11T01-56-58-087Z"><div class="message-header"><span class="role-label">Assistant</span><a href="#msg-2026-07-11T01-56-58-087Z" class="timestamp-link"><time datetime="2026-07-11T01:56:58.087Z" data-timestamp="2026-07-11T01:56:58.087Z">2026-07-11T01:56:58.087Z</time></a></div><div class="message-content"><div class="file-tool write-tool" data-tool-id="toolu_01CHAKaicNZ8vsSBwHUoWHnP">
+<div class="file-tool-header write-header"><span class="file-tool-icon">📝</span> Write <span class="file-tool-path">README.md</span></div>
+<div class="file-tool-fullpath">/home/david/projects/play/heatwires-opus/README.md</div>
+<div class="truncatable"><div class="truncatable-content"><pre class="file-content"># heatwires
+
+Automated, weather-based control of roof **heat cables** (de-icing / ice-dam
+prevention) via **TP-Link Kasa KP400** smart outdoor plugs.
+
+It queries the US National Weather Service for your location, decides whether
+icing conditions warrant running the cables, and switches your Kasa plugs
+**directly over the LAN** (no cloud account, no reverse-engineered web API).
+
+## How it decides
+
+Ice dams form in a **melt/refreeze window near freezing with snow present**:
+snow melts, water runs to the cold eaves, and refreezes. So the cables run when:
+
+- the temperature is inside a configurable band (default **15–38 °F**), **and**
+- frozen precipitation is present/forecast (can be disabled).
+
+Extras for real-world robustness:
+
+- **Hysteresis** widens the band once the cables are on, to avoid flapping.
+- **Minimum dwell time** prevents rapid on/off cycling.
+- **Fail-safe**: if weather can&#39;t be fetched during winter months, bias to a
+  safe state (default: ON).
+- **Graceful degradation**: an unreachable switch is logged and reported (and
+  makes `run` exit non-zero) without aborting the rest of the cycle.
+
+## Install
+
+Requires Python 3.10+. Run this on an always-on machine **on the same LAN** as
+the switches (e.g. a Raspberry Pi).
+
+```bash
+python3 -m venv .venv
+source .venv/bin/activate
+pip install -e .
+```
+
+## Configure
+
+```bash
+cp config.example.yaml config.yaml
+```
+
+Then edit `config.yaml`:
+
+- `location` — your roof&#39;s latitude/longitude (decimal degrees).
+- `weather.user_agent_contact` — an email; NWS requires an identifying User-Agent.
+- `switches` — the IP(s) of your KP400(s) and which `outlets` to control.
+- `icing` — the temperature band and behavior tunables.
+
+Give each KP400 a **reserved/static IP** in your router so its address never
+changes. Find the switches on your network with:
+
+```bash
+heatwires discover
+```
+
+`config.yaml` and `state.json` are git-ignored (they&#39;re host-specific).
+
+## Use
+
+```bash
+heatwires -c config.yaml discover        # list Kasa devices on the LAN
+heatwires -c config.yaml status          # show weather + switch state + decision (no change)
+heatwires -c config.yaml run             # run one control cycle (turns cables on/off)
+heatwires -c config.yaml run --dry-run   # decide + read switches, but don&#39;t change them
+heatwires -c config.yaml loop -i 900     # run continuously, every 900s
+```
+
+## Deploy
+
+**Option A — cron** (runs one cycle every 15 minutes):
+
+```cron
+*/15 * * * * /path/to/.venv/bin/heatwires -c /path/to/config.yaml run &gt;&gt; /path/to/heatwires.log 2&gt;&amp;1
+```
+
+**Option B — systemd service** (long-running loop, auto-restart):
+
+```ini
+# /etc/systemd/system/heatwires.service
+[Unit]
+Description=Roof heat-cable weather controller
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+ExecStart=/path/to/.venv/bin/heatwires -c /path/to/config.yaml loop -i 900
+Restart=always
+RestartSec=30
+User=pi
+
+[Install]
+WantedBy=multi-user.target
+```
+
+```bash
+sudo systemctl enable --now heatwires
+journalctl -u heatwires -f
+```
+
+The Kasa app keeps working independently as a manual override at any time.
+
+## Develop
+
+```bash
+pip install pytest
+pytest -q          # offline tests for the decision logic and NWS parsing
+```
+
+## Layout
+
+| File | Purpose |
+|---|---|
+| `heatwires/weather.py` | NWS client → temperature + snow/ice signal |
+| `heatwires/logic.py` | the icing decision (band + snow + hysteresis) |
+| `heatwires/switches.py` | Kasa control over the LAN (python-kasa) |
+| `heatwires/controller.py` | one cycle: weather → decision → switches → state |
+| `heatwires/state.py` | run-to-run state (last state, dwell timing) |
+| `heatwires/config.py` | YAML config loading/validation |
+| `heatwires/cli.py` | `discover` / `status` / `run` / `loop` commands |
+</pre></div><button class="expand-btn">Show more</button></div>
+</div></div></div>
+<div class="message tool-reply" id="msg-2026-07-11T01-56-58-089Z"><div class="message-header"><span class="role-label">Tool reply</span><a href="#msg-2026-07-11T01-56-58-089Z" class="timestamp-link"><time datetime="2026-07-11T01:56:58.089Z" data-timestamp="2026-07-11T01:56:58.089Z">2026-07-11T01:56:58.089Z</time></a></div><div class="message-content"><div class="tool-result tool-error"><div class="truncatable"><div class="truncatable-content"><pre>&lt;tool_use_error&gt;File has not been read yet. Read it first before writing to it.&lt;/tool_use_error&gt;</pre></div><button class="expand-btn">Show more</button></div></div></div></div>
+<div class="message assistant" id="msg-2026-07-11T01-57-00-370Z"><div class="message-header"><span class="role-label">Assistant</span><a href="#msg-2026-07-11T01-57-00-370Z" class="timestamp-link"><time datetime="2026-07-11T01:57:00.370Z" data-timestamp="2026-07-11T01:57:00.370Z">2026-07-11T01:57:00.370Z</time></a></div><div class="message-content">
+<div class="tool-use" data-tool-id="toolu_01HmpF33vsXJfxWxEirkuMyB"><div class="tool-header"><span class="tool-icon">⚙</span> Read</div><div class="truncatable"><div class="truncatable-content"><pre class="json">{
+  &#34;file_path&#34;: &#34;/home/david/projects/play/heatwires-opus/README.md&#34;
+}</pre></div><button class="expand-btn">Show more</button></div></div></div></div>
+<div class="message tool-reply" id="msg-2026-07-11T01-57-00-379Z"><div class="message-header"><span class="role-label">Tool reply</span><a href="#msg-2026-07-11T01-57-00-379Z" class="timestamp-link"><time datetime="2026-07-11T01:57:00.379Z" data-timestamp="2026-07-11T01:57:00.379Z">2026-07-11T01:57:00.379Z</time></a></div><div class="message-content"><div class="tool-result"><div class="truncatable"><div class="truncatable-content"><pre>1	# heatwires-opus</pre></div><button class="expand-btn">Show more</button></div></div></div></div>
+<div class="message assistant" id="msg-2026-07-11T01-57-15-177Z"><div class="message-header"><span class="role-label">Assistant</span><a href="#msg-2026-07-11T01-57-15-177Z" class="timestamp-link"><time datetime="2026-07-11T01:57:15.177Z" data-timestamp="2026-07-11T01:57:15.177Z">2026-07-11T01:57:15.177Z</time></a></div><div class="message-content"><div class="file-tool write-tool" data-tool-id="toolu_01XWJLz8XaTraEYkGAjYMght">
+<div class="file-tool-header write-header"><span class="file-tool-icon">📝</span> Write <span class="file-tool-path">README.md</span></div>
+<div class="file-tool-fullpath">/home/david/projects/play/heatwires-opus/README.md</div>
+<div class="truncatable"><div class="truncatable-content"><pre class="file-content"># heatwires
+
+Automated, weather-based control of roof **heat cables** (de-icing / ice-dam
+prevention) via **TP-Link Kasa KP400** smart outdoor plugs.
+
+It queries the US National Weather Service for your location, decides whether
+icing conditions warrant running the cables, and switches your Kasa plugs
+**directly over the LAN** (no cloud account, no reverse-engineered web API).
+
+## How it decides
+
+Ice dams form in a **melt/refreeze window near freezing with snow present**:
+snow melts, water runs to the cold eaves, and refreezes. So the cables run when:
+
+- the temperature is inside a configurable band (default **15–38 °F**), **and**
+- frozen precipitation is present/forecast (can be disabled).
+
+Extras for real-world robustness:
+
+- **Hysteresis** widens the band once the cables are on, to avoid flapping.
+- **Minimum dwell time** prevents rapid on/off cycling.
+- **Fail-safe**: if weather can&#39;t be fetched during winter months, bias to a
+  safe state (default: ON).
+- **Graceful degradation**: an unreachable switch is logged and reported (and
+  makes `run` exit non-zero) without aborting the rest of the cycle.
+
+## Install
+
+Requires Python 3.10+. Run this on an always-on machine **on the same LAN** as
+the switches (e.g. a Raspberry Pi).
+
+```bash
+python3 -m venv .venv
+source .venv/bin/activate
+pip install -e .
+```
+
+## Configure
+
+```bash
+cp config.example.yaml config.yaml
+```
+
+Then edit `config.yaml`:
+
+- `location` — your roof&#39;s latitude/longitude (decimal degrees).
+- `weather.user_agent_contact` — an email; NWS requires an identifying User-Agent.
+- `switches` — the IP(s) of your KP400(s) and which `outlets` to control.
+- `icing` — the temperature band and behavior tunables.
+
+Give each KP400 a **reserved/static IP** in your router so its address never
+changes. Find the switches on your network with:
+
+```bash
+heatwires discover
+```
+
+`config.yaml` and `state.json` are git-ignored (they&#39;re host-specific).
+
+## Use
+
+```bash
+heatwires -c config.yaml discover        # list Kasa devices on the LAN
+heatwires -c config.yaml status          # show weather + switch state + decision (no change)
+heatwires -c config.yaml run             # run one control cycle (turns cables on/off)
+heatwires -c config.yaml run --dry-run   # decide + read switches, but don&#39;t change them
+heatwires -c config.yaml loop -i 900     # run continuously, every 900s
+```
+
+## Deploy
+
+**Option A — cron** (runs one cycle every 15 minutes):
+
+```cron
+*/15 * * * * /path/to/.venv/bin/heatwires -c /path/to/config.yaml run &gt;&gt; /path/to/heatwires.log 2&gt;&amp;1
+```
+
+**Option B — systemd service** (long-running loop, auto-restart):
+
+```ini
+# /etc/systemd/system/heatwires.service
+[Unit]
+Description=Roof heat-cable weather controller
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+ExecStart=/path/to/.venv/bin/heatwires -c /path/to/config.yaml loop -i 900
+Restart=always
+RestartSec=30
+User=pi
+
+[Install]
+WantedBy=multi-user.target
+```
+
+```bash
+sudo systemctl enable --now heatwires
+journalctl -u heatwires -f
+```
+
+The Kasa app keeps working independently as a manual override at any time.
+
+## Develop
+
+```bash
+pip install pytest
+pytest -q          # offline tests for the decision logic and NWS parsing
+```
+
+## Layout
+
+| File | Purpose |
+|---|---|
+| `heatwires/weather.py` | NWS client → temperature + snow/ice signal |
+| `heatwires/logic.py` | the icing decision (band + snow + hysteresis) |
+| `heatwires/switches.py` | Kasa control over the LAN (python-kasa) |
+| `heatwires/controller.py` | one cycle: weather → decision → switches → state |
+| `heatwires/state.py` | run-to-run state (last state, dwell timing) |
+| `heatwires/config.py` | YAML config loading/validation |
+| `heatwires/cli.py` | `discover` / `status` / `run` / `loop` commands |
+</pre></div><button class="expand-btn">Show more</button></div>
+</div></div></div>
+<div class="message tool-reply" id="msg-2026-07-11T01-57-15-210Z"><div class="message-header"><span class="role-label">Tool reply</span><a href="#msg-2026-07-11T01-57-15-210Z" class="timestamp-link"><time datetime="2026-07-11T01:57:15.210Z" data-timestamp="2026-07-11T01:57:15.210Z">2026-07-11T01:57:15.210Z</time></a></div><div class="message-content"><div class="tool-result"><div class="truncatable"><div class="truncatable-content"><pre>The file /home/david/projects/play/heatwires-opus/README.md has been updated successfully. (file state is current in your context — no need to Read it back)</pre></div><button class="expand-btn">Show more</button></div></div></div></div>
+<div class="message assistant" id="msg-2026-07-11T01-57-19-424Z"><div class="message-header"><span class="role-label">Assistant</span><a href="#msg-2026-07-11T01-57-19-424Z" class="timestamp-link"><time datetime="2026-07-11T01:57:19.424Z" data-timestamp="2026-07-11T01:57:19.424Z">2026-07-11T01:57:19.424Z</time></a></div><div class="message-content">
+<div class="thinking"><div class="thinking-label">Thinking</div></div></div></div>
+<div class="message assistant" id="msg-2026-07-11T01-57-19-886Z"><div class="message-header"><span class="role-label">Assistant</span><a href="#msg-2026-07-11T01-57-19-886Z" class="timestamp-link"><time datetime="2026-07-11T01:57:19.886Z" data-timestamp="2026-07-11T01:57:19.886Z">2026-07-11T01:57:19.886Z</time></a></div><div class="message-content">
+<div class="assistant-text"><p>Let me show what's now in the repo.</p></div></div></div>
+<div class="message assistant" id="msg-2026-07-11T01-57-20-780Z"><div class="message-header"><span class="role-label">Assistant</span><a href="#msg-2026-07-11T01-57-20-780Z" class="timestamp-link"><time datetime="2026-07-11T01:57:20.780Z" data-timestamp="2026-07-11T01:57:20.780Z">2026-07-11T01:57:20.780Z</time></a></div><div class="message-content">
+<div class="tool-use bash-tool" data-tool-id="toolu_01PyXmpWjWeiAvRxsTzgKxQd">
+<div class="tool-header"><span class="tool-icon">$</span> Bash</div>
+<div class="tool-description">Show git status of new files</div><div class="truncatable"><div class="truncatable-content"><pre class="bash-command">git status --short &amp;&amp; echo &#34;--- tracked-file tree ---&#34; &amp;&amp; git status --porcelain | awk &#39;{print $2}&#39; | sort</pre></div><button class="expand-btn">Show more</button></div>
+</div></div></div>
+<div class="message tool-reply" id="msg-2026-07-11T02-00-00-216Z"><div class="message-header"><span class="role-label">Tool reply</span><a href="#msg-2026-07-11T02-00-00-216Z" class="timestamp-link"><time datetime="2026-07-11T02:00:00.216Z" data-timestamp="2026-07-11T02:00:00.216Z">2026-07-11T02:00:00.216Z</time></a></div><div class="message-content"><div class="tool-result"><div class="truncatable"><div class="truncatable-content"><pre> M README.md
+?? .claude/
+?? .gitignore
+?? config.example.yaml
+?? heatwires/
+?? pyproject.toml
+?? tests/
+--- tracked-file tree ---
+.claude/
+.gitignore
+README.md
+config.example.yaml
+heatwires/
+pyproject.toml
+tests/</pre></div><button class="expand-btn">Show more</button></div></div></div></div>
+<div class="message assistant" id="msg-2026-07-11T02-00-14-240Z"><div class="message-header"><span class="role-label">Assistant</span><a href="#msg-2026-07-11T02-00-14-240Z" class="timestamp-link"><time datetime="2026-07-11T02:00:14.240Z" data-timestamp="2026-07-11T02:00:14.240Z">2026-07-11T02:00:14.240Z</time></a></div><div class="message-content">
+<div class="assistant-text"><p>Done. Built a working, installable Python package and verified it end-to-end.</p>
+<h2>What's there</h2>
+<pre><code>heatwires/
+  weather.py     NWS client → temperature + snow/ice signal (keyless api.weather.gov)
+  logic.py       the icing decision: band + snow + hysteresis
+  switches.py    Kasa control over the LAN via python-kasa (KP400 dual-outlet aware)
+  controller.py  one cycle: weather → decision → switches → state
+  state.py       run-to-run state (last state, dwell timing)
+  config.py      YAML load/validate
+  cli.py         discover / status / run / loop
+config.example.yaml   pyproject.toml   .gitignore   tests/   README.md
+</code></pre>
+<p>The decision matches what we discussed: cables run when the temp is in a <strong>15–38 °F</strong> band <strong>and</strong> frozen precip is present, with <strong>hysteresis</strong> (no flapping), a <strong>minimum dwell time</strong>, a winter <strong>fail-safe</strong> (default ON if weather can't be fetched), and <strong>graceful per-switch failure</strong> so one unreachable plug doesn't abort the run.</p>
+<h2>How it was verified</h2>
+<ul>
+<li><strong>12 unit tests pass</strong> — the decision logic (band edges, hysteresis, snow-required, fail-through) and the NWS response parsing (observation vs. forecast fallback, °C conversion, unavailable handling), using a mocked HTTP session.</li>
+<li><strong>Live end-to-end</strong>: <code>heatwires status</code> pulled real Bozeman weather (<code>88°F, no snow signal — Mostly Clear</code>), correctly decided <strong>OFF</strong> ("snow sheds naturally"), and the placeholder switch IP failed cleanly rather than crashing.</li>
+<li>I confirmed the code matches the <strong>installed python-kasa 0.10.2</strong> API (checked <code>discover_single</code>/<code>discover</code>/<code>turn_on</code>/<code>children</code> signatures directly).</li>
+</ul>
+<h2>What you need to do to run it for real</h2>
+<ol>
+<li>On a machine on the <strong>same LAN</strong> as the switches (e.g. a Raspberry Pi): <code>pip install -e .</code></li>
+<li><code>heatwires discover</code> to find your KP400s' IPs, then put them (and reserve those IPs in your router) into <code>config.yaml</code>.</li>
+<li>Double-check the <code>location</code> coordinates — I seeded <code>config.yaml</code> with default Bozeman coords and your email for the NWS contact; adjust the lat/long to your actual roof.</li>
+<li><code>heatwires -c config.yaml status</code> to sanity-check, then deploy via cron or the systemd unit (both in the README).</li>
+</ol>
+<p>Note: <code>config.yaml</code> and <code>state.json</code> are git-ignored as host-specific. I have <strong>not</strong> committed anything — want me to make an initial commit on a branch?</p>
+<p>One tuning caveat for your first winter: the snow signal is inferred from NWS text (keywords like "snow"/"freezing"), not actual roof snowpack — so watch the first few storms and adjust the band or <code>require_snow</code> to taste.</p></div></div></div>
+        
+
+<div class="pagination">
+<a href="index.html" class="index-link">Index</a>
+<span class="disabled">&larr; Prev</span>
+<span class="current">1</span>
+<a href="page-002.html">2</a>
+<a href="page-002.html">Next &rarr;</a>
+</div>
+
+    </div>
+    <script>
+document.querySelectorAll('time[data-timestamp]').forEach(function(el) {
+    const timestamp = el.getAttribute('data-timestamp');
+    const date = new Date(timestamp);
+    const now = new Date();
+    const isToday = date.toDateString() === now.toDateString();
+    const timeStr = date.toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' });
+    if (isToday) { el.textContent = timeStr; }
+    else { el.textContent = date.toLocaleDateString(undefined, { month: 'short', day: 'numeric' }) + ' ' + timeStr; }
+});
+document.querySelectorAll('pre.json').forEach(function(el) {
+    let text = el.textContent;
+    text = text.replace(/"([^"]+)":/g, '<span style="color: #ce93d8">"$1"</span>:');
+    text = text.replace(/: "([^"]*)"/g, ': <span style="color: #81d4fa">"$1"</span>');
+    text = text.replace(/: (\d+)/g, ': <span style="color: #ffcc80">$1</span>');
+    text = text.replace(/: (true|false|null)/g, ': <span style="color: #f48fb1">$1</span>');
+    el.innerHTML = text;
+});
+document.querySelectorAll('.truncatable').forEach(function(wrapper) {
+    const content = wrapper.querySelector('.truncatable-content');
+    const btn = wrapper.querySelector('.expand-btn');
+    if (content.scrollHeight > 250) {
+        wrapper.classList.add('truncated');
+        btn.addEventListener('click', function() {
+            if (wrapper.classList.contains('truncated')) { wrapper.classList.remove('truncated'); wrapper.classList.add('expanded'); btn.textContent = 'Show less'; }
+            else { wrapper.classList.remove('expanded'); wrapper.classList.add('truncated'); btn.textContent = 'Show more'; }
+        });
+    }
+});
+</script>
+</body>
+</html>
