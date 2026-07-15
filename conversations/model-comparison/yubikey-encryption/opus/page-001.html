@@ -1,0 +1,732 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Claude Code transcript - page 1</title>
+    <style>
+:root { --bg-color: #f5f5f5; --card-bg: #ffffff; --user-bg: #e3f2fd; --user-border: #1976d2; --assistant-bg: #f5f5f5; --assistant-border: #9e9e9e; --thinking-bg: #fff8e1; --thinking-border: #ffc107; --thinking-text: #666; --tool-bg: #f3e5f5; --tool-border: #9c27b0; --tool-result-bg: #e8f5e9; --tool-error-bg: #ffebee; --text-color: #212121; --text-muted: #757575; --code-bg: #263238; --code-text: #aed581; }
+* { box-sizing: border-box; }
+body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: var(--bg-color); color: var(--text-color); margin: 0; padding: 16px; line-height: 1.6; }
+.container { max-width: 800px; margin: 0 auto; }
+h1 { font-size: 1.5rem; margin-bottom: 24px; padding-bottom: 8px; border-bottom: 2px solid var(--user-border); }
+.header-row { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; border-bottom: 2px solid var(--user-border); padding-bottom: 8px; margin-bottom: 24px; }
+.header-row h1 { border-bottom: none; padding-bottom: 0; margin-bottom: 0; flex: 1; min-width: 200px; }
+.message { margin-bottom: 16px; border-radius: 12px; overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+.message.user { background: var(--user-bg); border-left: 4px solid var(--user-border); }
+.message.assistant { background: var(--card-bg); border-left: 4px solid var(--assistant-border); }
+.message.tool-reply { background: #fff8e1; border-left: 4px solid #ff9800; }
+.tool-reply .role-label { color: #e65100; }
+.tool-reply .tool-result { background: transparent; padding: 0; margin: 0; }
+.tool-reply .tool-result .truncatable.truncated::after { background: linear-gradient(to bottom, transparent, #fff8e1); }
+.message-header { display: flex; justify-content: space-between; align-items: center; padding: 8px 16px; background: rgba(0,0,0,0.03); font-size: 0.85rem; }
+.role-label { font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; }
+.user .role-label { color: var(--user-border); }
+time { color: var(--text-muted); font-size: 0.8rem; }
+.timestamp-link { color: inherit; text-decoration: none; }
+.timestamp-link:hover { text-decoration: underline; }
+.message:target { animation: highlight 2s ease-out; }
+@keyframes highlight { 0% { background-color: rgba(25, 118, 210, 0.2); } 100% { background-color: transparent; } }
+.message-content { padding: 16px; }
+.message-content p { margin: 0 0 12px 0; }
+.message-content p:last-child { margin-bottom: 0; }
+.thinking { background: var(--thinking-bg); border: 1px solid var(--thinking-border); border-radius: 8px; padding: 12px; margin: 12px 0; font-size: 0.9rem; color: var(--thinking-text); }
+.thinking-label { font-size: 0.75rem; font-weight: 600; text-transform: uppercase; color: #f57c00; margin-bottom: 8px; }
+.thinking p { margin: 8px 0; }
+.assistant-text { margin: 8px 0; }
+.tool-use { background: var(--tool-bg); border: 1px solid var(--tool-border); border-radius: 8px; padding: 12px; margin: 12px 0; }
+.tool-header { font-weight: 600; color: var(--tool-border); margin-bottom: 8px; display: flex; align-items: center; gap: 8px; }
+.tool-icon { font-size: 1.1rem; }
+.tool-description { font-size: 0.9rem; color: var(--text-muted); margin-bottom: 8px; font-style: italic; }
+.tool-result { background: var(--tool-result-bg); border-radius: 8px; padding: 12px; margin: 12px 0; }
+.tool-result.tool-error { background: var(--tool-error-bg); }
+.file-tool { border-radius: 8px; padding: 12px; margin: 12px 0; }
+.write-tool { background: linear-gradient(135deg, #e3f2fd 0%, #e8f5e9 100%); border: 1px solid #4caf50; }
+.edit-tool { background: linear-gradient(135deg, #fff3e0 0%, #fce4ec 100%); border: 1px solid #ff9800; }
+.file-tool-header { font-weight: 600; margin-bottom: 4px; display: flex; align-items: center; gap: 8px; font-size: 0.95rem; }
+.write-header { color: #2e7d32; }
+.edit-header { color: #e65100; }
+.file-tool-icon { font-size: 1rem; }
+.file-tool-path { font-family: monospace; background: rgba(0,0,0,0.08); padding: 2px 8px; border-radius: 4px; }
+.file-tool-fullpath { font-family: monospace; font-size: 0.8rem; color: var(--text-muted); margin-bottom: 8px; word-break: break-all; }
+.file-content { margin: 0; }
+.edit-section { display: flex; margin: 4px 0; border-radius: 4px; overflow: hidden; }
+.edit-label { padding: 8px 12px; font-weight: bold; font-family: monospace; display: flex; align-items: flex-start; }
+.edit-old { background: #fce4ec; }
+.edit-old .edit-label { color: #b71c1c; background: #f8bbd9; }
+.edit-old .edit-content { color: #880e4f; }
+.edit-new { background: #e8f5e9; }
+.edit-new .edit-label { color: #1b5e20; background: #a5d6a7; }
+.edit-new .edit-content { color: #1b5e20; }
+.edit-content { margin: 0; flex: 1; background: transparent; font-size: 0.85rem; }
+.edit-replace-all { font-size: 0.75rem; font-weight: normal; color: var(--text-muted); }
+.write-tool .truncatable.truncated::after { background: linear-gradient(to bottom, transparent, #e6f4ea); }
+.edit-tool .truncatable.truncated::after { background: linear-gradient(to bottom, transparent, #fff0e5); }
+.todo-list { background: linear-gradient(135deg, #e8f5e9 0%, #f1f8e9 100%); border: 1px solid #81c784; border-radius: 8px; padding: 12px; margin: 12px 0; }
+.todo-header { font-weight: 600; color: #2e7d32; margin-bottom: 10px; display: flex; align-items: center; gap: 8px; font-size: 0.95rem; }
+.todo-items { list-style: none; margin: 0; padding: 0; }
+.todo-item { display: flex; align-items: flex-start; gap: 10px; padding: 6px 0; border-bottom: 1px solid rgba(0,0,0,0.06); font-size: 0.9rem; }
+.todo-item:last-child { border-bottom: none; }
+.todo-icon { flex-shrink: 0; width: 20px; height: 20px; display: flex; align-items: center; justify-content: center; font-weight: bold; border-radius: 50%; }
+.todo-completed .todo-icon { color: #2e7d32; background: rgba(46, 125, 50, 0.15); }
+.todo-completed .todo-content { color: #558b2f; text-decoration: line-through; }
+.todo-in-progress .todo-icon { color: #f57c00; background: rgba(245, 124, 0, 0.15); }
+.todo-in-progress .todo-content { color: #e65100; font-weight: 500; }
+.todo-pending .todo-icon { color: #757575; background: rgba(0,0,0,0.05); }
+.todo-pending .todo-content { color: #616161; }
+pre { background: var(--code-bg); color: var(--code-text); padding: 12px; border-radius: 6px; overflow-x: auto; font-size: 0.85rem; line-height: 1.5; margin: 8px 0; white-space: pre-wrap; word-wrap: break-word; }
+pre.json { color: #e0e0e0; }
+code { background: rgba(0,0,0,0.08); padding: 2px 6px; border-radius: 4px; font-size: 0.9em; }
+pre code { background: none; padding: 0; }
+.user-content { margin: 0; }
+.truncatable { position: relative; }
+.truncatable.truncated .truncatable-content { max-height: 200px; overflow: hidden; }
+.truncatable.truncated::after { content: ''; position: absolute; bottom: 32px; left: 0; right: 0; height: 60px; background: linear-gradient(to bottom, transparent, var(--card-bg)); pointer-events: none; }
+.message.user .truncatable.truncated::after { background: linear-gradient(to bottom, transparent, var(--user-bg)); }
+.message.tool-reply .truncatable.truncated::after { background: linear-gradient(to bottom, transparent, #fff8e1); }
+.tool-use .truncatable.truncated::after { background: linear-gradient(to bottom, transparent, var(--tool-bg)); }
+.tool-result .truncatable.truncated::after { background: linear-gradient(to bottom, transparent, var(--tool-result-bg)); }
+.expand-btn { display: none; width: 100%; padding: 8px 16px; margin-top: 4px; background: rgba(0,0,0,0.05); border: 1px solid rgba(0,0,0,0.1); border-radius: 6px; cursor: pointer; font-size: 0.85rem; color: var(--text-muted); }
+.expand-btn:hover { background: rgba(0,0,0,0.1); }
+.truncatable.truncated .expand-btn, .truncatable.expanded .expand-btn { display: block; }
+.pagination { display: flex; justify-content: center; gap: 8px; margin: 24px 0; flex-wrap: wrap; }
+.pagination a, .pagination span { padding: 5px 10px; border-radius: 6px; text-decoration: none; font-size: 0.85rem; }
+.pagination a { background: var(--card-bg); color: var(--user-border); border: 1px solid var(--user-border); }
+.pagination a:hover { background: var(--user-bg); }
+.pagination .current { background: var(--user-border); color: white; }
+.pagination .disabled { color: var(--text-muted); border: 1px solid #ddd; }
+.pagination .index-link { background: var(--user-border); color: white; }
+details.continuation { margin-bottom: 16px; }
+details.continuation summary { cursor: pointer; padding: 12px 16px; background: var(--user-bg); border-left: 4px solid var(--user-border); border-radius: 12px; font-weight: 500; color: var(--text-muted); }
+details.continuation summary:hover { background: rgba(25, 118, 210, 0.15); }
+details.continuation[open] summary { border-radius: 12px 12px 0 0; margin-bottom: 0; }
+.index-item { margin-bottom: 16px; border-radius: 12px; overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,0.1); background: var(--user-bg); border-left: 4px solid var(--user-border); }
+.index-item a { display: block; text-decoration: none; color: inherit; }
+.index-item a:hover { background: rgba(25, 118, 210, 0.1); }
+.index-item-header { display: flex; justify-content: space-between; align-items: center; padding: 8px 16px; background: rgba(0,0,0,0.03); font-size: 0.85rem; }
+.index-item-number { font-weight: 600; color: var(--user-border); }
+.index-item-content { padding: 16px; }
+.index-item-stats { padding: 8px 16px 12px 32px; font-size: 0.85rem; color: var(--text-muted); border-top: 1px solid rgba(0,0,0,0.06); }
+.index-item-commit { margin-top: 6px; padding: 4px 8px; background: #fff3e0; border-radius: 4px; font-size: 0.85rem; color: #e65100; }
+.index-item-commit code { background: rgba(0,0,0,0.08); padding: 1px 4px; border-radius: 3px; font-size: 0.8rem; margin-right: 6px; }
+.commit-card { margin: 8px 0; padding: 10px 14px; background: #fff3e0; border-left: 4px solid #ff9800; border-radius: 6px; }
+.commit-card a { text-decoration: none; color: #5d4037; display: block; }
+.commit-card a:hover { color: #e65100; }
+.commit-card-hash { font-family: monospace; color: #e65100; font-weight: 600; margin-right: 8px; }
+.index-commit { margin-bottom: 12px; padding: 10px 16px; background: #fff3e0; border-left: 4px solid #ff9800; border-radius: 8px; box-shadow: 0 1px 2px rgba(0,0,0,0.05); }
+.index-commit a { display: block; text-decoration: none; color: inherit; }
+.index-commit a:hover { background: rgba(255, 152, 0, 0.1); margin: -10px -16px; padding: 10px 16px; border-radius: 8px; }
+.index-commit-header { display: flex; justify-content: space-between; align-items: center; font-size: 0.85rem; margin-bottom: 4px; }
+.index-commit-hash { font-family: monospace; color: #e65100; font-weight: 600; }
+.index-commit-msg { color: #5d4037; }
+.index-item-long-text { margin-top: 8px; padding: 12px; background: var(--card-bg); border-radius: 8px; border-left: 3px solid var(--assistant-border); }
+.index-item-long-text .truncatable.truncated::after { background: linear-gradient(to bottom, transparent, var(--card-bg)); }
+.index-item-long-text-content { color: var(--text-color); }
+#search-box { display: none; align-items: center; gap: 8px; }
+#search-box input { padding: 6px 12px; border: 1px solid var(--assistant-border); border-radius: 6px; font-size: 16px; width: 180px; }
+#search-box button, #modal-search-btn, #modal-close-btn { background: var(--user-border); color: white; border: none; border-radius: 6px; padding: 6px 10px; cursor: pointer; display: flex; align-items: center; justify-content: center; }
+#search-box button:hover, #modal-search-btn:hover { background: #1565c0; }
+#modal-close-btn { background: var(--text-muted); margin-left: 8px; }
+#modal-close-btn:hover { background: #616161; }
+#search-modal[open] { border: none; border-radius: 12px; box-shadow: 0 4px 24px rgba(0,0,0,0.2); padding: 0; width: 90vw; max-width: 900px; height: 80vh; max-height: 80vh; display: flex; flex-direction: column; }
+#search-modal::backdrop { background: rgba(0,0,0,0.5); }
+.search-modal-header { display: flex; align-items: center; gap: 8px; padding: 16px; border-bottom: 1px solid var(--assistant-border); background: var(--bg-color); border-radius: 12px 12px 0 0; }
+.search-modal-header input { flex: 1; padding: 8px 12px; border: 1px solid var(--assistant-border); border-radius: 6px; font-size: 16px; }
+#search-status { padding: 8px 16px; font-size: 0.85rem; color: var(--text-muted); border-bottom: 1px solid rgba(0,0,0,0.06); }
+#search-results { flex: 1; overflow-y: auto; padding: 16px; }
+.search-result { margin-bottom: 16px; border-radius: 8px; overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+.search-result a { display: block; text-decoration: none; color: inherit; }
+.search-result a:hover { background: rgba(25, 118, 210, 0.05); }
+.search-result-page { padding: 6px 12px; background: rgba(0,0,0,0.03); font-size: 0.8rem; color: var(--text-muted); border-bottom: 1px solid rgba(0,0,0,0.06); }
+.search-result-content { padding: 12px; }
+.search-result mark { background: #fff59d; padding: 1px 2px; border-radius: 2px; }
+@media (max-width: 600px) { body { padding: 8px; } .message, .index-item { border-radius: 8px; } .message-content, .index-item-content { padding: 12px; } pre { font-size: 0.8rem; padding: 8px; } #search-box input { width: 120px; } #search-modal[open] { width: 95vw; height: 90vh; } }
+</style>
+</head>
+<body>
+    <div class="container">
+        <h1><a href="index.html" style="color: inherit; text-decoration: none;">Claude Code transcript</a> - page 1/2</h1>
+        
+
+<div class="pagination">
+<a href="index.html" class="index-link">Index</a>
+<span class="disabled">&larr; Prev</span>
+<span class="current">1</span>
+<a href="page-002.html">2</a>
+<a href="page-002.html">Next &rarr;</a>
+</div>
+
+        
+<div class="message user" id="msg-2026-07-11T15-58-55-117Z"><div class="message-header"><span class="role-label">User</span><a href="#msg-2026-07-11T15-58-55-117Z" class="timestamp-link"><time datetime="2026-07-11T15:58:55.117Z" data-timestamp="2026-07-11T15:58:55.117Z">2026-07-11T15:58:55.117Z</time></a></div><div class="message-content">
+<div class="user-content"><p>I'd like some advice on how to deploy the following file encryption scenario: I would like to have some files that contain ssh private keys and things like plaintext passwords encrypted. In the past I've done this on the desktop with Veracrypt. However now I'd like to adapt the scheme so that it can work on Android. There's no Veracrypt for Android. In addition I'd like to have the encryption key stored on a hard token (specifically a Yubikey). I understand that using the OpenKeyChain Android app and the Termux app, in theory I can have the encrypted data stored on a removable SD card and use a key on the Yubikey to decrypt the files such that they are available to processes running in Termux such as the ssh client. I think that setup will work for me but I also want to adopt the same workflow on the desktop (and discontinue using Veracrypt). So I'd need some pointers on how to make it work with WSL2. I'd also like to have the decryption key available off-Yubikey so I can provision it to multiple Yubikeys and potentially use it bare in some scenarios. I'm not sure how to import such a GPG key into a Yubikey so it works on both Linux and Android.</p></div></div></div>
+<div class="message assistant" id="msg-2026-07-11T16-00-18-766Z"><div class="message-header"><span class="role-label">Assistant</span><a href="#msg-2026-07-11T16-00-18-766Z" class="timestamp-link"><time datetime="2026-07-11T16:00:18.766Z" data-timestamp="2026-07-11T16:00:18.766Z">2026-07-11T16:00:18.766Z</time></a></div><div class="message-content">
+<div class="thinking"><div class="thinking-label">Thinking</div></div></div></div>
+<div class="message assistant" id="msg-2026-07-11T16-00-20-757Z"><div class="message-header"><span class="role-label">Assistant</span><a href="#msg-2026-07-11T16-00-20-757Z" class="timestamp-link"><time datetime="2026-07-11T16:00:20.757Z" data-timestamp="2026-07-11T16:00:20.757Z">2026-07-11T16:00:20.757Z</time></a></div><div class="message-content">
+<div class="assistant-text"><p>This is a great, well-scoped setup and most of your plan is sound — but there are a couple of important architectural points (and one common misconception about how the Yubikey actually gets used on Android) that are worth nailing down before you commit. Let me verify the fiddliest current details rather than rely on memory, then give you a concrete plan.</p></div></div></div>
+<div class="message assistant" id="msg-2026-07-11T16-00-20-992Z"><div class="message-header"><span class="role-label">Assistant</span><a href="#msg-2026-07-11T16-00-20-992Z" class="timestamp-link"><time datetime="2026-07-11T16:00:20.992Z" data-timestamp="2026-07-11T16:00:20.992Z">2026-07-11T16:00:20.992Z</time></a></div><div class="message-content">
+<div class="tool-use" data-tool-id="toolu_01DrFixm2obT2RQR8vAe6Nvk"><div class="tool-header"><span class="tool-icon">⚙</span> ToolSearch</div><div class="truncatable"><div class="truncatable-content"><pre class="json">{
+  &#34;query&#34;: &#34;select:WebSearch,WebFetch&#34;,
+  &#34;max_results&#34;: 5
+}</pre></div><button class="expand-btn">Show more</button></div></div></div></div>
+<div class="message tool-reply" id="msg-2026-07-11T16-00-21-028Z"><div class="message-header"><span class="role-label">Tool reply</span><a href="#msg-2026-07-11T16-00-21-028Z" class="timestamp-link"><time datetime="2026-07-11T16:00:21.028Z" data-timestamp="2026-07-11T16:00:21.028Z">2026-07-11T16:00:21.028Z</time></a></div><div class="message-content"><div class="tool-result"><div class="truncatable"><div class="truncatable-content"><pre class="json">{
+  &quot;type&quot;: &quot;tool_reference&quot;,
+  &quot;tool_name&quot;: &quot;WebSearch&quot;
+}</pre><pre class="json">{
+  &quot;type&quot;: &quot;tool_reference&quot;,
+  &quot;tool_name&quot;: &quot;WebFetch&quot;
+}</pre></div><button class="expand-btn">Show more</button></div></div></div></div>
+<div class="message assistant" id="msg-2026-07-11T16-00-22-931Z"><div class="message-header"><span class="role-label">Assistant</span><a href="#msg-2026-07-11T16-00-22-931Z" class="timestamp-link"><time datetime="2026-07-11T16:00:22.931Z" data-timestamp="2026-07-11T16:00:22.931Z">2026-07-11T16:00:22.931Z</time></a></div><div class="message-content">
+<div class="thinking"><div class="thinking-label">Thinking</div></div></div></div>
+<div class="message assistant" id="msg-2026-07-11T16-00-23-933Z"><div class="message-header"><span class="role-label">Assistant</span><a href="#msg-2026-07-11T16-00-23-933Z" class="timestamp-link"><time datetime="2026-07-11T16:00:23.933Z" data-timestamp="2026-07-11T16:00:23.933Z">2026-07-11T16:00:23.933Z</time></a></div><div class="message-content">
+<div class="tool-use" data-tool-id="toolu_01L6EEUn8btR9vdTXoPxN3pi"><div class="tool-header"><span class="tool-icon">⚙</span> WebSearch</div><div class="truncatable"><div class="truncatable-content"><pre class="json">{
+  &#34;query&#34;: &#34;Termux OpenKeychain GnuPG Yubikey decrypt files integration bridge&#34;
+}</pre></div><button class="expand-btn">Show more</button></div></div></div></div>
+<div class="message assistant" id="msg-2026-07-11T16-00-24-921Z"><div class="message-header"><span class="role-label">Assistant</span><a href="#msg-2026-07-11T16-00-24-921Z" class="timestamp-link"><time datetime="2026-07-11T16:00:24.921Z" data-timestamp="2026-07-11T16:00:24.921Z">2026-07-11T16:00:24.921Z</time></a></div><div class="message-content">
+<div class="tool-use" data-tool-id="toolu_01WLcQNwgJXzt86XFCu1kqgy"><div class="tool-header"><span class="tool-icon">⚙</span> WebSearch</div><div class="truncatable"><div class="truncatable-content"><pre class="json">{
+  &#34;query&#34;: &#34;WSL2 Yubikey GPG smartcard passthrough gpg-agent relay usbipd 2025&#34;
+}</pre></div><button class="expand-btn">Show more</button></div></div></div></div>
+<div class="message assistant" id="msg-2026-07-11T16-00-25-176Z"><div class="message-header"><span class="role-label">Assistant</span><a href="#msg-2026-07-11T16-00-25-176Z" class="timestamp-link"><time datetime="2026-07-11T16:00:25.176Z" data-timestamp="2026-07-11T16:00:25.176Z">2026-07-11T16:00:25.176Z</time></a></div><div class="message-content">
+<div class="tool-use" data-tool-id="toolu_01AuFP2VnxchntTeEb7SF2LH"><div class="tool-header"><span class="tool-icon">⚙</span> WebSearch</div><div class="truncatable"><div class="truncatable-content"><pre class="json">{
+  &#34;query&#34;: &#34;gpg keytocard same encryption subkey multiple yubikeys restore backup&#34;
+}</pre></div><button class="expand-btn">Show more</button></div></div></div></div>
+<div class="message tool-reply" id="msg-2026-07-11T16-03-32-298Z"><div class="message-header"><span class="role-label">Tool reply</span><a href="#msg-2026-07-11T16-03-32-298Z" class="timestamp-link"><time datetime="2026-07-11T16:03:32.298Z" data-timestamp="2026-07-11T16:03:32.298Z">2026-07-11T16:03:32.298Z</time></a></div><div class="message-content"><div class="tool-result"><div class="truncatable"><div class="truncatable-content"><pre>Web search results for query: &quot;gpg keytocard same encryption subkey multiple yubikeys restore backup&quot;
+
+Links: [{&quot;title&quot;:&quot;Managing Multiple GPG Keys and YubiKey Setup&quot;,&quot;url&quot;:&quot;https://blog.leiw.ai/blog/2025-11-06-manage-gpg-keys-and-yubikey-setup/&quot;},{&quot;title&quot;:&quot;Using two yubikeys not covered under guide · Issue #19 · drduh/YubiKey-Guide&quot;,&quot;url&quot;:&quot;https://github.com/drduh/YubiKey-Guide/issues/19&quot;},{&quot;title&quot;:&quot;Yubico Forum • View topic - copying authentication gpg subkey to a backup yubico&quot;,&quot;url&quot;:&quot;https://forum.yubico.com/viewtopic039c.html?p=8370&quot;},{&quot;title&quot;:&quot;Applying GPG and Yubikey: Part 6 (Setting up Yubikeys) · Chip Senkbeil&quot;,&quot;url&quot;:&quot;https://chipsenkbeil.com/posts/applying-gpg-and-yubikey-part-6-setting-up-yubikeys/&quot;},{&quot;title&quot;:&quot;Developers Guide to GPG and YubiKey | Okta Developer&quot;,&quot;url&quot;:&quot;https://developer.okta.com/blog/2021/07/07/developers-guide-to-gpg&quot;},{&quot;title&quot;:&quot;How to Reset Your YubiKey and Create a Backup - Privacy Guides&quot;,&quot;url&quot;:&quot;https://www.privacyguides.org/articles/2025/03/06/yubikey-reset-and-backup/&quot;}]
+
+Based on the search results, here&#x27;s what I found regarding your query about using the same encryption subkey with multiple YubiKeys and restoring from backup:
+
+## Key Finding: The Limitation
+
+If you try copying the GPG secret key and subkeys onto a second Yubikey, &quot;keytocard&quot; will not let you. You&#x27;ll get &quot;secret key already stored on a card&quot; and other similar warnings.
+
+## The Solution: Backup Before Moving Keys
+
+However, there is a workaround. To maintain the same subkey copied to each Yubikey, by design, when you move a subkey over to a Yubikey, the local instance is destroyed. To maintain the same subkey, you have to copy your GPG folder prior to transferring the keys in order to maintain the subkeys.
+
+## Backup Workflow
+
+Always back up your private keys and revocation certificates offline. Protect backups with encryption: gpg -c private.asc. For YubiKey setups, keep your master key offline and only move subkeys to the device.
+
+## Important Limitation
+
+You can NOT back up the keys once they are on the device. This means you need to back up your keys before moving them to a YubiKey using `keytocard`.
+
+In summary, the recommended approach is to:
+1. Create a backup of your GPG keys and folder before using `keytocard`
+2. Move the subkeys to the first YubiKey
+3. Restore from your backup and move to subsequent YubiKeys
+
+
+REMINDER: You MUST include the sources above in your response to the user using markdown hyperlinks.</pre></div><button class="expand-btn">Show more</button></div></div></div></div>
+<div class="message tool-reply" id="msg-2026-07-11T16-03-32-312Z"><div class="message-header"><span class="role-label">Tool reply</span><a href="#msg-2026-07-11T16-03-32-312Z" class="timestamp-link"><time datetime="2026-07-11T16:03:32.312Z" data-timestamp="2026-07-11T16:03:32.312Z">2026-07-11T16:03:32.312Z</time></a></div><div class="message-content"><div class="tool-result"><div class="truncatable"><div class="truncatable-content"><pre>Web search results for query: &quot;Termux OpenKeychain GnuPG Yubikey decrypt files integration bridge&quot;
+
+Links: [{&quot;title&quot;:&quot;YubiKey support · Issue #393 · termux/termux-api&quot;,&quot;url&quot;:&quot;https://github.com/termux/termux-api/issues/393&quot;},{&quot;title&quot;:&quot;Do phone apps support Yubikey? | Hacker News&quot;,&quot;url&quot;:&quot;https://news.ycombinator.com/item?id=26800225&quot;},{&quot;title&quot;:&quot;Yes! Termux[0] does supports gpg and pass but no yubikey by default, but okc-age... | Hacker News&quot;,&quot;url&quot;:&quot;https://news.ycombinator.com/item?id=26801530&quot;},{&quot;title&quot;:&quot;Hacker News&quot;,&quot;url&quot;:&quot;http://labs.stephenou.com/hn/item/26799021&quot;},{&quot;title&quot;:&quot;How to Use GPG Encryption in Termux for Bulletproof Privacy&quot;,&quot;url&quot;:&quot;https://www.samgalope.dev/2024/09/06/gpg-encryption-in-termux-how-to-encrypt-and-secure-your-communications/&quot;},{&quot;title&quot;:&quot;FAQ · OpenKeychain&quot;,&quot;url&quot;:&quot;https://www.openkeychain.org/faq/&quot;},{&quot;title&quot;:&quot;Password management using YuBiKey, PGP/GnuPG and GIT&quot;,&quot;url&quot;:&quot;https://dehnes.com/software/2020/04/03/password_management_yubikey_pgp_git.html&quot;},{&quot;title&quot;:&quot;Using Your YubiKey with OpenPGP&quot;,&quot;url&quot;:&quot;https://support.yubico.com/hc/en-us/articles/360013790259-Using-Your-YubiKey-with-OpenPGP&quot;},{&quot;title&quot;:&quot;PGP&quot;,&quot;url&quot;:&quot;https://developers.yubico.com/PGP/&quot;}]
+
+Based on the search results, here&#x27;s what I found regarding Termux, OpenKeychain, GnuPG, and Yubikey integration for decrypting files:
+
+## Integration Bridge: OkcAgent
+
+Termux supports gpg and pass but no yubikey by default, but okc-agent is a third party binding of OpenKeyChain, providing barebones gpg via yubikey. This appears to be the primary integration bridge for using Yubikey with GnuPG in Termux.
+
+Users can decrypt passwords via NFC with a simple command like: okc-gpg -d ~/.password-store/mypass.gpg
+
+## OpenKeychain and Yubikey Support
+
+OpenKeychain needs a stand-alone file manager to select files from local storage or SD card for importing keys or encrypting/decrypting files. The YubiKey NEO is recommended and supports both USB and NFC.
+
+## Limitations
+
+It&#x27;s worth noting that OpenKeyChain&#x27;s PGP implementation doesn&#x27;t support YubiKeys in such a way that it can decrypt files with a hidden receipt.
+
+## Practical Usage
+
+Users can verify their key by opening OpenKeychain and holding their YubiKey to the back of their phone, allowing the app to communicate with the YubiKey via NFC and know when it needs to ask for the YubiKey to be held against the phone for private key access.
+
+
+REMINDER: You MUST include the sources above in your response to the user using markdown hyperlinks.</pre></div><button class="expand-btn">Show more</button></div></div></div></div>
+<div class="message tool-reply" id="msg-2026-07-11T16-03-32-598Z"><div class="message-header"><span class="role-label">Tool reply</span><a href="#msg-2026-07-11T16-03-32-598Z" class="timestamp-link"><time datetime="2026-07-11T16:03:32.598Z" data-timestamp="2026-07-11T16:03:32.598Z">2026-07-11T16:03:32.598Z</time></a></div><div class="message-content"><div class="tool-result"><div class="truncatable"><div class="truncatable-content"><pre>Web search results for query: &quot;WSL2 Yubikey GPG smartcard passthrough gpg-agent relay usbipd 2025&quot;
+
+Links: [{&quot;title&quot;:&quot;Odd issue sharing a USB device between Windows and WSL2 · Issue #458 · dorssel/usbipd-win&quot;,&quot;url&quot;:&quot;https://github.com/dorssel/usbipd-win/issues/458&quot;},{&quot;title&quot;:&quot;Using a Yubikey for GPG in WSL (Windows Subsystem for Linux) on Windows 10&quot;,&quot;url&quot;:&quot;https://justyn.io/blog/using-a-yubikey-for-gpg-in-wsl-windows-subsystem-for-linux-on-windows-10/&quot;},{&quot;title&quot;:&quot;The ultimate guide to Yubikey on WSL2 [Part 1] | by Jaroslav Živný | Medium&quot;,&quot;url&quot;:&quot;https://jardazivny.medium.com/the-ultimate-guide-to-yubikey-on-wsl2-part-1-dce2ff8d7e45&quot;},{&quot;title&quot;:&quot;How to use Yubikey with WSL2 via USB passthrough (or how I compiled my first custom Linux kernel) | 1-Bit Blog&quot;,&quot;url&quot;:&quot;https://1-bit-wonder.github.io/blog/how-to-use-yubikey-with-wsl/How%20to%20use%20Yubikey%20with%20WSL%20via%20USB%20passthrough/&quot;},{&quot;title&quot;:&quot;Yubikey Passthrough on WSL2 With Full FIDO2 Support&quot;,&quot;url&quot;:&quot;https://lgug2z.com/articles/yubikey-passthrough-on-wsl2-with-full-fido2-support/&quot;},{&quot;title&quot;:&quot;How to use GPG with YubiKey (bonus: WSL 1 and WSL 2)&quot;,&quot;url&quot;:&quot;https://codingnest.com/how-to-use-gpg-with-yubikey-wsl/&quot;},{&quot;title&quot;:&quot;WSL Setup for Yubikey - Home | Grav&quot;,&quot;url&quot;:&quot;https://www.cylindric.net/pki/yubikey/wsl&quot;},{&quot;title&quot;:&quot;WSL2 gpg agent relay (Yubikey) · GitHub&quot;,&quot;url&quot;:&quot;https://gist.github.com/Speedy37/1833b6b8c73a7768a266f0b903ab3678&quot;},{&quot;title&quot;:&quot;Using GPG keys stored on a YubiKey for SSH Authentication on Windows and Windows Subsystem for Linux | Richard Slater&quot;,&quot;url&quot;:&quot;https://www.richard-slater.co.uk/tech-blog/gpg-ssh-with-wsl/&quot;}]
+
+I found several resources about using Yubikey with GPG on WSL2 via USB passthrough and gpg-agent relay. Here&#x27;s a summary of the key information:
+
+## USB Passthrough with usbipd
+
+WSL2 version 0.67.6 or later with USB passthrough via usbipd-win allows sharing locally connected USB devices to WSL2. usbipd-win is used to do USB passthrough to the WSL2 VM and can be installed via winget.
+
+## FIDO2 Support Requirements
+
+To enable full USB passthrough with FIDO2 support, you need to compile a custom WSL2 Linux kernel, because the kernels released by Microsoft are missing key options. You need to enable HIDDEV and HIDRAW options when recompiling.
+
+## GPG Agent Relay Approaches
+
+There are several methods for forwarding GPG access:
+
+1. **Agent Forwarding**: It is possible to forward gpg-agent from Windows to WSL.
+
+2. **Socket Relay**: gpg-agent on Windows creates a socket file at %APPDATA%/gnupg/S.gpg-agent, but Windows doesn&#x27;t support Unix sockets, so this socket file can&#x27;t be used directly.
+
+3. **Tool-based Solutions**: Tools like npiperelay and wsl2-ssh-pageant can be used to bridge Windows and WSL communication for both SSH and GPG.
+
+## Shared Device Limitations
+
+USBIPD requires exclusive access of the YubiKey by WSL, forwarding USB packets over the local interface. If using the Yubikey in Windows first through gpg-agent, you may be unable to attach it to WSL2 until system reboot, but attaching to WSL2 first allows for repeated detaching and reattaching.
+
+
+REMINDER: You MUST include the sources above in your response to the user using markdown hyperlinks.</pre></div><button class="expand-btn">Show more</button></div></div></div></div>
+<div class="message assistant" id="msg-2026-07-11T16-03-45-482Z"><div class="message-header"><span class="role-label">Assistant</span><a href="#msg-2026-07-11T16-03-45-482Z" class="timestamp-link"><time datetime="2026-07-11T16:03:45.482Z" data-timestamp="2026-07-11T16:03:45.482Z">2026-07-11T16:03:45.482Z</time></a></div><div class="message-content">
+<div class="thinking"><div class="thinking-label">Thinking</div></div></div></div>
+<div class="message assistant" id="msg-2026-07-11T16-04-35-518Z"><div class="message-header"><span class="role-label">Assistant</span><a href="#msg-2026-07-11T16-04-35-518Z" class="timestamp-link"><time datetime="2026-07-11T16:04:35.518Z" data-timestamp="2026-07-11T16:04:35.518Z">2026-07-11T16:04:35.518Z</time></a></div><div class="message-content">
+<div class="assistant-text"><p>Good — all three of the tricky points check out. Here's my advice, organized around the decisions that actually matter for your setup.</p>
+<h2>1. Reframe: you're moving from a symmetric container to GPG public-key encryption</h2>
+<p>Veracrypt is a symmetric volume: one passphrase-derived key, mount/unmount. The OpenKeychain + Yubikey world is <strong>asymmetric OpenPGP</strong>: you encrypt files <em>to your public key</em>, and the <em>private encryption subkey</em> (held on the Yubikey) decrypts them. This is the right primitive for your requirements and it's what makes "the key lives on a hardware token" possible at all. Concretely:</p>
+<ul>
+<li>The Yubikey's OpenPGP applet has three slots: <strong>S</strong>ignature, <strong>E</strong>ncryption, <strong>A</strong>uthentication. For decrypting files you only need the <strong>Encryption</strong> subkey on the card.</li>
+<li><code>gpg --decrypt</code> asks the card to unwrap the file's session key on-chip; the private key never leaves the token.</li>
+<li>The <strong>public</strong> key is all you need to <em>encrypt</em>. It's not secret — put it on every device.</li>
+</ul>
+<p>The main behavioral change vs. Veracrypt: there's no mounted volume by default. You decrypt files on demand (to stdout, a pipe, or tmpfs). If you miss the "mount a folder" feeling, see §5.</p>
+<h2>2. The off-token / multi-Yubikey requirement drives your whole key ceremony</h2>
+<p>This is the most important constraint you stated, and it dictates that you <strong>generate keys offline and keep an exportable backup</strong> — <em>not</em> generate them on the Yubikey. Two facts to internalize:</p>
+<ul>
+<li><code>keytocard</code> is <strong>destructive</strong>: moving the encryption subkey onto a Yubikey replaces the on-disk copy with a stub. You cannot pull it back off.</li>
+<li>Therefore, to provision the <em>same</em> encryption subkey onto Yubikey #2, #3, … you restore your backup keyring between each <code>keytocard</code>.</li>
+</ul>
+<p>Recommended ceremony (do it on an airgapped/offline boot or a throwaway <code>GNUPGHOME</code>):</p>
+<ol>
+<li>Generate a <strong>certify-only master</strong> key (kept offline) plus <strong>S/E/A subkeys</strong>. Use <strong>ed25519/cv25519</strong> if all your Yubikeys are v5 (they support ECC OpenPGP and so does OpenKeychain); use <strong>rsa4096</strong> if any are older NEO/4 tokens or you want maximum interop.</li>
+<li>Export and store the full secret keyring securely — this backup <em>is</em> your "use it bare" copy and your multi-token source:
+   <code>gpg --armor --export-secret-keys   KEYID &gt; master-secret.asc
+   gpg --armor --export-secret-subkeys KEYID &gt; subkeys.asc
+   gpg --armor --export KEYID &gt; public.asc
+   gpg --gen-revoke KEYID &gt; revoke.asc</code>
+   Keep these on encrypted offline media (and consider <code>paperkey</code> for the master). Put a strong passphrase on them.</li>
+<li>For <strong>each</strong> Yubikey: work from a <em>fresh copy</em> of the backup (e.g. <code>export GNUPGHOME=$(mktemp -d); gpg --import subkeys.asc</code>), then <code>gpg --edit-key KEYID</code> → <code>key &lt;n&gt;</code> (select the encryption subkey) → <code>keytocard</code> → Encryption slot → <code>save</code>. Discard that temp GNUPGHOME. Repeat per token.</li>
+</ol>
+<p><strong>Security tradeoff to accept consciously:</strong> keeping the encryption key exportable defeats the strongest property of a hardware token (non-extractability). Anyone who gets your backup + its passphrase can decrypt everything, forever, no Yubikey needed. That's a legitimate choice for your "provision many / use bare" goal — just guard that backup like it <em>is</em> the plaintext, because effectively it is. If you ever want the strong guarantee for a subset of use, that's when you'd generate on-card instead (but then it's single-token and non-portable).</p>
+<h2>3. Android reality — correct one misconception</h2>
+<p>Your mental model is right <em>except</em> for one thing: <strong>Termux does not talk to the Yubikey directly.</strong> Non-root Android apps can't grab a USB CCID smartcard, and NFC is only available to the foreground app. So the Yubikey is always driven by <strong>OpenKeychain</strong> (NFC tap or USB-C), and Termux delegates to it.</p>
+<p>The bridge is <strong><a href="https://github.com/tanshihaj/okc-agent">okc-agent / <code>okc-gpg</code></a></strong> (also packaged as <code>okc-age</code>): a shim that routes GnuPG operations from your Termux shell to OpenKeychain. Your ssh-client-in-Termux flow becomes, e.g.:</p>
+<pre><code>okc-gpg -d ~/vault/id_ed25519.gpg &gt; &quot;$TMPDIR/id_ed25519&quot;   # NFC-tap the Yubikey when prompted
+ssh -i &quot;$TMPDIR/id_ed25519&quot; host
+shred -u &quot;$TMPDIR/id_ed25519&quot;
+</code></pre>
+<p>On Android put <code>$TMPDIR</code> on internal storage (tmpfs-ish, app-private), <strong>not</strong> the SD card, so plaintext isn't written to removable media. The <em>encrypted</em> <code>.gpg</code> files can live on the SD card as you planned. Import only your <strong>public</strong> key into OpenKeychain; the private E-key comes from the Yubikey.</p>
+<h2>4. WSL2 — two workable paths, pick the relay</h2>
+<p>There are two established approaches (both confirmed current):</p>
+<ul>
+<li><strong>A. gpg-agent socket relay (recommended).</strong> Install Gpg4win on Windows; Windows' <code>gpg-agent</code> owns the Yubikey. Bridge its socket into WSL2 with <strong>npiperelay + socat</strong> (or <code>wsl2-ssh-pageant</code>). WSL's gpg talks to the Windows agent; the Yubikey stays usable by Windows apps simultaneously. Cleaner, survives reboots, no custom kernel. See the <a href="https://gist.github.com/Speedy37/1833b6b8c73a7768a266f0b903ab3678">WSL2 gpg-agent relay gist</a> and <a href="https://jardazivny.medium.com/the-ultimate-guide-to-yubikey-on-wsl2-part-1-dce2ff8d7e45">Jarda Živný's guide</a>.</li>
+<li><strong>B. usbipd-win passthrough.</strong> <code>usbipd attach</code> the Yubikey into the WSL2 VM and run <code>pcscd</code>/<code>gpg</code> inside Linux. Downside: it's <strong>exclusive</strong> — Windows loses the Yubikey while attached, and you can get stuck needing a reboot if Windows' gpg-agent grabbed it first. (Full FIDO2 needs a custom kernel, but for OpenPGP smartcard/CCID the stock kernel is fine.) See <a href="https://github.com/dorssel/usbipd-win">usbipd-win</a>.</li>
+</ul>
+<p>Go with <strong>A</strong> unless you have a reason to isolate the token inside the VM. It gives you the same decrypt-on-demand commands as Android, and as a bonus you get Yubikey-backed SSH auth (<code>enable-ssh-support</code> in gpg-agent) if you ever want it.</p>
+<h2>5. How to organize the files themselves</h2>
+<p>Three options, roughly best-to-worst for your case:</p>
+<ul>
+<li><strong><code>pass</code> (passwordstore.org) — strongly recommended for the passwords, and fine for keys.</strong> It <em>is</em> your architecture, productized: a tree of per-file GPG-encrypted secrets, decrypted via your Yubikey. Mature cross-platform story: <code>pass</code> on desktop/Termux, the <strong><a href="https://github.com/android-password-store/Android-Password-Store">Android Password Store</a></strong> app integrates directly with OpenKeychain + Yubikey, and it syncs via git (or drop the store on your SD card / Syncthing). SSH private keys can be stored as multiline entries and decrypted on demand exactly like above.</li>
+<li><strong>Per-file <code>gpg -e -r KEYID file</code></strong> for a handful of standalone files. Simplest; no extra tooling; decrypt to a pipe/tmpfs. Good if you don't want the <code>pass</code> layout.</li>
+<li><strong>"Poor-man's container"</strong> if you really want the mount feel: keep a <code>gocryptfs</code> directory whose <em>password</em> is stored in a small Yubikey-decrypted <code>.gpg</code> file. You <code>okc-gpg -d passfile.gpg | gocryptfs ...</code> to mount on Linux/WSL (FUSE) and via <strong>DroidFS</strong> on Android. This most closely reproduces Veracrypt (a real mounted encrypted folder) while still gating unlock behind the Yubikey. More moving parts — only worth it if the mount workflow matters to you.</li>
+</ul>
+<p>My suggestion: <strong><code>pass</code> for passwords and small secrets; per-file GPG for the occasional SSH key</strong>, both decrypting through the same Yubikey. It's the least custom, works identically on all three platforms, and matches the OpenKeychain/Termux tooling you already found.</p>
+<h2>Suggested next step</h2>
+<p>Do the <strong>offline key ceremony (§2)</strong> first — everything else depends on having an exportable E-subkey and a safe backup. Then provision one Yubikey, get the desktop relay (§4A) working, validate <code>gpg -e</code>/<code>gpg -d</code> round-trips there, and only then move to the Android/okc-agent leg (§3), which is the fiddliest. Want me to draft the exact ceremony as a runnable script (temp-GNUPGHOME, ECC vs RSA choice, per-token loop) so you can review it before running it airgapped?</p>
+<p>Sources: <a href="https://github.com/tanshihaj/okc-agent">okc-agent</a> · <a href="https://github.com/drduh/YubiKey-Guide/issues/19">drduh YubiKey-Guide (multi-key)</a> · <a href="https://gist.github.com/Speedy37/1833b6b8c73a7768a266f0b903ab3678">WSL2 gpg-agent relay gist</a> · <a href="https://jardazivny.medium.com/the-ultimate-guide-to-yubikey-on-wsl2-part-1-dce2ff8d7e45">YubiKey on WSL2 guide</a> · <a href="https://github.com/dorssel/usbipd-win">usbipd-win</a> · <a href="https://github.com/android-password-store/Android-Password-Store">Android Password Store</a></p></div></div></div>
+<div class="message user" id="msg-2026-07-11T17-04-44-125Z"><div class="message-header"><span class="role-label">User</span><a href="#msg-2026-07-11T17-04-44-125Z" class="timestamp-link"><time datetime="2026-07-11T17:04:44.125Z" data-timestamp="2026-07-11T17:04:44.125Z">2026-07-11T17:04:44.125Z</time></a></div><div class="message-content">
+<div class="user-content"><p>Ok thanks that's interesting. I have used pass in the past in a different scenario but never quite understood its purpose in addition to bare GPG.</p></div></div></div>
+<div class="message assistant" id="msg-2026-07-11T17-04-47-845Z"><div class="message-header"><span class="role-label">Assistant</span><a href="#msg-2026-07-11T17-04-47-845Z" class="timestamp-link"><time datetime="2026-07-11T17:04:47.845Z" data-timestamp="2026-07-11T17:04:47.845Z">2026-07-11T17:04:47.845Z</time></a></div><div class="message-content">
+<div class="thinking"><div class="thinking-label">Thinking</div></div></div></div>
+<div class="message assistant" id="msg-2026-07-11T17-05-11-197Z"><div class="message-header"><span class="role-label">Assistant</span><a href="#msg-2026-07-11T17-05-11-197Z" class="timestamp-link"><time datetime="2026-07-11T17:05:11.197Z" data-timestamp="2026-07-11T17:05:11.197Z">2026-07-11T17:05:11.197Z</time></a></div><div class="message-content">
+<div class="assistant-text"><p>Right — and your instinct is correct: <code>pass</code> adds <strong>zero cryptography</strong> over bare GPG. Every entry is literally just a <code>gpg -e</code> file. If you <code>find ~/.password-store</code>, you'll see a plain directory tree of <code>*.gpg</code> files, and <code>pass show foo</code> is essentially <code>gpg -d ~/.password-store/foo.gpg</code>. So the fair question is "then why not just use gpg and a folder?" The answer is that <code>pass</code> is a set of <strong>conventions and ergonomics</strong> wrapped around exactly that. What you're buying:</p>
+<p><strong>1. A naming/layout convention.</strong> A predictable tree (<code>web/github.com</code>, <code>ssh/hetzner</code>, <code>email/fastmail</code>) with tab-completion on entry names. Bare GPG leaves you to invent and remember filenames and paths. Sounds trivial; it's most of the day-to-day value.</p>
+<p><strong>2. Convenience verbs over the gpg round-trip.</strong> <code>pass insert</code>, <code>pass edit</code> (decrypts to a tmpfile, opens <code>$EDITOR</code>, re-encrypts, cleans up), <code>pass generate</code> (makes a random password <em>and</em> stores it in one step), <code>pass rm</code>, <code>pass mv/cp</code> (which re-encrypt correctly). Each is a small gpg + tempfile + shred dance you'd otherwise script yourself and get subtly wrong (e.g. leaving plaintext in <code>/tmp</code>).</p>
+<p><strong>3. Clipboard hygiene.</strong> <code>pass -c foo</code> copies the secret to the clipboard and <strong>auto-clears it after 45s</strong>. That's the single most-used feature and it's annoying to reproduce by hand.</p>
+<p><strong>4. Structured-entry convention.</strong> <code>pass</code> treats the <strong>first line as the password</strong> and everything below as free-form metadata (username, URL, TOTP seed, recovery codes). Tools rely on this: <code>pass otp</code> (TOTP), browser/mobile integrations, <code>passff</code> for Firefox. Bare GPG files have no such contract, so nothing can introspect them.</p>
+<p><strong>5. Multi-recipient by directory.</strong> A <code>.gpg-id</code> file per subtree lists which key(s) encrypt that subtree, and <code>pass init</code>/<code>pass git</code> re-encrypt everything to the right recipients when membership changes. This is what makes team/multi-key stores tractable — with bare GPG you'd manually track "which files were encrypted to which keys" and re-run <code>gpg -e</code> across the tree on every change.</p>
+<p><strong>6. Git integration.</strong> <code>pass git</code> treats the store as a git repo with sane commits per change. Since ciphertext is what's committed, you get versioned, syncable, auditable history "for free." This is the backbone of the sync story (git remote, or Syncthing, or your SD card).</p>
+<p><strong>7. The ecosystem.</strong> Because <em>everyone</em> agreed on this trivial layout, you get the Android Password Store app, <code>okc-gpg</code>-based mobile use, browser extensions, <code>rofi</code>/<code>dmenu</code> pickers, etc. — all interoperating on the same folder. That network effect is the real payoff, and it's why it's worth preferring over a bespoke folder-of-gpg-files even though you <em>could</em> trivially build the latter.</p>
+<p>So the honest framing: <strong><code>pass</code> is a UX and convention layer, not a security layer.</strong> The security is 100% your GPG key (and thus, in your setup, your Yubikey). If you only have a handful of files and don't care about clipboard/TOTP/multi-recipient/git, bare <code>gpg -e</code>/<code>gpg -d</code> is genuinely fine and <code>pass</code> buys you little. Its value climbs with (a) the <em>number</em> of secrets, (b) how often you <em>read/rotate</em> them interactively, and (c) whether you want the mobile app and git sync — which, for your Android + multi-device goal, you probably do.</p>
+<p>One relevant wrinkle for <em>your</em> specific case: <code>pass</code> shines for passwords and short secrets, but it's a bit awkward for <strong>whole SSH private key files</strong> (multi-line blobs where "first line is the password" doesn't apply, and you often want the key as a <em>file</em> on disk, not on a clipboard). For those I'd still lean on plain <code>gpg -d key.gpg &gt; tmpfile</code> rather than forcing them into the <code>pass</code> model — which is exactly the "pass for passwords, per-file GPG for key files" split I suggested. Same Yubikey underneath either way.</p></div></div></div>
+<div class="message user" id="msg-2026-07-11T17-27-00-923Z"><div class="message-header"><span class="role-label">User</span><a href="#msg-2026-07-11T17-27-00-923Z" class="timestamp-link"><time datetime="2026-07-11T17:27:00.923Z" data-timestamp="2026-07-11T17:27:00.923Z">2026-07-11T17:27:00.923Z</time></a></div><div class="message-content">
+<div class="user-content"><p>Ok makes sense. Is there a way to pipe an ssh private key directly from gpg or pass into ssh-agent?</p></div></div></div>
+<div class="message assistant" id="msg-2026-07-11T17-27-20-083Z"><div class="message-header"><span class="role-label">Assistant</span><a href="#msg-2026-07-11T17-27-20-083Z" class="timestamp-link"><time datetime="2026-07-11T17:27:20.083Z" data-timestamp="2026-07-11T17:27:20.083Z">2026-07-11T17:27:20.083Z</time></a></div><div class="message-content">
+<div class="thinking"><div class="thinking-label">Thinking</div></div></div></div>
+<div class="message assistant" id="msg-2026-07-11T17-27-31-880Z"><div class="message-header"><span class="role-label">Assistant</span><a href="#msg-2026-07-11T17-27-31-880Z" class="timestamp-link"><time datetime="2026-07-11T17:27:31.880Z" data-timestamp="2026-07-11T17:27:31.880Z">2026-07-11T17:27:31.880Z</time></a></div><div class="message-content">
+<div class="assistant-text"><p>Yes — and it's the clean way to do it, because the plaintext key never touches disk; it lives only in the agent's memory. Modern <code>ssh-add</code> reads a key from <strong>stdin</strong> with the <code>-</code> argument:</p>
+<pre><code class="language-bash"># per-file GPG
+gpg -d ~/keys/id_ed25519.gpg | ssh-add -
+
+# from pass (entry content is the raw private key)
+pass show ssh/hetzner | ssh-add -
+
+# on Android/Termux, same thing through the Yubikey bridge
+okc-gpg -d ~/vault/id_ed25519.gpg | ssh-add -
+</code></pre>
+<p>That's the whole trick. A few things worth knowing so it actually behaves:</p>
+<p><strong>Store the SSH key <em>without</em> its own passphrase.</strong> This is the important one. If the decrypted key still has an OpenSSH passphrase on it, <code>ssh-add -</code> can't prompt on the terminal — stdin is busy being the key — so it falls back to <code>SSH_ASKPASS</code>, and with no askpass/<code>DISPLAY</code> set it just fails. Since your GPG key (→ Yubikey) is already the protection layer, double-encrypting adds friction for no real gain. Generate the SSH key with an empty passphrase, then <code>gpg -e</code> it. If you <em>do</em> want both layers, set <code>SSH_ASKPASS=/path/to/askpass</code> and <code>SSH_ASKPASS_REQUIRE=force</code> so the passphrase can be collected out-of-band.</p>
+<p><strong>Add a lifetime so it self-expires:</strong></p>
+<pre><code class="language-bash">gpg -d ~/keys/id_ed25519.gpg | ssh-add -t 3600 -    # forget after 1h
+</code></pre>
+<p><code>-c</code> (confirm each use) also works but needs an askpass, so it's awkward in a headless Termux shell.</p>
+<p><strong>Make sure an agent is running</strong> and your shell points at it (<code>echo $SSH_AUTH_SOCK</code>). On Termux you may need to <code>eval "$(ssh-agent -s)"</code> in the session first; on WSL2 you'll typically already have one (or you're using the relayed Windows agent).</p>
+<p>One nice wrinkle: this works even though the key came off a Yubikey-guarded file — the Yubikey unlocks the <em>file</em>, the resulting key sits in the agent, and <code>ssh</code> uses it normally with no further taps. If you find yourself doing this constantly for the <em>same</em> key, that's the point where it's worth considering skipping the file entirely and using the Yubikey's <strong>Authentication subkey as the SSH key</strong> via <code>gpg-agent</code>'s ssh support (<code>enable-ssh-support</code>) — then there's no private key file to decrypt or pipe at all, and every SSH auth requires a physical touch. But for the "I have a few key files I occasionally load" case, the <code>gpg -d | ssh-add -</code> pipe is exactly right.</p></div></div></div>
+<div class="message user" id="msg-2026-07-11T17-33-04-894Z"><div class="message-header"><span class="role-label">User</span><a href="#msg-2026-07-11T17-33-04-894Z" class="timestamp-link"><time datetime="2026-07-11T17:33:04.894Z" data-timestamp="2026-07-11T17:33:04.894Z">2026-07-11T17:33:04.894Z</time></a></div><div class="message-content">
+<div class="user-content"><p>Ok but I've heard that there is a limit of only one Yubikey authentication subkey slot and I have to support at least two and possibly more legacy ssh rsa keys.</p></div></div></div>
+<div class="message assistant" id="msg-2026-07-11T17-33-31-228Z"><div class="message-header"><span class="role-label">Assistant</span><a href="#msg-2026-07-11T17-33-31-228Z" class="timestamp-link"><time datetime="2026-07-11T17:33:31.228Z" data-timestamp="2026-07-11T17:33:31.228Z">2026-07-11T17:33:31.228Z</time></a></div><div class="message-content">
+<div class="thinking"><div class="thinking-label">Thinking</div></div></div></div>
+<div class="message assistant" id="msg-2026-07-11T17-33-50-353Z"><div class="message-header"><span class="role-label">Assistant</span><a href="#msg-2026-07-11T17-33-50-353Z" class="timestamp-link"><time datetime="2026-07-11T17:33:50.353Z" data-timestamp="2026-07-11T17:33:50.353Z">2026-07-11T17:33:50.353Z</time></a></div><div class="message-content">
+<div class="assistant-text"><p>You've put your finger on exactly the limitation of the "use the Yubikey's own subkey as your SSH key" approach, and it's a real one — but it only applies to <em>that</em> approach. The good news is it doesn't affect the setup we just built.</p>
+<p><strong>The limit is real but narrow.</strong> The Yubikey's <strong>OpenPGP</strong> applet has exactly three key slots — one Signature, one Encryption, one Authentication. So if you go the <code>gpg-agent enable-ssh-support</code> route (Yubikey's Authentication subkey <em>is</em> your SSH identity, touch-to-auth), you get <strong>exactly one</strong> SSH identity. Full stop. That's the constraint you heard about, and for two-plus distinct RSA keys it's a dealbreaker.</p>
+<p><strong>But the <code>gpg -d | ssh-add -</code> model has no such limit.</strong> That's the key insight: in that model the Yubikey slot is <em>not</em> your SSH key — it's only the <strong>Encryption</strong> subkey that decrypts <em>files</em>. Your legacy RSA keys stay as N separate <code>gpg</code>-encrypted files:</p>
+<pre><code class="language-bash">gpg -d ~/keys/legacy-rsa-a.gpg | ssh-add -
+gpg -d ~/keys/legacy-rsa-b.gpg | ssh-add -
+gpg -d ~/keys/legacy-rsa-c.gpg | ssh-add -
+# ...as many as you like
+</code></pre>
+<p>One Encryption subkey on the Yubikey unwraps <em>all</em> of them — there's no per-SSH-key slot involved, so "two, possibly more" is a non-issue. This also keeps working identically on Android (<code>okc-gpg -d … | ssh-add -</code>), which matters because the alternatives below mostly don't. <strong>This is the approach I'd recommend for you</strong>, precisely because it decouples "number of SSH identities" (unlimited, they're just files) from "Yubikey slots" (one, used only for decryption).</p>
+<p><strong>If instead you specifically want the keys non-extractable and living <em>on</em> the token</strong>, then you're looking at the Yubikey's <em>other</em> applet, <strong>PIV</strong> — which is where the multi-slot capacity lives:</p>
+<ul>
+<li>PIV has the four named slots (9a/9c/9d/9e) <strong>plus ~20 "retired key management" slots (82–95)</strong>, all usable for SSH via PKCS#11 (<code>ssh -I .../libykcs11.so</code>, or <code>PKCS11Provider</code> in your ssh config). So realistically up to ~24 SSH keys on one token, each touch-guarded.</li>
+<li>You can <strong>import</strong> your existing legacy RSA keys into PIV slots (<code>yubico-piv-tool -a import-key</code>), so you don't have to regenerate them — and since you keep the originals, you can import the same keys onto multiple Yubikeys.</li>
+<li>The catch, and it's a big one for you: <strong>PIV-over-PKCS#11 SSH has essentially no story on Android/Termux.</strong> OpenKeychain drives the <em>OpenPGP</em> applet, not PIV-for-SSH. So going PIV would split your workflow — on-device keys on desktop, but you'd fall back to decrypt-a-file on the phone anyway.</li>
+</ul>
+<p>So the decision comes down to what you're optimizing:</p>
+<table>
+<thead>
+<tr>
+<th>Priority</th>
+<th>Approach</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Many SSH keys, <strong>same workflow on Android + desktop</strong>, keys portable/backed-up</td>
+<td><strong>Encrypted files + <code>ssh-add -</code></strong> (Yubikey = decryption only) ← recommended</td>
+</tr>
+<tr>
+<td>SSH keys <strong>non-extractable, on-device, touch-required</strong>, desktop-centric</td>
+<td><strong>PIV slots + PKCS#11</strong> (no Android SSH support)</td>
+</tr>
+<tr>
+<td>A single flagship key with per-use touch</td>
+<td>OpenPGP Auth subkey via gpg-agent (the one-slot approach — too limited here)</td>
+</tr>
+</tbody>
+</table>
+<p>Given your Android requirement and the fact that these are <em>legacy</em> keys you already hold as extractable material, the file-based model is the natural fit and sidesteps the one-slot limit entirely. The single OpenPGP Encryption subkey on each Yubikey is all the hardware you need, no matter how many SSH keys you end up with.</p></div></div></div>
+<div class="message user" id="msg-2026-07-11T17-52-25-007Z"><div class="message-header"><span class="role-label">User</span><a href="#msg-2026-07-11T17-52-25-007Z" class="timestamp-link"><time datetime="2026-07-11T17:52:25.007Z" data-timestamp="2026-07-11T17:52:25.007Z">2026-07-11T17:52:25.007Z</time></a></div><div class="message-content">
+<div class="user-content"><p>Ok thanks. I wonder could you write a short markdown document that sets out the plan as we've discussed and includes command line recipes for the various steps and links to the important source material?</p></div></div></div>
+<div class="message assistant" id="msg-2026-07-11T17-52-53-926Z"><div class="message-header"><span class="role-label">Assistant</span><a href="#msg-2026-07-11T17-52-53-926Z" class="timestamp-link"><time datetime="2026-07-11T17:52:53.926Z" data-timestamp="2026-07-11T17:52:53.926Z">2026-07-11T17:52:53.926Z</time></a></div><div class="message-content">
+<div class="thinking"><div class="thinking-label">Thinking</div></div></div></div>
+<div class="message assistant" id="msg-2026-07-11T17-53-56-703Z"><div class="message-header"><span class="role-label">Assistant</span><a href="#msg-2026-07-11T17-53-56-703Z" class="timestamp-link"><time datetime="2026-07-11T17:53:56.703Z" data-timestamp="2026-07-11T17:53:56.703Z">2026-07-11T17:53:56.703Z</time></a></div><div class="message-content"><div class="file-tool write-tool" data-tool-id="toolu_01HicD6fjo3mekWcdLGFuCfn">
+<div class="file-tool-header write-header"><span class="file-tool-icon">📝</span> Write <span class="file-tool-path">yubikey-gpg-encryption-plan.md</span></div>
+<div class="file-tool-fullpath">/home/david/projects/play/claude-chat/yubikey-gpg-encryption-plan.md</div>
+<div class="truncatable"><div class="truncatable-content"><pre class="file-content"># Yubikey-backed file encryption — deployment plan
+
+A cross-platform (Linux/WSL2 + Android) replacement for a Veracrypt workflow, using
+OpenPGP public-key encryption with the private **Encryption** subkey held on one or
+more Yubikeys. Encrypted data lives on removable/synced storage; plaintext is only
+ever produced on demand (pipe / tmpfs), never written to the SD card.
+
+## Design at a glance
+
+- **Primitive:** OpenPGP asymmetric encryption. Files are encrypted *to your public key*;
+  the Yubikey&#39;s on-card **Encryption (E)** subkey decrypts them. The public key is not
+  secret — put it on every device.
+- **The Yubikey holds exactly one E subkey.** That single slot decrypts *arbitrarily many*
+  files, so there is no per-secret or per-SSH-key limit. (The OpenPGP applet&#39;s one-Auth-slot
+  limit only bites if you use the Yubikey&#39;s Auth subkey *directly* as an SSH identity — we
+  don&#39;t; see [SSH keys](#ssh-keys-into-ssh-agent).)
+- **Keys are generated offline and kept as an exportable backup**, so the same E subkey can
+  be provisioned to multiple Yubikeys and used &#34;bare&#34; without a token when needed.
+- **Files:** `pass` for passwords/short secrets; plain `gpg -e` files for whole SSH key blobs.
+- **Android:** OpenKeychain drives the Yubikey (NFC/USB); Termux delegates to it via
+  `okc-gpg`. Termux cannot talk to the Yubikey directly.
+- **Desktop/WSL2:** relay the Windows `gpg-agent` (Gpg4win) socket into WSL2 so the Yubikey
+  stays shared with Windows.
+
+&gt; **Security tradeoff, stated up front:** keeping the E subkey exportable defeats the
+&gt; hardware token&#39;s non-extractability guarantee. Your offline backup *is* the plaintext —
+&gt; anyone with the backup file **and** its passphrase can decrypt everything, forever, with
+&gt; no Yubikey. Guard it accordingly. This is a deliberate choice to support multi-token /
+&gt; bare use.
+
+---
+
+## 1. One-time key ceremony (do this offline)
+
+Run on an airgapped or freshly-booted machine. Using a throwaway `GNUPGHOME` keeps it out of
+your daily keyring.
+
+```bash
+export GNUPGHOME=$(mktemp -d)
+chmod 700 &#34;$GNUPGHOME&#34;
+
+# Certify-only master key (kept offline). ed25519 for Yubikey 5; use rsa4096 if any
+# token is a NEO/4 or you need maximum interop.
+gpg --quick-generate-key &#39;Your Name &lt;you@example.com&gt;&#39; ed25519 cert never
+
+# Capture the fingerprint
+export KEYFPR=$(gpg --list-keys --with-colons | awk -F: &#39;/^fpr:/ {print $10; exit}&#39;)
+
+# Subkeys: sign, encrypt, authenticate
+gpg --quick-add-key &#34;$KEYFPR&#34; ed25519 sign 2y
+gpg --quick-add-key &#34;$KEYFPR&#34; cv25519 encr 2y
+gpg --quick-add-key &#34;$KEYFPR&#34; ed25519 auth 2y
+```
+
+### Back up everything BEFORE touching a Yubikey
+
+`keytocard` is **destructive** — it replaces the on-disk subkey with a stub. This backup is
+both your multi-token source and your &#34;use it bare&#34; copy.
+
+```bash
+gpg --armor --export-secret-keys    &#34;$KEYFPR&#34; &gt; master-secret.asc
+gpg --armor --export-secret-subkeys &#34;$KEYFPR&#34; &gt; subkeys.asc
+gpg --armor --export                &#34;$KEYFPR&#34; &gt; public.asc
+gpg --output revoke.asc --gen-revoke &#34;$KEYFPR&#34;
+
+# Encrypt the backups symmetrically before they leave the airgap, and/or use paperkey.
+gpg -c master-secret.asc     # -&gt; master-secret.asc.gpg (strong passphrase!)
+```
+
+Store `*.asc.gpg` + `revoke.asc` on encrypted offline media. Keep `public.asc` handy — it&#39;s
+what you distribute.
+
+---
+
+## 2. Provision each Yubikey
+
+Repeat per token. Because `keytocard` destroys the local copy, **start each token from a
+fresh import of the backup.**
+
+```bash
+export GNUPGHOME=$(mktemp -d); chmod 700 &#34;$GNUPGHOME&#34;
+gpg --import master-secret.asc            # from your decrypted backup
+export KEYFPR=&lt;your-fingerprint&gt;
+
+# (optional but recommended) set card PINs / metadata first
+gpg --card-edit
+#   admin
+#   passwd        # change default user PIN (123456) and admin PIN (12345678)
+#   quit
+
+gpg --edit-key &#34;$KEYFPR&#34;
+#   key N         # select the ENCRYPTION subkey (the [E] one in the listing)
+#   keytocard     # choose slot (2) Encryption
+#   save
+```
+
+To also use one flagship SSH identity on-card, repeat `key N` / `keytocard` for the `[A]`
+subkey into the Authentication slot. Then discard this `GNUPGHOME` and start clean for the
+next token.
+
+Verify: `gpg --card-status` should show the Encryption key fingerprint populated.
+
+---
+
+## 3. Everyday keyring (per device)
+
+On each machine you only need the **public** key plus, for decryption, the Yubikey:
+
+```bash
+gpg --import public.asc
+# Trust it (ultimately, since it&#39;s yours)
+echo &#34;$KEYFPR:6:&#34; | gpg --import-ownertrust
+```
+
+For &#34;bare&#34; (no-token) use on a trusted machine, import the secret subkeys instead:
+
+```bash
+gpg --import subkeys.asc      # decrypt without a Yubikey; protect with the key passphrase
+```
+
+---
+
+## 4. Encrypting &amp; decrypting files
+
+```bash
+# Encrypt to yourself
+gpg --encrypt --recipient &#34;$KEYFPR&#34; secrets.txt          # -&gt; secrets.txt.gpg
+gpg -e -r &#34;$KEYFPR&#34; -a notes.txt                         # ASCII-armored -&gt; notes.txt.asc
+
+# Decrypt (Yubikey prompts for PIN/touch as configured)
+gpg --decrypt secrets.txt.gpg &gt; secrets.txt
+gpg -d secrets.txt.gpg | less                            # straight to a pager, no plaintext file
+```
+
+Keep the `*.gpg` files on the SD card / synced folder. Decrypt to a pipe or a tmpfs path,
+never onto removable media.
+
+### Using `pass` for passwords / short secrets
+
+`pass` adds no crypto — it&#39;s a naming convention + ergonomics (clipboard auto-clear, TOTP,
+git history, multi-recipient) over per-file `gpg`. Ideal for many small secrets and the
+Android app.
+
+```bash
+pass init &#34;$KEYFPR&#34;                # binds the store to your key (writes .gpg-id)
+pass git init                      # optional: version + sync the ciphertext
+
+pass insert web/github.com         # prompts, stores encrypted
+pass generate web/example.com 30   # make + store a 30-char password
+pass -c web/github.com             # copy to clipboard, auto-clears after 45s
+pass show email/fastmail           # print (first line = password, rest = metadata)
+pass otp totp/some-service         # TOTP, if seed stored (pass-otp)
+```
+
+---
+
+## 5. SSH keys into ssh-agent
+
+Decrypt straight into the agent so the private key only ever lives in agent memory —
+never on disk. `ssh-add -` reads a key from stdin. No per-key Yubikey slot involved, so
+**any number** of legacy RSA keys is fine.
+
+```bash
+gpg -d ~/keys/legacy-rsa-a.gpg | ssh-add -t 3600 -      # expires after 1h
+gpg -d ~/keys/legacy-rsa-b.gpg | ssh-add -t 3600 -
+pass show ssh/hetzner          | ssh-add -              # if stored in pass
+```
+
+**Store the SSH keys without their own passphrase** — the GPG/Yubikey layer is your
+protection. A passphrase-protected key piped on stdin can&#39;t prompt on the terminal and will
+fail unless you wire up `SSH_ASKPASS` + `SSH_ASKPASS_REQUIRE=force`.
+
+&gt; On-device alternative (desktop only, non-extractable, touch-per-use): import RSA keys into
+&gt; **PIV** slots (9a/9c/9d/9e + retired 82–95, ~24 total) via `yubico-piv-tool -a import-key`
+&gt; and use them over PKCS#11 (`ssh -I .../libykcs11.so`). This has **no Android/Termux SSH
+&gt; story**, so it splits your workflow — only worth it if on-device non-extractability
+&gt; outranks cross-platform uniformity.
+
+---
+
+## 6. Desktop / WSL2 setup
+
+Recommended: let **Windows** own the Yubikey and relay its `gpg-agent` socket into WSL2 (the
+token stays usable by Windows apps; survives reboots; no custom kernel).
+
+1. Install **Gpg4win** on Windows; confirm `gpg --card-status` works there.
+2. Bridge the agent socket into WSL2 with **npiperelay + socat** (or `wsl2-ssh-pageant`).
+   Follow the [WSL2 gpg-agent relay gist](https://gist.github.com/Speedy37/1833b6b8c73a7768a266f0b903ab3678)
+   or [the ultimate guide to Yubikey on WSL2](https://jardazivny.medium.com/the-ultimate-guide-to-yubikey-on-wsl2-part-1-dce2ff8d7e45).
+3. In WSL, point `gpg`/`ssh` at the relayed sockets; then all recipes above work unchanged.
+
+Alternative: **[usbipd-win](https://github.com/dorssel/usbipd-win)** `attach` passes the raw
+USB device into the WSL2 VM (run `pcscd` inside Linux). Downside: it&#39;s **exclusive** —
+Windows loses the token while attached, and grab-order conflicts can require a reboot. Prefer
+the relay unless you specifically want the token isolated in the VM.
+
+---
+
+## 7. Android / Termux setup
+
+Termux (non-root) can&#39;t access the Yubikey&#39;s USB CCID, and NFC is foreground-app only — so
+**OpenKeychain drives the token** and Termux delegates to it.
+
+1. Install **OpenKeychain** and import `public.asc`. (The private E key comes from the
+   Yubikey; you never import it to the phone.)
+2. Pair the Yubikey: NFC tap, or USB-C. OpenKeychain prompts for a tap when a private-key op
+   is needed.
+3. In Termux:
+   ```bash
+   pkg install gnupg openssh git
+   # install okc-agent (bridges GnuPG ops to OpenKeychain): see project README
+   ```
+4. Decrypt / SSH through the bridge:
+   ```bash
+   okc-gpg -d ~/vault/secrets.txt.gpg &gt; &#34;$TMPDIR/secrets.txt&#34;   # tap Yubikey when prompted
+   okc-gpg -d ~/vault/id_ed25519.gpg  | ssh-add -               # into Termux&#39;s ssh-agent
+   ```
+   Put `$TMPDIR` on **internal app storage**, not the SD card, so no plaintext lands on
+   removable media. The `.gpg` files themselves live on the SD card as planned.
+5. For passwords, the **Android Password Store** app reads the same `pass` store and uses
+   OpenKeychain + Yubikey directly.
+
+---
+
+## Suggested rollout order
+
+1. Do the offline **key ceremony** (§1) and verify the encrypted backup restores.
+2. **Provision one Yubikey** (§2).
+3. Get the **desktop/WSL2 relay** working (§6) and validate `gpg -e` / `gpg -d` round-trips
+   plus `ssh-add -`.
+4. Only then tackle the **Android/okc-agent** leg (§7) — it&#39;s the fiddliest.
+5. Provision the **second/third Yubikey** from backup once the workflow is proven.
+
+---
+
+## Sources
+
+- [okc-agent — OpenKeychain ↔ Termux GnuPG bridge](https://github.com/tanshihaj/okc-agent)
+- [drduh YubiKey-Guide](https://github.com/drduh/YubiKey-Guide) · [multi-Yubikey note](https://github.com/drduh/YubiKey-Guide/issues/19)
+- [Yubico: Using Your YubiKey with OpenPGP](https://support.yubico.com/hc/en-us/articles/360013790259-Using-Your-YubiKey-with-OpenPGP) · [Yubico PGP developer docs](https://developers.yubico.com/PGP/)
+- [WSL2 gpg-agent relay gist](https://gist.github.com/Speedy37/1833b6b8c73a7768a266f0b903ab3678) · [Ultimate guide to Yubikey on WSL2](https://jardazivny.medium.com/the-ultimate-guide-to-yubikey-on-wsl2-part-1-dce2ff8d7e45)
+- [usbipd-win](https://github.com/dorssel/usbipd-win)
+- [Android Password Store](https://github.com/android-password-store/Android-Password-Store) · [passwordstore.org](https://www.passwordstore.org/)
+- [OpenKeychain](https://www.openkeychain.org/)
+</pre></div><button class="expand-btn">Show more</button></div>
+</div></div></div>
+<div class="message tool-reply" id="msg-2026-07-11T17-54-09-059Z"><div class="message-header"><span class="role-label">Tool reply</span><a href="#msg-2026-07-11T17-54-09-059Z" class="timestamp-link"><time datetime="2026-07-11T17:54:09.059Z" data-timestamp="2026-07-11T17:54:09.059Z">2026-07-11T17:54:09.059Z</time></a></div><div class="message-content"><div class="tool-result"><div class="truncatable"><div class="truncatable-content"><pre>File created successfully at: /home/david/projects/play/claude-chat/yubikey-gpg-encryption-plan.md (file state is current in your context — no need to Read it back)</pre></div><button class="expand-btn">Show more</button></div></div></div></div>
+<div class="message assistant" id="msg-2026-07-11T17-54-20-575Z"><div class="message-header"><span class="role-label">Assistant</span><a href="#msg-2026-07-11T17-54-20-575Z" class="timestamp-link"><time datetime="2026-07-11T17:54:20.575Z" data-timestamp="2026-07-11T17:54:20.575Z">2026-07-11T17:54:20.575Z</time></a></div><div class="message-content">
+<div class="assistant-text"><p>Done. I've written the plan to:</p>
+<p><strong><code>/home/david/projects/play/claude-chat/yubikey-gpg-encryption-plan.md</code></strong></p>
+<p>It captures everything we discussed, structured as:</p>
+<ol>
+<li><strong>Design at a glance</strong> — the asymmetric/OpenPGP reframe, the one-E-subkey-decrypts-everything point, and the exportable-key security tradeoff called out up front.</li>
+<li><strong>Key ceremony</strong> — offline generation (ed25519/cv25519), and the backup-<em>before</em>-<code>keytocard</code> rule.</li>
+<li><strong>Provisioning multiple Yubikeys</strong> — the fresh-<code>GNUPGHOME</code>-from-backup-per-token loop.</li>
+<li><strong>Everyday keyring</strong> — public-key import vs. bare secret-subkey import.</li>
+<li><strong>Encrypt/decrypt recipes</strong> + the <code>pass</code> conventions layer.</li>
+<li><strong>SSH keys → ssh-agent</strong> — the <code>gpg -d | ssh-add -</code> pattern, why it sidesteps the one-Auth-slot limit, and PIV as the on-device alternative with its Android caveat.</li>
+<li><strong>WSL2</strong> — gpg-agent relay (recommended) vs. usbipd passthrough.</li>
+<li><strong>Android/Termux</strong> — OpenKeychain-drives-the-token, <code>okc-gpg</code> delegation, plaintext-off-SD-card note.</li>
+<li><strong>Rollout order</strong> and a <strong>Sources</strong> section with all the links.</li>
+</ol>
+<p>A couple of things worth flagging as you use it:</p>
+<ul>
+<li>The <code>key N</code> step in §2 (selecting the encryption subkey in <code>--edit-key</code>) — the subkey index depends on listing order, so pick the one tagged <code>[E]</code>, not a fixed number.</li>
+<li>The <code>okc-agent</code> install in §7 is the one step I left as "see project README" since its packaging changes; that's the piece I'd validate first when you get to the Android leg.</li>
+</ul>
+<p>Want me to expand the WSL2 relay section into a concrete copy-paste recipe (npiperelay + socat + the <code>.bashrc</code> socket wiring), or keep it as links?</p></div></div></div>
+        
+
+<div class="pagination">
+<a href="index.html" class="index-link">Index</a>
+<span class="disabled">&larr; Prev</span>
+<span class="current">1</span>
+<a href="page-002.html">2</a>
+<a href="page-002.html">Next &rarr;</a>
+</div>
+
+    </div>
+    <script>
+document.querySelectorAll('time[data-timestamp]').forEach(function(el) {
+    const timestamp = el.getAttribute('data-timestamp');
+    const date = new Date(timestamp);
+    const now = new Date();
+    const isToday = date.toDateString() === now.toDateString();
+    const timeStr = date.toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' });
+    if (isToday) { el.textContent = timeStr; }
+    else { el.textContent = date.toLocaleDateString(undefined, { month: 'short', day: 'numeric' }) + ' ' + timeStr; }
+});
+document.querySelectorAll('pre.json').forEach(function(el) {
+    let text = el.textContent;
+    text = text.replace(/"([^"]+)":/g, '<span style="color: #ce93d8">"$1"</span>:');
+    text = text.replace(/: "([^"]*)"/g, ': <span style="color: #81d4fa">"$1"</span>');
+    text = text.replace(/: (\d+)/g, ': <span style="color: #ffcc80">$1</span>');
+    text = text.replace(/: (true|false|null)/g, ': <span style="color: #f48fb1">$1</span>');
+    el.innerHTML = text;
+});
+document.querySelectorAll('.truncatable').forEach(function(wrapper) {
+    const content = wrapper.querySelector('.truncatable-content');
+    const btn = wrapper.querySelector('.expand-btn');
+    if (content.scrollHeight > 250) {
+        wrapper.classList.add('truncated');
+        btn.addEventListener('click', function() {
+            if (wrapper.classList.contains('truncated')) { wrapper.classList.remove('truncated'); wrapper.classList.add('expanded'); btn.textContent = 'Show less'; }
+            else { wrapper.classList.remove('expanded'); wrapper.classList.add('truncated'); btn.textContent = 'Show more'; }
+        });
+    }
+});
+</script>
+</body>
+</html>

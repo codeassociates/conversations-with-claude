@@ -1,0 +1,1467 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Codex CLI Session — 019f51f0-893</title>
+  <style>:root {
+  --accent: #10a37f;
+  --accent-dim: #0d8c6d;
+  --border: #5f87ff;
+  --borderAccent: #10a37f;
+  --success: #b5bd68;
+  --error: #cc6666;
+  --warning: #ffff00;
+  --muted: #808080;
+  --dim: #666666;
+  --text: #e5e5e7;
+  --thinkingText: #808080;
+  --selectedBg: #3a3a4a;
+  --userMessageBg: #343541;
+  --userMessageText: #e5e5e7;
+  --commentaryBg: #2a2d3a;
+  --commentaryText: #a0b0c0;
+  --commentaryBorder: #3a4a5a;
+  --toolPendingBg: #282832;
+  --toolSuccessBg: #283228;
+  --toolErrorBg: #3c2828;
+  --toolOutput: #808080;
+  --mdHeading: #f0c674;
+  --mdLink: #81a2be;
+  --mdCode: #8abeb7;
+  --mdCodeBlockBorder: #808080;
+  --mdQuote: #808080;
+  --mdListBullet: #8abeb7;
+  --mdHr: #808080;
+  --body-bg: rgb(36, 37, 46);
+  --container-bg: rgb(44, 45, 55);
+  --line-height: 18px;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+body {
+  font-family: ui-monospace, 'Cascadia Code', 'Source Code Pro', Menlo, Consolas, 'DejaVu Sans Mono', monospace;
+  font-size: 12px;
+  line-height: var(--line-height);
+  color: var(--text);
+  background: var(--body-bg);
+}
+
+#app {
+  display: flex;
+  min-height: 100vh;
+}
+
+/* Sidebar */
+#sidebar {
+  width: 420px;
+  background: var(--container-bg);
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  border-right: 1px solid var(--dim);
+}
+
+.sidebar-header {
+  padding: 12px;
+  border-bottom: 1px solid var(--dim);
+}
+
+.sidebar-header h2 {
+  font-size: 11px;
+  color: var(--accent);
+  margin-bottom: 4px;
+}
+
+.sidebar-meta {
+  font-size: 10px;
+  color: var(--dim);
+}
+
+.sidebar-search {
+  width: 100%;
+  padding: 4px 8px;
+  margin-top: 8px;
+  font-size: 11px;
+  font-family: inherit;
+  background: var(--body-bg);
+  color: var(--text);
+  border: 1px solid var(--dim);
+  border-radius: 3px;
+}
+
+.sidebar-search:focus {
+  outline: none;
+  border-color: var(--accent);
+}
+
+.sidebar-filters {
+  display: flex;
+  gap: 4px;
+  margin-top: 6px;
+  flex-wrap: wrap;
+}
+
+.filter-btn {
+  padding: 2px 6px;
+  font-size: 10px;
+  font-family: inherit;
+  background: transparent;
+  color: var(--muted);
+  border: 1px solid var(--dim);
+  border-radius: 3px;
+  cursor: pointer;
+}
+
+.filter-btn:hover { color: var(--text); border-color: var(--text); }
+.filter-btn.active { background: var(--accent); color: var(--body-bg); border-color: var(--accent); }
+
+.tree-container {
+  flex: 1;
+  overflow-y: auto;
+  padding: 4px 0;
+}
+
+.tree-node {
+  display: flex;
+  align-items: baseline;
+  padding: 2px 8px;
+  font-size: 11px;
+  line-height: 16px;
+  text-decoration: none;
+  color: inherit;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  cursor: pointer;
+}
+
+.tree-node:hover { background: var(--selectedBg); }
+.tree-node.active { background: var(--selectedBg); font-weight: bold; }
+
+.tree-ts {
+  color: var(--dim);
+  flex-shrink: 0;
+  margin-right: 6px;
+  font-size: 10px;
+}
+
+.tree-content { overflow: hidden; text-overflow: ellipsis; }
+.tree-role-user .tree-content { color: var(--accent); }
+.tree-role-assistant .tree-content { color: var(--success); }
+.tree-role-tool .tree-content { color: var(--muted); }
+.tree-role-thinking .tree-content { color: var(--thinkingText); }
+.tree-role-system .tree-content { color: var(--dim); }
+.tree-role-error .tree-content { color: var(--error); }
+
+/* Main content */
+#content {
+  flex: 1;
+  overflow-y: auto;
+  padding: var(--line-height) calc(var(--line-height) * 2);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+#content > * {
+  width: 100%;
+  max-width: 860px;
+}
+
+/* Header */
+.header {
+  background: var(--container-bg);
+  border-radius: 4px;
+  padding: var(--line-height);
+  margin-bottom: var(--line-height);
+}
+
+.header h1 {
+  font-size: 13px;
+  font-weight: bold;
+  color: var(--accent);
+  margin-bottom: 8px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.header h1 .codex-logo {
+  display: inline-block;
+  padding: 2px 6px;
+  background: var(--accent);
+  color: var(--body-bg);
+  border-radius: 3px;
+  font-size: 10px;
+  font-weight: bold;
+  letter-spacing: 1px;
+}
+
+.header-info {
+  display: flex;
+  flex-direction: column;
+  font-size: 11px;
+}
+
+.info-item {
+  color: var(--dim);
+  display: flex;
+}
+
+.info-label {
+  font-weight: 600;
+  min-width: 110px;
+}
+
+.info-value {
+  color: var(--text);
+}
+
+/* Messages */
+#messages {
+  display: flex;
+  flex-direction: column;
+  gap: var(--line-height);
+}
+
+.message-timestamp {
+  font-size: 10px;
+  color: var(--dim);
+  opacity: 0.8;
+  margin-bottom: 4px;
+}
+
+.user-message {
+  background: var(--userMessageBg);
+  color: var(--userMessageText);
+  padding: var(--line-height);
+  border-radius: 4px;
+  border-left: 3px solid var(--accent);
+}
+
+.assistant-message {
+  padding: var(--line-height);
+  border-radius: 4px;
+}
+
+.assistant-message.final-answer {
+  background: rgba(16, 163, 127, 0.08);
+  border-left: 3px solid var(--accent);
+}
+
+.assistant-text {
+  white-space: pre-wrap;
+  word-wrap: break-word;
+}
+
+.commentary-message {
+  padding: 8px var(--line-height);
+  background: var(--commentaryBg);
+  border-left: 3px solid var(--commentaryBorder);
+  border-radius: 4px;
+  color: var(--commentaryText);
+  font-style: italic;
+}
+
+.thinking-block {
+  padding: 8px var(--line-height);
+  color: var(--thinkingText);
+  font-style: italic;
+}
+
+.thinking-text {
+  white-space: pre-wrap;
+}
+
+/* Tool execution */
+.tool-execution {
+  padding: var(--line-height);
+  border-radius: 4px;
+}
+
+.tool-execution.pending { background: var(--toolPendingBg); }
+.tool-execution.success { background: var(--toolSuccessBg); }
+
+.tool-header { font-weight: bold; margin-bottom: 4px; }
+.tool-name { color: var(--accent); }
+
+.tool-command {
+  font-weight: bold;
+  white-space: pre-wrap;
+  word-wrap: break-word;
+  color: var(--success);
+}
+
+.tool-args pre {
+  white-space: pre-wrap;
+  word-wrap: break-word;
+  font-family: inherit;
+  color: var(--text);
+}
+
+.tool-output {
+  color: var(--toolOutput);
+  font-family: inherit;
+  overflow-x: auto;
+}
+
+.tool-output pre {
+  margin: 0;
+  padding: 0;
+  font-family: inherit;
+  color: inherit;
+  white-space: pre-wrap;
+  word-wrap: break-word;
+}
+
+.tool-output.expandable { cursor: pointer; }
+.tool-output.expandable:hover { opacity: 0.9; }
+.tool-output.expandable .output-full { display: none; }
+.tool-output.expandable.expanded .output-preview { display: none; }
+.tool-output.expandable.expanded .output-full { display: block; }
+
+.expand-hint { color: var(--warning); font-style: italic; }
+
+/* System events */
+.system-event {
+  padding: 4px var(--line-height);
+  font-size: 11px;
+}
+
+.event-label {
+  color: var(--dim);
+}
+
+.error-text {
+  color: var(--error);
+}
+
+.token-count {
+  padding: 2px var(--line-height);
+  font-size: 10px;
+  color: var(--dim);
+}
+
+/* Markdown */
+.markdown-content {
+  white-space: pre-wrap;
+  word-wrap: break-word;
+}
+
+.markdown-content h1, .markdown-content h2, .markdown-content h3,
+.markdown-content h4, .markdown-content h5, .markdown-content h6 {
+  color: var(--mdHeading);
+  margin: var(--line-height) 0 0 0;
+  font-weight: bold;
+  font-size: 1em;
+}
+
+.markdown-content p { margin: 0; }
+.markdown-content p + p { margin-top: var(--line-height); }
+
+.markdown-content a { color: var(--mdLink); text-decoration: underline; }
+
+.markdown-content code {
+  background: rgba(128, 128, 128, 0.2);
+  color: var(--mdCode);
+  padding: 0 4px;
+  border-radius: 3px;
+  font-family: inherit;
+}
+
+.markdown-content pre {
+  background: rgba(0,0,0,0.3);
+  padding: 8px;
+  border-radius: 4px;
+  margin: var(--line-height) 0;
+  overflow-x: auto;
+}
+
+.markdown-content pre code {
+  display: block;
+  background: none;
+  color: var(--text);
+  padding: 0;
+}
+
+.markdown-content blockquote {
+  border-left: 3px solid var(--mdQuote);
+  padding-left: var(--line-height);
+  margin: var(--line-height) 0;
+  color: var(--mdQuote);
+}
+
+.markdown-content ul, .markdown-content ol {
+  margin: var(--line-height) 0;
+  padding-left: calc(var(--line-height) * 2);
+}
+
+.markdown-content li { margin: 0; }
+.markdown-content li::marker { color: var(--mdListBullet); }
+
+.markdown-content hr {
+  border: none;
+  border-top: 1px solid var(--mdHr);
+  margin: var(--line-height) 0;
+}
+
+.markdown-content table {
+  border-collapse: collapse;
+  margin: 0.5em 0;
+  width: 100%;
+}
+
+.markdown-content th, .markdown-content td {
+  border: 1px solid var(--mdCodeBlockBorder);
+  padding: 6px 10px;
+  text-align: left;
+}
+
+.markdown-content th {
+  background: rgba(128, 128, 128, 0.1);
+  font-weight: bold;
+}
+
+/* Footer */
+.footer {
+  margin-top: 48px;
+  padding: 20px;
+  text-align: center;
+  color: var(--dim);
+  font-size: 10px;
+}
+
+/* Mobile */
+#hamburger {
+  display: none;
+  position: fixed;
+  top: 10px;
+  left: 10px;
+  z-index: 100;
+  padding: 3px 8px;
+  font-size: 14px;
+  font-family: inherit;
+  background: var(--container-bg);
+  color: var(--muted);
+  border: 1px solid var(--dim);
+  border-radius: 3px;
+  cursor: pointer;
+}
+
+#sidebar-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.5);
+  z-index: 98;
+}
+
+@media (max-width: 900px) {
+  #sidebar {
+    position: fixed;
+    left: -420px;
+    width: 420px;
+    z-index: 99;
+    transition: left 0.3s;
+  }
+  #sidebar.open { left: 0; }
+  #sidebar-overlay.open { display: block; }
+  #hamburger { display: block; }
+  #content { padding: var(--line-height) 16px; }
+  #content > * { max-width: 100%; }
+}
+
+@media print {
+  #sidebar, #hamburger { display: none !important; }
+  body { background: white; color: black; }
+}
+</style>
+</head>
+<body>
+  <button id="hamburger" onclick="document.getElementById('sidebar').classList.toggle('open'); document.getElementById('sidebar-overlay').classList.toggle('open')">☰</button>
+  <div id="sidebar-overlay" onclick="document.getElementById('sidebar').classList.remove('open'); this.classList.remove('open')"></div>
+  <div id="app">
+    <aside id="sidebar">
+      <div class="sidebar-header">
+        <h2>CODEX CLI SESSION</h2>
+        <div class="sidebar-meta">019f51f0-893 · 2026-07-11 16:09:06 UTC</div>
+        <input type="text" class="sidebar-search" id="tree-search" placeholder="Filter entries..." oninput="filterTree(this.value)">
+        <div class="sidebar-filters">
+          <button class="filter-btn active" data-filter="default" onclick="setFilter('default', this)">Default</button>
+          <button class="filter-btn" data-filter="no-tools" onclick="setFilter('no-tools', this)">No tools</button>
+          <button class="filter-btn" data-filter="user-only" onclick="setFilter('user-only', this)">User</button>
+          <button class="filter-btn" data-filter="answers" onclick="setFilter('answers', this)">Answers</button>
+          <button class="filter-btn" data-filter="all" onclick="setFilter('all', this)">All</button>
+        </div>
+      </div>
+      <div class="tree-container" id="tree-container"><a class="tree-node tree-role-system" href="#msg-1"><span class="tree-ts">16:09:30</span> <span class="tree-content">▶ Turn started</span></a>
+<a class="tree-node tree-role-user" href="#msg-2"><span class="tree-ts">16:09:30</span> <span class="tree-content">👤 I&#x27;d like some advice on how to deploy the following file encryption scenario: I </span></a>
+<a class="tree-node tree-role-assistant" href="#msg-3"><span class="tree-ts">16:09:37</span> <span class="tree-content">🤖 I’ll separate the key-management design from the Android and</span></a>
+<a class="tree-node tree-role-system" href="#msg-4"><span class="tree-ts">16:09:41</span> <span class="tree-content">📊 in:13,097 out:288 reasoning:85</span></a>
+<a class="tree-node tree-role-system" href="#msg-5"><span class="tree-ts">16:09:46</span> <span class="tree-content">📊 in:34,427 out:404 reasoning:99</span></a>
+<a class="tree-node tree-role-system" href="#msg-6"><span class="tree-ts">16:09:55</span> <span class="tree-content">📊 in:63,881 out:517 reasoning:143</span></a>
+<a class="tree-node tree-role-assistant" href="#msg-7"><span class="tree-ts">16:11:01</span> <span class="tree-content">💬 Your proposed setup is workable, but I’d make one important </span></a>
+<a class="tree-node tree-role-assistant" href="#msg-8"><span class="tree-ts">16:11:01</span> <span class="tree-content">🤖 Your proposed setup is workable, but I’d make one important </span></a>
+<a class="tree-node tree-role-system" href="#msg-9"><span class="tree-ts">16:11:01</span> <span class="tree-content">📊 in:102,340 out:3,066 reasoning:479</span></a>
+<a class="tree-node tree-role-system" href="#msg-10"><span class="tree-ts">16:26:46</span> <span class="tree-content">▶ Turn started</span></a>
+<a class="tree-node tree-role-user" href="#msg-11"><span class="tree-ts">16:26:46</span> <span class="tree-content">👤 Ok great, thanks for that. I am aware of the native SSH GPG key option and do pl</span></a>
+<a class="tree-node tree-role-assistant" href="#msg-12"><span class="tree-ts">16:26:55</span> <span class="tree-content">🤖 There’s a useful distinction here: “GPG-backed SSH” changes </span></a>
+<a class="tree-node tree-role-system" href="#msg-13"><span class="tree-ts">16:26:59</span> <span class="tree-content">📊 in:143,736 out:3,427 reasoning:638</span></a>
+<a class="tree-node tree-role-assistant" href="#msg-14"><span class="tree-ts">16:28:05</span> <span class="tree-content">💬 A smoother setup is possible, and you likely don’t need plai</span></a>
+<a class="tree-node tree-role-assistant" href="#msg-15"><span class="tree-ts">16:28:05</span> <span class="tree-content">🤖 A smoother setup is possible, and you likely don’t need plai</span></a>
+<a class="tree-node tree-role-system" href="#msg-16"><span class="tree-ts">16:28:05</span> <span class="tree-content">📊 in:193,329 out:5,893 reasoning:1,136</span></a>
+<a class="tree-node tree-role-system" href="#msg-17"><span class="tree-ts">17:52:31</span> <span class="tree-content">▶ Turn started</span></a>
+<a class="tree-node tree-role-user" href="#msg-18"><span class="tree-ts">17:52:31</span> <span class="tree-content">👤 Ok thanks. I wonder could you write a short markdown document that sets out the </span></a>
+<a class="tree-node tree-role-assistant" href="#msg-19"><span class="tree-ts">17:52:44</span> <span class="tree-content">🤖 I’ll turn this into a concise operational runbook, covering </span></a>
+<a class="tree-node tree-role-system" href="#msg-20"><span class="tree-ts">17:52:44</span> <span class="tree-content">📊 in:245,433 out:6,048 reasoning:1,150</span></a>
+<a class="tree-node tree-role-assistant" href="#msg-21"><span class="tree-ts">17:52:47</span> <span class="tree-content">🤖 The repository has no existing Markdown conventions to follo</span></a>
+<a class="tree-node tree-role-system" href="#msg-22"><span class="tree-ts">17:53:43</span> <span class="tree-content">📊 in:297,724 out:9,075 reasoning:1,193</span></a>
+<a class="tree-node tree-role-system" href="#msg-23"><span class="tree-ts">17:53:48</span> <span class="tree-content">📊 in:353,066 out:9,198 reasoning:1,246</span></a>
+<a class="tree-node tree-role-assistant" href="#msg-24"><span class="tree-ts">17:53:53</span> <span class="tree-content">💬 Created [yubikey-encrypted-files-plan.md](/home/david/projec</span></a>
+<a class="tree-node tree-role-assistant" href="#msg-25"><span class="tree-ts">17:53:53</span> <span class="tree-content">🤖 Created [yubikey-encrypted-files-plan.md](/home/david/projec</span></a>
+<a class="tree-node tree-role-system" href="#msg-26"><span class="tree-ts">17:53:53</span> <span class="tree-content">📊 in:410,891 out:9,348 reasoning:1,313</span></a></div>
+    </aside>
+    <main id="content">
+      <div class="header">
+        <h1><span class="codex-logo">CODEX</span> Session Transcript</h1>
+        <div class="header-info">
+          <div class="info-item"><span class="info-label">Session ID</span><span class="info-value">019f51f0-893b-7523-a19a-6ba260cff35e</span></div>
+          <div class="info-item"><span class="info-label">Timestamp</span><span class="info-value">2026-07-11 16:09:06 UTC</span></div>
+          <div class="info-item"><span class="info-label">Model</span><span class="info-value">openai</span></div>
+          <div class="info-item"><span class="info-label">CLI Version</span><span class="info-value">0.144.1</span></div>
+          <div class="info-item"><span class="info-label">Working Dir</span><span class="info-value">/home/david/projects/play/gpt-chat</span></div>
+          <div class="info-item"><span class="info-label">Git Branch</span><span class="info-value"></span></div>
+        </div>
+      </div>
+      <div id="messages"><div class="system-event" id="msg-1"><div class="message-timestamp">16:09:30</div><span class="event-label">▶ Turn started</span></div>
+<div class="user-message" id="msg-2"><div class="message-timestamp">16:09:30</div><div class="markdown-content">I&#x27;d like some advice on how to deploy the following file encryption scenario: I would like to have some files that contain ssh private keys and things like plaintext
+  passwords encrypted. In the past I&#x27;ve done this on the desktop with Veracrypt. However now I&#x27;d like to adapt the scheme so that it can work on Android. There&#x27;s no
+  Veracrypt for Android. In addition I&#x27;d like to have the encryption key stored on a hard token (specifically a Yubikey). I understand that using the OpenKeyChain Android
+  app and the Termux app, in theory I can have the encrypted data stored on a removable SD card and use a key on the Yubikey to decrypt the files such that they are
+  available to processes running in Termux such as the ssh client. I think that setup will work for me but I also want to adopt the same workflow on the desktop (and
+  discontinue using Veracrypt). So I&#x27;d need some pointers on how to make it work with WSL2. I&#x27;d also like to have the decryption key available off-Yubikey so I can
+  provision it to multiple Yubikeys and potentially use it bare in some scenarios. I&#x27;m not sure how to import such a GPG key into a Yubikey so it works on both Linux and
+  Android.</div></div>
+<div class="assistant-message" id="msg-3"><div class="message-timestamp">16:09:37 (commentary)</div><div class="assistant-text markdown-content">I’ll separate the key-management design from the Android and WSL mechanics, because the biggest trap here is accidentally treating a YubiKey as the only copy of a non-exportable private key. I’m checking the current supported paths for OpenKeychain, YubiKey OpenPGP, Termux storage, and WSL USB access.</div></div>
+<div class="token-count" id="msg-4"><div class="message-timestamp">16:09:41</div><span class="event-label">📊 Tokens — in:13,097 out:288 reasoning:85</span></div>
+<div class="token-count" id="msg-5"><div class="message-timestamp">16:09:46</div><span class="event-label">📊 Tokens — in:34,427 out:404 reasoning:99</span></div>
+<div class="token-count" id="msg-6"><div class="message-timestamp">16:09:55</div><span class="event-label">📊 Tokens — in:63,881 out:517 reasoning:143</span></div>
+<div class="commentary-message" id="msg-7"><div class="message-timestamp">16:11:01</div><div class="markdown-content">Your proposed setup is workable, but I’d make one important architectural change: don’t decrypt an SSH private-key file merely so <code>ssh</code> can read it. Put a dedicated OpenPGP authentication subkey on the YubiKey and use it through an SSH agent. The private key then never exists in Termux or WSL.
+
+For passwords and other files, OpenPGP-encrypted files are reasonable, provided you manage decrypted temporary files carefully.
+
+<h2>Recommended key design</h2>
+
+Create one OpenPGP identity offline with:
+
+• A certification-only primary key, retained offline.
+• An encryption subkey for your encrypted files.
+• An authentication subkey for SSH.
+• Optionally, a signing subkey for Git, documents, and so forth.
+
+Copy the same subkeys onto each YubiKey. Preserve an encrypted offline backup of all private keys before provisioning any token.
+
+Conceptually:
+
+<pre><code class="language-text">Offline backup
+├── certification primary key
+├── encryption subkey ──→ YubiKey 1, YubiKey 2
+├── authentication subkey ──→ YubiKey 1, YubiKey 2
+└── signing subkey ──→ YubiKey 1, YubiKey 2
+</code></pre>
+
+An OpenPGP card has separate signature, encryption, and authentication slots. <code>keytocard</code> transfers a key into one of these slots and normally replaces the local key with a card reference; it is not an ordinary copy operation. Yubico therefore explicitly recommends making an offline backup first. [Yubico’s importing-key instructions](https://developers.yubico.com/PGP/Importing_keys.html)
+
+For widest interoperability with Android, WSL, older SSH installations, and multiple YubiKey generations, I would use RSA 3072. Modern curves can work, but RSA eliminates a fair number of version-compatibility variables.
+
+<h2>Generate the keys offline</h2>
+
+Do this from a temporary Linux installation or live image disconnected from the network. Use a temporary <code>GNUPGHOME</code>, not your everyday GnuPG directory.
+
+A suitable structure can be created with:
+
+<pre><code class="language-bash">export GNUPGHOME=/path/on/encrypted/offline/media/gnupg
+mkdir -m 700 &quot;$GNUPGHOME&quot;
+
+gpg --quick-generate-key \
+    &quot;Personal Vault &lt;vault@example.invalid&gt;&quot; \
+    rsa3072 cert 2y
+</code></pre>
+
+Find the full fingerprint:
+
+<pre><code class="language-bash">gpg --list-secret-keys --with-subkey-fingerprint
+</code></pre>
+
+Then add the subkeys, substituting the primary-key fingerprint:
+
+<pre><code class="language-bash">gpg --quick-add-key PRIMARY_FINGERPRINT rsa3072 encr 2y
+gpg --quick-add-key PRIMARY_FINGERPRINT rsa3072 auth 2y
+gpg --quick-add-key PRIMARY_FINGERPRINT rsa3072 sign 2y
+</code></pre>
+
+Export at least:
+
+<pre><code class="language-bash">gpg --armor --export PRIMARY_FINGERPRINT &gt; public.asc
+gpg --armor --export-secret-keys PRIMARY_FINGERPRINT &gt; secret-full.asc
+gpg --armor --export-secret-subkeys PRIMARY_FINGERPRINT &gt; secret-subkeys.asc
+gpg --output revocation.asc --gen-revoke PRIMARY_FINGERPRINT
+</code></pre>
+
+Protect the private export with a strong passphrase and place copies on encrypted media in separate physical locations. Test importing the backup into another temporary GnuPG directory before relying on it.
+
+The revocation certificate should also be offline. It lets you revoke the identity if both the tokens and backup are compromised.
+
+<h2>Provision each YubiKey</h2>
+
+Before loading keys:
+
+1. Reset the OpenPGP application if the token was previously used.
+2. Change both the user PIN and admin PIN.
+3. Record the token’s serial number.
+4. Consider enabling touch requirements for signing, authentication, and decryption through YubiKey Manager.
+
+For every YubiKey, start from a fresh temporary GnuPG directory and import <code>secret-full.asc</code>. Do not try to provision token 2 using the keyring left after provisioning token 1, because <code>keytocard</code> may already have replaced the private material with card stubs.
+
+Run:
+
+<pre><code class="language-bash">gpg --edit-key PRIMARY_FINGERPRINT
+</code></pre>
+
+At the <code>gpg&gt;</code> prompt:
+
+<pre><code class="language-text">toggle
+</code></pre>
+
+Select the encryption subkey with <code>key N</code>, run <code>keytocard</code>, and choose the encryption slot. Repeat for the authentication and signing subkeys, choosing their corresponding slots.
+
+I recommend leaving the certification primary key off the everyday YubiKeys. You only need it offline for adding/revoking subkeys, changing expiration dates, or modifying the identity.
+
+After each token, verify:
+
+<pre><code class="language-bash">gpg --card-status
+gpg --list-secret-keys --with-keygrip
+</code></pre>
+
+Then test encryption and decryption before provisioning the next token.
+
+<h2>Encrypting files</h2>
+
+Encryption only needs the public key:
+
+<pre><code class="language-bash">gpg --recipient PRIMARY_FINGERPRINT \
+    --output secrets.tar.gpg \
+    --encrypt secrets.tar
+</code></pre>
+
+Decrypt using the encryption subkey on the inserted YubiKey:
+
+<pre><code class="language-bash">gpg --output secrets.tar --decrypt secrets.tar.gpg
+</code></pre>
+
+For a directory, create a tar archive first. OpenPGP encrypts streams/files; it does not provide a mounted filesystem comparable to VeraCrypt.
+
+Important consequences:
+
+• Filenames outside the encrypted archive remain visible.
+• Decrypted files become ordinary plaintext files.
+• Secure deletion is generally unreliable on SSDs, SD cards, and flash storage.
+• Avoid decrypting plaintext back onto the removable SD card if possible.
+• Prefer pipes, RAM-backed storage, or short-lived application-private storage.
+
+For plaintext passwords, a password manager with a well-understood Android workflow may be safer and more convenient than repeatedly extracting an encrypted archive. OpenPGP is especially suitable for small, relatively static emergency files and configuration bundles.
+
+<h2>SSH without an SSH private-key file</h2>
+
+Your authentication subkey can serve as the SSH identity. Export its public SSH representation:
+
+<pre><code class="language-bash">gpg --export-ssh-key PRIMARY_FINGERPRINT
+</code></pre>
+
+Put that output into the server’s <code>~/.ssh/authorized_keys</code>.
+
+On desktop Linux or WSL, add this to <code>~/.gnupg/gpg-agent.conf</code>:
+
+<pre><code class="language-text">enable-ssh-support
+</code></pre>
+
+Then restart the agent:
+
+<pre><code class="language-bash">gpgconf --kill gpg-agent
+gpgconf --launch gpg-agent
+</code></pre>
+
+Set the SSH socket in your shell:
+
+<pre><code class="language-bash">export SSH_AUTH_SOCK=&quot;$(gpgconf --list-dirs agent-ssh-socket)&quot;
+</code></pre>
+
+Test with:
+
+<pre><code class="language-bash">ssh-add -L
+ssh -v user@host
+</code></pre>
+
+Now SSH asks <code>gpg-agent</code> to have the YubiKey perform authentication; it never reads a private-key file.
+
+<h2>Android and Termux</h2>
+
+The likely stack is:
+
+• OpenKeychain for OpenPGP and access to the YubiKey over NFC or USB.
+• Termux for shell tools.
+• OkcAgent as the bridge between Termux and OpenKeychain.
+
+OkcAgent exposes both an SSH-agent-compatible socket and limited GPG-style encryption/decryption commands. Its documented Termux setup uses:
+
+<pre><code class="language-bash">pkg install okc-agents
+eval &quot;$(okc-ssh-agent)&quot;
+</code></pre>
+
+It then sets <code>SSH_AUTH_SOCK</code>, allowing the normal Termux <code>ssh</code> client to authenticate through OpenKeychain. [OkcAgent documentation](https://github.com/DDoSolitary/OkcAgent)
+
+Import <code>public.asc</code> into OpenKeychain and associate/use the security token when prompted. Do not import <code>secret-full.asc</code> into Android unless you intentionally want a software-key fallback there. OpenKeychain supports NFC security tokens and SD-card file selection, although parts of its public documentation are dated, so test your exact phone, Android version, OpenKeychain build, YubiKey model, and NFC/USB connection before migrating everything. [OpenKeychain overview](https://www.openkeychain.org/), [OpenKeychain FAQ](https://www.openkeychain.org/faq/)
+
+One Android limitation is app isolation: decrypting something in OpenKeychain does not automatically make it appear as a private file inside Termux. Use OkcAgent for command-line crypto and SSH. If you instead use Android’s file picker to decrypt a file, it may land in shared storage, which is undesirable for SSH keys and passwords.
+
+<h2>WSL2</h2>
+
+The most direct arrangement is to attach the physical YubiKey to WSL using <code>usbipd-win</code>.
+
+From an elevated PowerShell prompt, initially:
+
+<pre><code class="language-powershell">winget install --interactive --exact dorssel.usbipd-win
+usbipd list
+usbipd bind --busid &lt;BUSID&gt;
+</code></pre>
+
+With a WSL terminal open, attach it from ordinary PowerShell:
+
+<pre><code class="language-powershell">usbipd attach --wsl --busid &lt;BUSID&gt;
+</code></pre>
+
+Inside WSL:
+
+<pre><code class="language-bash">lsusb
+gpg --card-status
+</code></pre>
+
+When finished:
+
+<pre><code class="language-powershell">usbipd detach --busid &lt;BUSID&gt;
+</code></pre>
+
+While attached to WSL, the device is unavailable to Windows applications. Microsoft documents this path specifically for USB devices such as smart-card readers. [Microsoft’s WSL USB instructions](https://learn.microsoft.com/en-us/windows/wsl/connect-usb)
+
+Within the distribution, install the normal smart-card components—for Debian/Ubuntu, typically:
+
+<pre><code class="language-bash">sudo apt install gnupg scdaemon pcscd
+</code></pre>
+
+Depending on USB permissions, you may need an appropriate udev rule or temporary elevated access. Avoid running your normal GnuPG keyring as root.
+
+An alternative is to use Gpg4win on Windows and forward its agent into WSL, but that involves socket relays and lifecycle management. Direct <code>usbipd</code> attachment is generally easier to understand and troubleshoot.
+
+<h2>“Bare” software-key operation</h2>
+
+Your <code>secret-full.asc</code> backup permits this. On a trusted machine:
+
+<pre><code class="language-bash">export GNUPGHOME=/trusted/private/location
+mkdir -m 700 &quot;$GNUPGHOME&quot;
+gpg --import secret-full.asc
+</code></pre>
+
+That machine can then decrypt without a YubiKey. This necessarily weakens the hardware-token security boundary while the software key exists there. Treat it as recovery or controlled offline operation, not the default workflow.
+
+The clean policy is:
+
+• Public key: freely copied to every device.
+• Private subkeys: on each YubiKey.
+• Full private backup: encrypted and offline.
+• Certification key: used only in the offline maintenance environment.
+• No decrypted SSH private-key files at all.
+• Plaintext data decrypted only into short-lived, private storage.</div></div>
+<div class="assistant-message" id="msg-8"><div class="message-timestamp">16:11:01 (final_answer)</div><div class="assistant-text markdown-content">Your proposed setup is workable, but I’d make one important architectural change: don’t decrypt an SSH private-key file merely so <code>ssh</code> can read it. Put a dedicated OpenPGP authentication subkey on the YubiKey and use it through an SSH agent. The private key then never exists in Termux or WSL.
+
+For passwords and other files, OpenPGP-encrypted files are reasonable, provided you manage decrypted temporary files carefully.
+
+<h2>Recommended key design</h2>
+
+Create one OpenPGP identity offline with:
+
+• A certification-only primary key, retained offline.
+• An encryption subkey for your encrypted files.
+• An authentication subkey for SSH.
+• Optionally, a signing subkey for Git, documents, and so forth.
+
+Copy the same subkeys onto each YubiKey. Preserve an encrypted offline backup of all private keys before provisioning any token.
+
+Conceptually:
+
+<pre><code class="language-text">Offline backup
+├── certification primary key
+├── encryption subkey ──→ YubiKey 1, YubiKey 2
+├── authentication subkey ──→ YubiKey 1, YubiKey 2
+└── signing subkey ──→ YubiKey 1, YubiKey 2
+</code></pre>
+
+An OpenPGP card has separate signature, encryption, and authentication slots. <code>keytocard</code> transfers a key into one of these slots and normally replaces the local key with a card reference; it is not an ordinary copy operation. Yubico therefore explicitly recommends making an offline backup first. [Yubico’s importing-key instructions](https://developers.yubico.com/PGP/Importing_keys.html)
+
+For widest interoperability with Android, WSL, older SSH installations, and multiple YubiKey generations, I would use RSA 3072. Modern curves can work, but RSA eliminates a fair number of version-compatibility variables.
+
+<h2>Generate the keys offline</h2>
+
+Do this from a temporary Linux installation or live image disconnected from the network. Use a temporary <code>GNUPGHOME</code>, not your everyday GnuPG directory.
+
+A suitable structure can be created with:
+
+<pre><code class="language-bash">export GNUPGHOME=/path/on/encrypted/offline/media/gnupg
+mkdir -m 700 &quot;$GNUPGHOME&quot;
+
+gpg --quick-generate-key \
+    &quot;Personal Vault &lt;vault@example.invalid&gt;&quot; \
+    rsa3072 cert 2y
+</code></pre>
+
+Find the full fingerprint:
+
+<pre><code class="language-bash">gpg --list-secret-keys --with-subkey-fingerprint
+</code></pre>
+
+Then add the subkeys, substituting the primary-key fingerprint:
+
+<pre><code class="language-bash">gpg --quick-add-key PRIMARY_FINGERPRINT rsa3072 encr 2y
+gpg --quick-add-key PRIMARY_FINGERPRINT rsa3072 auth 2y
+gpg --quick-add-key PRIMARY_FINGERPRINT rsa3072 sign 2y
+</code></pre>
+
+Export at least:
+
+<pre><code class="language-bash">gpg --armor --export PRIMARY_FINGERPRINT &gt; public.asc
+gpg --armor --export-secret-keys PRIMARY_FINGERPRINT &gt; secret-full.asc
+gpg --armor --export-secret-subkeys PRIMARY_FINGERPRINT &gt; secret-subkeys.asc
+gpg --output revocation.asc --gen-revoke PRIMARY_FINGERPRINT
+</code></pre>
+
+Protect the private export with a strong passphrase and place copies on encrypted media in separate physical locations. Test importing the backup into another temporary GnuPG directory before relying on it.
+
+The revocation certificate should also be offline. It lets you revoke the identity if both the tokens and backup are compromised.
+
+<h2>Provision each YubiKey</h2>
+
+Before loading keys:
+
+1. Reset the OpenPGP application if the token was previously used.
+2. Change both the user PIN and admin PIN.
+3. Record the token’s serial number.
+4. Consider enabling touch requirements for signing, authentication, and decryption through YubiKey Manager.
+
+For every YubiKey, start from a fresh temporary GnuPG directory and import <code>secret-full.asc</code>. Do not try to provision token 2 using the keyring left after provisioning token 1, because <code>keytocard</code> may already have replaced the private material with card stubs.
+
+Run:
+
+<pre><code class="language-bash">gpg --edit-key PRIMARY_FINGERPRINT
+</code></pre>
+
+At the <code>gpg&gt;</code> prompt:
+
+<pre><code class="language-text">toggle
+</code></pre>
+
+Select the encryption subkey with <code>key N</code>, run <code>keytocard</code>, and choose the encryption slot. Repeat for the authentication and signing subkeys, choosing their corresponding slots.
+
+I recommend leaving the certification primary key off the everyday YubiKeys. You only need it offline for adding/revoking subkeys, changing expiration dates, or modifying the identity.
+
+After each token, verify:
+
+<pre><code class="language-bash">gpg --card-status
+gpg --list-secret-keys --with-keygrip
+</code></pre>
+
+Then test encryption and decryption before provisioning the next token.
+
+<h2>Encrypting files</h2>
+
+Encryption only needs the public key:
+
+<pre><code class="language-bash">gpg --recipient PRIMARY_FINGERPRINT \
+    --output secrets.tar.gpg \
+    --encrypt secrets.tar
+</code></pre>
+
+Decrypt using the encryption subkey on the inserted YubiKey:
+
+<pre><code class="language-bash">gpg --output secrets.tar --decrypt secrets.tar.gpg
+</code></pre>
+
+For a directory, create a tar archive first. OpenPGP encrypts streams/files; it does not provide a mounted filesystem comparable to VeraCrypt.
+
+Important consequences:
+
+• Filenames outside the encrypted archive remain visible.
+• Decrypted files become ordinary plaintext files.
+• Secure deletion is generally unreliable on SSDs, SD cards, and flash storage.
+• Avoid decrypting plaintext back onto the removable SD card if possible.
+• Prefer pipes, RAM-backed storage, or short-lived application-private storage.
+
+For plaintext passwords, a password manager with a well-understood Android workflow may be safer and more convenient than repeatedly extracting an encrypted archive. OpenPGP is especially suitable for small, relatively static emergency files and configuration bundles.
+
+<h2>SSH without an SSH private-key file</h2>
+
+Your authentication subkey can serve as the SSH identity. Export its public SSH representation:
+
+<pre><code class="language-bash">gpg --export-ssh-key PRIMARY_FINGERPRINT
+</code></pre>
+
+Put that output into the server’s <code>~/.ssh/authorized_keys</code>.
+
+On desktop Linux or WSL, add this to <code>~/.gnupg/gpg-agent.conf</code>:
+
+<pre><code class="language-text">enable-ssh-support
+</code></pre>
+
+Then restart the agent:
+
+<pre><code class="language-bash">gpgconf --kill gpg-agent
+gpgconf --launch gpg-agent
+</code></pre>
+
+Set the SSH socket in your shell:
+
+<pre><code class="language-bash">export SSH_AUTH_SOCK=&quot;$(gpgconf --list-dirs agent-ssh-socket)&quot;
+</code></pre>
+
+Test with:
+
+<pre><code class="language-bash">ssh-add -L
+ssh -v user@host
+</code></pre>
+
+Now SSH asks <code>gpg-agent</code> to have the YubiKey perform authentication; it never reads a private-key file.
+
+<h2>Android and Termux</h2>
+
+The likely stack is:
+
+• OpenKeychain for OpenPGP and access to the YubiKey over NFC or USB.
+• Termux for shell tools.
+• OkcAgent as the bridge between Termux and OpenKeychain.
+
+OkcAgent exposes both an SSH-agent-compatible socket and limited GPG-style encryption/decryption commands. Its documented Termux setup uses:
+
+<pre><code class="language-bash">pkg install okc-agents
+eval &quot;$(okc-ssh-agent)&quot;
+</code></pre>
+
+It then sets <code>SSH_AUTH_SOCK</code>, allowing the normal Termux <code>ssh</code> client to authenticate through OpenKeychain. [OkcAgent documentation](https://github.com/DDoSolitary/OkcAgent)
+
+Import <code>public.asc</code> into OpenKeychain and associate/use the security token when prompted. Do not import <code>secret-full.asc</code> into Android unless you intentionally want a software-key fallback there. OpenKeychain supports NFC security tokens and SD-card file selection, although parts of its public documentation are dated, so test your exact phone, Android version, OpenKeychain build, YubiKey model, and NFC/USB connection before migrating everything. [OpenKeychain overview](https://www.openkeychain.org/), [OpenKeychain FAQ](https://www.openkeychain.org/faq/)
+
+One Android limitation is app isolation: decrypting something in OpenKeychain does not automatically make it appear as a private file inside Termux. Use OkcAgent for command-line crypto and SSH. If you instead use Android’s file picker to decrypt a file, it may land in shared storage, which is undesirable for SSH keys and passwords.
+
+<h2>WSL2</h2>
+
+The most direct arrangement is to attach the physical YubiKey to WSL using <code>usbipd-win</code>.
+
+From an elevated PowerShell prompt, initially:
+
+<pre><code class="language-powershell">winget install --interactive --exact dorssel.usbipd-win
+usbipd list
+usbipd bind --busid &lt;BUSID&gt;
+</code></pre>
+
+With a WSL terminal open, attach it from ordinary PowerShell:
+
+<pre><code class="language-powershell">usbipd attach --wsl --busid &lt;BUSID&gt;
+</code></pre>
+
+Inside WSL:
+
+<pre><code class="language-bash">lsusb
+gpg --card-status
+</code></pre>
+
+When finished:
+
+<pre><code class="language-powershell">usbipd detach --busid &lt;BUSID&gt;
+</code></pre>
+
+While attached to WSL, the device is unavailable to Windows applications. Microsoft documents this path specifically for USB devices such as smart-card readers. [Microsoft’s WSL USB instructions](https://learn.microsoft.com/en-us/windows/wsl/connect-usb)
+
+Within the distribution, install the normal smart-card components—for Debian/Ubuntu, typically:
+
+<pre><code class="language-bash">sudo apt install gnupg scdaemon pcscd
+</code></pre>
+
+Depending on USB permissions, you may need an appropriate udev rule or temporary elevated access. Avoid running your normal GnuPG keyring as root.
+
+An alternative is to use Gpg4win on Windows and forward its agent into WSL, but that involves socket relays and lifecycle management. Direct <code>usbipd</code> attachment is generally easier to understand and troubleshoot.
+
+<h2>“Bare” software-key operation</h2>
+
+Your <code>secret-full.asc</code> backup permits this. On a trusted machine:
+
+<pre><code class="language-bash">export GNUPGHOME=/trusted/private/location
+mkdir -m 700 &quot;$GNUPGHOME&quot;
+gpg --import secret-full.asc
+</code></pre>
+
+That machine can then decrypt without a YubiKey. This necessarily weakens the hardware-token security boundary while the software key exists there. Treat it as recovery or controlled offline operation, not the default workflow.
+
+The clean policy is:
+
+• Public key: freely copied to every device.
+• Private subkeys: on each YubiKey.
+• Full private backup: encrypted and offline.
+• Certification key: used only in the offline maintenance environment.
+• No decrypted SSH private-key files at all.
+• Plaintext data decrypted only into short-lived, private storage.</div></div>
+<div class="token-count" id="msg-9"><div class="message-timestamp">16:11:01</div><span class="event-label">📊 Tokens — in:102,340 out:3,066 reasoning:479</span></div>
+<div class="system-event" id="msg-10"><div class="message-timestamp">16:26:46</div><span class="event-label">▶ Turn started</span></div>
+<div class="user-message" id="msg-11"><div class="message-timestamp">16:26:46</div><div class="markdown-content">Ok great, thanks for that. I am aware of the native SSH GPG key option and do plan to use that but since I have many existing hosts provisioned with regular SSH keys, some of which may not support GPG-based SSH auth, I still need to be able to handle the &quot;file as ssh key&quot; scenario for now. I&#x27;m also wondering if it might be worthwhile waiting for FIDO2 SSH keys to be supported on Android as they already are on Linux and WSL2. Another thing I wondered about: the process to use a Yubikey with GPG in WSL2 looks quite cumbersome and would preclude concurrent use of the native Yubikey windows application (which I might need for TOTP from the Yubikey). Is there an option to use a native Windows GPG that would work more smoothly?</div></div>
+<div class="assistant-message" id="msg-12"><div class="message-timestamp">16:26:55 (commentary)</div><div class="assistant-text markdown-content">There’s a useful distinction here: “GPG-backed SSH” changes where the client’s private operation happens, but the server still sees an ordinary SSH public key and needs no GPG support. I’m checking the current Android FIDO2 situation and the least-fragile Windows-to-WSL agent options before recommending a workflow.</div></div>
+<div class="token-count" id="msg-13"><div class="message-timestamp">16:26:59</div><span class="event-label">📊 Tokens — in:143,736 out:3,427 reasoning:638</span></div>
+<div class="commentary-message" id="msg-14"><div class="message-timestamp">16:28:05</div><div class="markdown-content">A smoother setup is possible, and you likely don’t need plaintext SSH-key files even for your legacy hosts.
+
+<h2>Legacy SSH keys: decrypt directly into <code>ssh-agent</code></h2>
+
+Your existing hosts do not need any changes if you retain their existing SSH private keys. Store each private key encrypted with your OpenPGP encryption subkey, then decrypt it directly into a conventional SSH agent:
+
+<pre><code class="language-bash">eval &quot;$(ssh-agent -s)&quot;
+gpg --decrypt legacy_id_ed25519.gpg | ssh-add -
+</code></pre>
+
+Verify and connect:
+
+<pre><code class="language-bash">ssh-add -l
+ssh user@legacy-host
+</code></pre>
+
+When finished:
+
+<pre><code class="language-bash">ssh-add -D
+ssh-agent -k
+</code></pre>
+
+This gives you:
+
+• The existing SSH public key and server configuration remain unchanged.
+• The YubiKey authorizes decryption of the old private key.
+• The plaintext private key exists in the agent’s memory, but is never written to storage.
+• Any SSH implementation capable of using <code>ssh-agent</code> works normally.
+
+The analogous Termux command would use OkcAgent’s limited GPG interface to decrypt into an ordinary Termux <code>ssh-agent</code>:
+
+<pre><code class="language-bash">eval &quot;$(ssh-agent -s)&quot;
+okc-gpg --decrypt legacy_id_ed25519.gpg | ssh-add -
+</code></pre>
+
+Test the exact <code>okc-gpg</code> invocation because it supports only a subset of GPG’s options. [OkcAgent documentation](https://github.com/DDoSolitary/OkcAgent)
+
+This is substantially better than decrypting into <code>$HOME/.ssh</code>. If you absolutely must create a file, put it in Termux’s private app directory—not shared storage or the SD card—and use <code>chmod 600</code>. Termux documents that its app-private directory is isolated from other apps, while shared storage is not. [Termux filesystem documentation](https://github.com/termux/termux-packages/wiki/Termux-file-system-layout)
+
+One subtle correction to my earlier answer: an OpenPGP authentication subkey exported for SSH does not require GPG support on the server. The server just sees an ordinary SSH key and signature. However, it is a different public key from your existing SSH keys, so you would still need to add it to every host. The decrypt-to-<code>ssh-agent</code> approach avoids that migration requirement.
+
+<h2>Should you wait for FIDO2 SSH on Android?</h2>
+
+I wouldn’t make your current design depend on it.
+
+FIDO2-backed OpenSSH keys are excellent:
+
+<pre><code class="language-bash">ssh-keygen -t ed25519-sk
+</code></pre>
+
+or, where Ed25519 security keys are unavailable:
+
+<pre><code class="language-bash">ssh-keygen -t ecdsa-sk
+</code></pre>
+
+They give you hardware-protected keys, user-presence checks, and optional PIN/user-verification. Recent upstream OpenSSH and current preview Win32 OpenSSH builds include <code>libfido2</code>; Windows support is clearly advancing. [Win32 OpenSSH releases](https://github.com/PowerShell/Win32-OpenSSH/releases)
+
+Android itself has FIDO2/passkey APIs, but that does not automatically make a YubiKey available to the OpenSSH binary running inside Termux. The missing piece is a reliable bridge among:
+
+• Termux/OpenSSH
+• Android USB or NFC APIs
+• The hardware token
+• OpenSSH’s security-key provider interface
+
+That may eventually become polished, but there isn’t a sufficiently established, portable Termux workflow that I would wait for today.
+
+FIDO SSH keys also require server-side support for the <code>sk-ssh-ed25519@openssh.com</code> or <code>sk-ecdsa-sha2-nistp256@openssh.com</code> algorithms, generally OpenSSH 8.2 or later. Thus they have more server compatibility constraints than a GPG authentication subkey exported as an ordinary RSA SSH key.
+
+My migration path would be:
+
+1. Preserve legacy keys as OpenPGP-encrypted blobs loaded with <code>ssh-add -</code>.
+2. Add your GPG authentication public key to hosts you can readily update.
+3. Experiment with FIDO2 SSH on desktop/WSL.
+4. Add FIDO credentials as an additional key rather than replacing working credentials.
+5. Revisit Android once a maintained agent/provider has a clean Termux integration.
+
+<h2>Native Windows GPG is probably the better desktop owner</h2>
+
+Yes: install Gpg4win and let its native <code>gpg-agent</code>/<code>scdaemon</code> own the YubiKey. This avoids handing the entire USB device to WSL with <code>usbipd</code>.
+
+That produces a cleaner ownership model:
+
+<pre><code class="language-text">Windows
+├── Gpg4win / gpg-agent ──→ YubiKey OpenPGP
+├── Yubico Authenticator ──→ YubiKey OATH/TOTP
+└── WSL
+    ├── calls Windows gpg.exe, or
+    └── connects to a forwarded Windows agent socket
+</code></pre>
+
+With <code>usbipd</code>, Microsoft notes that an attached device is unavailable to Windows until detached. That is exactly the conflict you identified. [Microsoft WSL USB documentation](https://learn.microsoft.com/en-us/windows/wsl/connect-usb)
+
+<h3>Simplest option: call Windows <code>gpg.exe</code> from WSL</h3>
+
+WSL can invoke Windows executables directly. After installing Gpg4win, something like this should work:
+
+<pre><code class="language-bash">&quot;/mnt/c/Program Files (x86)/GnuPG/bin/gpg.exe&quot; --card-status
+</code></pre>
+
+The actual path may instead be under <code>C:\Program Files\GnuPG\bin</code>; locate it in PowerShell with:
+
+<pre><code class="language-powershell">Get-Command gpg.exe
+</code></pre>
+
+For streaming operations, Windows GPG can read and write through WSL’s pipes:
+
+<pre><code class="language-bash">&quot;/mnt/c/Program Files (x86)/GnuPG/bin/gpg.exe&quot; \
+    --decrypt encrypted-key.gpg |
+ssh-add -
+</code></pre>
+
+You may need to pass an explicit Windows-readable path when GPG itself opens a file:
+
+<pre><code class="language-bash">winpath=$(wslpath -w &quot;$PWD/encrypted-key.gpg&quot;)
+
+&quot;/mnt/c/Program Files (x86)/GnuPG/bin/gpg.exe&quot; \
+    --decrypt &quot;$winpath&quot; |
+ssh-add -
+</code></pre>
+
+This is the option I would try first. It has fewer moving parts than forwarding GPG sockets and keeps smart-card ownership on Windows.
+
+<h3>Important filesystem qualification</h3>
+
+Windows programs cannot ordinarily open files stored only inside arbitrary Linux paths by their Linux pathname. Either:
+
+• Pipe the content through standard input.
+• Convert paths with <code>wslpath -w</code>.
+• Keep encrypted files somewhere both environments can access.
+• Use the <code>\\wsl$\Distribution\...</code> representation if the application handles UNC paths correctly.
+
+Piping is usually the cleanest:
+
+<pre><code class="language-bash">cat secret.gpg |
+&quot;/mnt/c/Program Files (x86)/GnuPG/bin/gpg.exe&quot; --decrypt |
+ssh-add -
+</code></pre>
+
+GPG may need options adjusted to interpret encrypted input from standard input, but the underlying interop works.
+
+<h2>Using the native Windows agent from WSL</h2>
+
+This is possible but less turnkey.
+
+Current GnuPG has Windows support for Win32 OpenSSH and Windows named pipes, including the <code>--enable-win32-openssh-support</code> facility documented in the GnuPG manual. [GnuPG manual](https://www.gnupg.org/documentation/manuals/gnupg.pdf)
+
+There are two layers:
+
+1. Windows Gpg4win’s <code>gpg-agent</code> talks to the YubiKey.
+2. A bridge exposes its SSH-agent or GPG-agent endpoint as a Unix socket inside WSL.
+
+Community tools such as <code>wsl2-ssh-pageant</code> have historically provided this bridge, but these integrations are sensitive to Gpg4win versions, socket locations, WSL behavior, and the difference between GPG-agent and SSH-agent protocols. Microsoft still tracks native exposure of the Windows SSH agent inside WSL as a requested capability rather than a universally transparent built-in feature. [WSL agent integration discussion](https://github.com/microsoft/WSL/issues/11207)
+
+Therefore I’d use these approaches in this order:
+
+1. Call native Windows <code>gpg.exe</code> from WSL.
+2. For ordinary SSH keys, decrypt through Windows GPG into a WSL <code>ssh-agent</code>.
+3. For routine GPG-backed SSH, consider running Windows <code>ssh.exe</code> with the Windows GPG agent.
+4. Add an agent-socket bridge only if you specifically need Linux <code>ssh</code> to access the Windows GPG authentication subkey.
+
+<h2>Yubico Authenticator coexistence</h2>
+
+Keeping the token attached to Windows is much better than USB/IP for this purpose. Gpg4win and Yubico Authenticator address different YubiKey applications—OpenPGP and OATH—but they may still contend temporarily for smart-card/CCID access.
+
+You should expect occasional cases where you need to:
+
+<pre><code class="language-powershell">gpgconf.exe --kill scdaemon
+</code></pre>
+
+or close/reopen Yubico Authenticator. That is still far less disruptive than detaching the whole token from Windows and attaching it to WSL.
+
+My practical recommendation is therefore:
+
+• Gpg4win is the exclusive desktop owner of the OpenPGP card.
+• WSL calls Windows <code>gpg.exe</code> for encryption/decryption.
+• Legacy SSH keys are decrypted into a short-lived WSL <code>ssh-agent</code>.
+• GPG authentication subkeys are your preferred identity on newly provisioned hosts.
+• FIDO2 SSH is introduced opportunistically, without waiting for Android support.</div></div>
+<div class="assistant-message" id="msg-15"><div class="message-timestamp">16:28:05 (final_answer)</div><div class="assistant-text markdown-content">A smoother setup is possible, and you likely don’t need plaintext SSH-key files even for your legacy hosts.
+
+<h2>Legacy SSH keys: decrypt directly into <code>ssh-agent</code></h2>
+
+Your existing hosts do not need any changes if you retain their existing SSH private keys. Store each private key encrypted with your OpenPGP encryption subkey, then decrypt it directly into a conventional SSH agent:
+
+<pre><code class="language-bash">eval &quot;$(ssh-agent -s)&quot;
+gpg --decrypt legacy_id_ed25519.gpg | ssh-add -
+</code></pre>
+
+Verify and connect:
+
+<pre><code class="language-bash">ssh-add -l
+ssh user@legacy-host
+</code></pre>
+
+When finished:
+
+<pre><code class="language-bash">ssh-add -D
+ssh-agent -k
+</code></pre>
+
+This gives you:
+
+• The existing SSH public key and server configuration remain unchanged.
+• The YubiKey authorizes decryption of the old private key.
+• The plaintext private key exists in the agent’s memory, but is never written to storage.
+• Any SSH implementation capable of using <code>ssh-agent</code> works normally.
+
+The analogous Termux command would use OkcAgent’s limited GPG interface to decrypt into an ordinary Termux <code>ssh-agent</code>:
+
+<pre><code class="language-bash">eval &quot;$(ssh-agent -s)&quot;
+okc-gpg --decrypt legacy_id_ed25519.gpg | ssh-add -
+</code></pre>
+
+Test the exact <code>okc-gpg</code> invocation because it supports only a subset of GPG’s options. [OkcAgent documentation](https://github.com/DDoSolitary/OkcAgent)
+
+This is substantially better than decrypting into <code>$HOME/.ssh</code>. If you absolutely must create a file, put it in Termux’s private app directory—not shared storage or the SD card—and use <code>chmod 600</code>. Termux documents that its app-private directory is isolated from other apps, while shared storage is not. [Termux filesystem documentation](https://github.com/termux/termux-packages/wiki/Termux-file-system-layout)
+
+One subtle correction to my earlier answer: an OpenPGP authentication subkey exported for SSH does not require GPG support on the server. The server just sees an ordinary SSH key and signature. However, it is a different public key from your existing SSH keys, so you would still need to add it to every host. The decrypt-to-<code>ssh-agent</code> approach avoids that migration requirement.
+
+<h2>Should you wait for FIDO2 SSH on Android?</h2>
+
+I wouldn’t make your current design depend on it.
+
+FIDO2-backed OpenSSH keys are excellent:
+
+<pre><code class="language-bash">ssh-keygen -t ed25519-sk
+</code></pre>
+
+or, where Ed25519 security keys are unavailable:
+
+<pre><code class="language-bash">ssh-keygen -t ecdsa-sk
+</code></pre>
+
+They give you hardware-protected keys, user-presence checks, and optional PIN/user-verification. Recent upstream OpenSSH and current preview Win32 OpenSSH builds include <code>libfido2</code>; Windows support is clearly advancing. [Win32 OpenSSH releases](https://github.com/PowerShell/Win32-OpenSSH/releases)
+
+Android itself has FIDO2/passkey APIs, but that does not automatically make a YubiKey available to the OpenSSH binary running inside Termux. The missing piece is a reliable bridge among:
+
+• Termux/OpenSSH
+• Android USB or NFC APIs
+• The hardware token
+• OpenSSH’s security-key provider interface
+
+That may eventually become polished, but there isn’t a sufficiently established, portable Termux workflow that I would wait for today.
+
+FIDO SSH keys also require server-side support for the <code>sk-ssh-ed25519@openssh.com</code> or <code>sk-ecdsa-sha2-nistp256@openssh.com</code> algorithms, generally OpenSSH 8.2 or later. Thus they have more server compatibility constraints than a GPG authentication subkey exported as an ordinary RSA SSH key.
+
+My migration path would be:
+
+1. Preserve legacy keys as OpenPGP-encrypted blobs loaded with <code>ssh-add -</code>.
+2. Add your GPG authentication public key to hosts you can readily update.
+3. Experiment with FIDO2 SSH on desktop/WSL.
+4. Add FIDO credentials as an additional key rather than replacing working credentials.
+5. Revisit Android once a maintained agent/provider has a clean Termux integration.
+
+<h2>Native Windows GPG is probably the better desktop owner</h2>
+
+Yes: install Gpg4win and let its native <code>gpg-agent</code>/<code>scdaemon</code> own the YubiKey. This avoids handing the entire USB device to WSL with <code>usbipd</code>.
+
+That produces a cleaner ownership model:
+
+<pre><code class="language-text">Windows
+├── Gpg4win / gpg-agent ──→ YubiKey OpenPGP
+├── Yubico Authenticator ──→ YubiKey OATH/TOTP
+└── WSL
+    ├── calls Windows gpg.exe, or
+    └── connects to a forwarded Windows agent socket
+</code></pre>
+
+With <code>usbipd</code>, Microsoft notes that an attached device is unavailable to Windows until detached. That is exactly the conflict you identified. [Microsoft WSL USB documentation](https://learn.microsoft.com/en-us/windows/wsl/connect-usb)
+
+<h3>Simplest option: call Windows <code>gpg.exe</code> from WSL</h3>
+
+WSL can invoke Windows executables directly. After installing Gpg4win, something like this should work:
+
+<pre><code class="language-bash">&quot;/mnt/c/Program Files (x86)/GnuPG/bin/gpg.exe&quot; --card-status
+</code></pre>
+
+The actual path may instead be under <code>C:\Program Files\GnuPG\bin</code>; locate it in PowerShell with:
+
+<pre><code class="language-powershell">Get-Command gpg.exe
+</code></pre>
+
+For streaming operations, Windows GPG can read and write through WSL’s pipes:
+
+<pre><code class="language-bash">&quot;/mnt/c/Program Files (x86)/GnuPG/bin/gpg.exe&quot; \
+    --decrypt encrypted-key.gpg |
+ssh-add -
+</code></pre>
+
+You may need to pass an explicit Windows-readable path when GPG itself opens a file:
+
+<pre><code class="language-bash">winpath=$(wslpath -w &quot;$PWD/encrypted-key.gpg&quot;)
+
+&quot;/mnt/c/Program Files (x86)/GnuPG/bin/gpg.exe&quot; \
+    --decrypt &quot;$winpath&quot; |
+ssh-add -
+</code></pre>
+
+This is the option I would try first. It has fewer moving parts than forwarding GPG sockets and keeps smart-card ownership on Windows.
+
+<h3>Important filesystem qualification</h3>
+
+Windows programs cannot ordinarily open files stored only inside arbitrary Linux paths by their Linux pathname. Either:
+
+• Pipe the content through standard input.
+• Convert paths with <code>wslpath -w</code>.
+• Keep encrypted files somewhere both environments can access.
+• Use the <code>\\wsl$\Distribution\...</code> representation if the application handles UNC paths correctly.
+
+Piping is usually the cleanest:
+
+<pre><code class="language-bash">cat secret.gpg |
+&quot;/mnt/c/Program Files (x86)/GnuPG/bin/gpg.exe&quot; --decrypt |
+ssh-add -
+</code></pre>
+
+GPG may need options adjusted to interpret encrypted input from standard input, but the underlying interop works.
+
+<h2>Using the native Windows agent from WSL</h2>
+
+This is possible but less turnkey.
+
+Current GnuPG has Windows support for Win32 OpenSSH and Windows named pipes, including the <code>--enable-win32-openssh-support</code> facility documented in the GnuPG manual. [GnuPG manual](https://www.gnupg.org/documentation/manuals/gnupg.pdf)
+
+There are two layers:
+
+1. Windows Gpg4win’s <code>gpg-agent</code> talks to the YubiKey.
+2. A bridge exposes its SSH-agent or GPG-agent endpoint as a Unix socket inside WSL.
+
+Community tools such as <code>wsl2-ssh-pageant</code> have historically provided this bridge, but these integrations are sensitive to Gpg4win versions, socket locations, WSL behavior, and the difference between GPG-agent and SSH-agent protocols. Microsoft still tracks native exposure of the Windows SSH agent inside WSL as a requested capability rather than a universally transparent built-in feature. [WSL agent integration discussion](https://github.com/microsoft/WSL/issues/11207)
+
+Therefore I’d use these approaches in this order:
+
+1. Call native Windows <code>gpg.exe</code> from WSL.
+2. For ordinary SSH keys, decrypt through Windows GPG into a WSL <code>ssh-agent</code>.
+3. For routine GPG-backed SSH, consider running Windows <code>ssh.exe</code> with the Windows GPG agent.
+4. Add an agent-socket bridge only if you specifically need Linux <code>ssh</code> to access the Windows GPG authentication subkey.
+
+<h2>Yubico Authenticator coexistence</h2>
+
+Keeping the token attached to Windows is much better than USB/IP for this purpose. Gpg4win and Yubico Authenticator address different YubiKey applications—OpenPGP and OATH—but they may still contend temporarily for smart-card/CCID access.
+
+You should expect occasional cases where you need to:
+
+<pre><code class="language-powershell">gpgconf.exe --kill scdaemon
+</code></pre>
+
+or close/reopen Yubico Authenticator. That is still far less disruptive than detaching the whole token from Windows and attaching it to WSL.
+
+My practical recommendation is therefore:
+
+• Gpg4win is the exclusive desktop owner of the OpenPGP card.
+• WSL calls Windows <code>gpg.exe</code> for encryption/decryption.
+• Legacy SSH keys are decrypted into a short-lived WSL <code>ssh-agent</code>.
+• GPG authentication subkeys are your preferred identity on newly provisioned hosts.
+• FIDO2 SSH is introduced opportunistically, without waiting for Android support.</div></div>
+<div class="token-count" id="msg-16"><div class="message-timestamp">16:28:05</div><span class="event-label">📊 Tokens — in:193,329 out:5,893 reasoning:1,136</span></div>
+<div class="system-event" id="msg-17"><div class="message-timestamp">17:52:31</div><span class="event-label">▶ Turn started</span></div>
+<div class="user-message" id="msg-18"><div class="message-timestamp">17:52:31</div><div class="markdown-content">Ok thanks. I wonder could you write a short markdown document that sets out the plan as we&#x27;ve discussed and includes command line recipes for the various steps and
+  links to the important source material?</div></div>
+<div class="assistant-message" id="msg-19"><div class="message-timestamp">17:52:44 (commentary)</div><div class="assistant-text markdown-content">I’ll turn this into a concise operational runbook, covering offline key creation, multi-YubiKey provisioning, legacy SSH-key loading, Android/Termux, and the Windows-native GPG/WSL path. I’ll first check the repository’s documentation conventions and then add the Markdown file.</div></div>
+<div class="token-count" id="msg-20"><div class="message-timestamp">17:52:44</div><span class="event-label">📊 Tokens — in:245,433 out:6,048 reasoning:1,150</span></div>
+<div class="assistant-message" id="msg-21"><div class="message-timestamp">17:52:47 (commentary)</div><div class="assistant-text markdown-content">The repository has no existing Markdown conventions to follow, so I’m adding a standalone runbook at the project root. I’ll keep the risky operations explicit—especially <code>keytocard</code>, backup restoration between tokens, and avoiding plaintext SSH keys on flash storage.</div></div>
+<div class="token-count" id="msg-22"><div class="message-timestamp">17:53:43</div><span class="event-label">📊 Tokens — in:297,724 out:9,075 reasoning:1,193</span></div>
+<div class="token-count" id="msg-23"><div class="message-timestamp">17:53:48</div><span class="event-label">📊 Tokens — in:353,066 out:9,198 reasoning:1,246</span></div>
+<div class="commentary-message" id="msg-24"><div class="message-timestamp">17:53:53</div><div class="markdown-content">Created [yubikey-encrypted-files-plan.md](/home/david/projects/play/gpt-chat/yubikey-encrypted-files-plan.md).
+
+It includes the agreed architecture, command recipes, operational cautions, recovery steps, and source links for Yubico, GnuPG, OpenKeychain, OkcAgent, Termux, WSL, and Win32 OpenSSH.</div></div>
+<div class="assistant-message" id="msg-25"><div class="message-timestamp">17:53:53 (final_answer)</div><div class="assistant-text markdown-content">Created [yubikey-encrypted-files-plan.md](/home/david/projects/play/gpt-chat/yubikey-encrypted-files-plan.md).
+
+It includes the agreed architecture, command recipes, operational cautions, recovery steps, and source links for Yubico, GnuPG, OpenKeychain, OkcAgent, Termux, WSL, and Win32 OpenSSH.</div></div>
+<div class="token-count" id="msg-26"><div class="message-timestamp">17:53:53</div><span class="event-label">📊 Tokens — in:410,891 out:9,348 reasoning:1,313</span></div></div>
+      <div class="footer">Codex CLI session transcript · Generated 2026-07-14 19:03</div>
+    </main>
+  </div>
+  <script>// Sidebar filtering and navigation for Codex session transcript viewer.
+
+const allNodes = document.querySelectorAll('.tree-node');
+let activeFilter = 'default';
+
+function setFilter(filter, btn) {
+  activeFilter = filter;
+  document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  applyFilters();
+}
+
+function filterTree(search) {
+  applyFilters(search);
+}
+
+function applyFilters(search) {
+  search = (search || document.getElementById('tree-search').value).toLowerCase();
+  allNodes.forEach(node => {
+    const text = node.textContent.toLowerCase();
+    const classes = node.className;
+    let visible = true;
+
+    if (activeFilter === 'no-tools') {
+      visible = !classes.includes('tree-role-tool') && !classes.includes('tree-role-system');
+    } else if (activeFilter === 'user-only') {
+      visible = classes.includes('tree-role-user');
+    } else if (activeFilter === 'answers') {
+      visible = classes.includes('tree-role-user') || (classes.includes('tree-role-assistant') && text.includes('\u2705'));
+    } else if (activeFilter === 'default') {
+      visible = !classes.includes('tree-role-system') && !classes.includes('tree-role-thinking');
+    }
+
+    if (visible && search) {
+      visible = text.includes(search);
+    }
+
+    node.style.display = visible ? '' : 'none';
+  });
+}
+
+// Smooth scroll to target on sidebar click
+document.querySelectorAll('.tree-node').forEach(node => {
+  node.addEventListener('click', function(e) {
+    e.preventDefault();
+    const id = this.getAttribute('href')?.slice(1);
+    if (id) {
+      const el = document.getElementById(id);
+      if (el) {
+        el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        el.style.outline = '2px solid var(--accent)';
+        setTimeout(() => el.style.outline = '', 2000);
+      }
+    }
+    document.querySelectorAll('.tree-node').forEach(n => n.classList.remove('active'));
+    this.classList.add('active');
+  });
+});
+
+// Apply default filter on load
+applyFilters();
+</script>
+</body>
+</html>
