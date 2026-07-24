@@ -1,0 +1,979 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Claude Code transcript - Index</title>
+    <style>
+:root { --bg-color: #f5f5f5; --card-bg: #ffffff; --user-bg: #e3f2fd; --user-border: #1976d2; --assistant-bg: #f5f5f5; --assistant-border: #9e9e9e; --thinking-bg: #fff8e1; --thinking-border: #ffc107; --thinking-text: #666; --tool-bg: #f3e5f5; --tool-border: #9c27b0; --tool-result-bg: #e8f5e9; --tool-error-bg: #ffebee; --text-color: #212121; --text-muted: #757575; --code-bg: #263238; --code-text: #aed581; }
+* { box-sizing: border-box; }
+body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: var(--bg-color); color: var(--text-color); margin: 0; padding: 16px; line-height: 1.6; }
+.container { max-width: 800px; margin: 0 auto; }
+h1 { font-size: 1.5rem; margin-bottom: 24px; padding-bottom: 8px; border-bottom: 2px solid var(--user-border); }
+.header-row { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; border-bottom: 2px solid var(--user-border); padding-bottom: 8px; margin-bottom: 24px; }
+.header-row h1 { border-bottom: none; padding-bottom: 0; margin-bottom: 0; flex: 1; min-width: 200px; }
+.message { margin-bottom: 16px; border-radius: 12px; overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+.message.user { background: var(--user-bg); border-left: 4px solid var(--user-border); }
+.message.assistant { background: var(--card-bg); border-left: 4px solid var(--assistant-border); }
+.message.tool-reply { background: #fff8e1; border-left: 4px solid #ff9800; }
+.tool-reply .role-label { color: #e65100; }
+.tool-reply .tool-result { background: transparent; padding: 0; margin: 0; }
+.tool-reply .tool-result .truncatable.truncated::after { background: linear-gradient(to bottom, transparent, #fff8e1); }
+.message-header { display: flex; justify-content: space-between; align-items: center; padding: 8px 16px; background: rgba(0,0,0,0.03); font-size: 0.85rem; }
+.role-label { font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; }
+.user .role-label { color: var(--user-border); }
+time { color: var(--text-muted); font-size: 0.8rem; }
+.timestamp-link { color: inherit; text-decoration: none; }
+.timestamp-link:hover { text-decoration: underline; }
+.message:target { animation: highlight 2s ease-out; }
+@keyframes highlight { 0% { background-color: rgba(25, 118, 210, 0.2); } 100% { background-color: transparent; } }
+.message-content { padding: 16px; }
+.message-content p { margin: 0 0 12px 0; }
+.message-content p:last-child { margin-bottom: 0; }
+.thinking { background: var(--thinking-bg); border: 1px solid var(--thinking-border); border-radius: 8px; padding: 12px; margin: 12px 0; font-size: 0.9rem; color: var(--thinking-text); }
+.thinking-label { font-size: 0.75rem; font-weight: 600; text-transform: uppercase; color: #f57c00; margin-bottom: 8px; }
+.thinking p { margin: 8px 0; }
+.assistant-text { margin: 8px 0; }
+.tool-use { background: var(--tool-bg); border: 1px solid var(--tool-border); border-radius: 8px; padding: 12px; margin: 12px 0; }
+.tool-header { font-weight: 600; color: var(--tool-border); margin-bottom: 8px; display: flex; align-items: center; gap: 8px; }
+.tool-icon { font-size: 1.1rem; }
+.tool-description { font-size: 0.9rem; color: var(--text-muted); margin-bottom: 8px; font-style: italic; }
+.tool-result { background: var(--tool-result-bg); border-radius: 8px; padding: 12px; margin: 12px 0; }
+.tool-result.tool-error { background: var(--tool-error-bg); }
+.file-tool { border-radius: 8px; padding: 12px; margin: 12px 0; }
+.write-tool { background: linear-gradient(135deg, #e3f2fd 0%, #e8f5e9 100%); border: 1px solid #4caf50; }
+.edit-tool { background: linear-gradient(135deg, #fff3e0 0%, #fce4ec 100%); border: 1px solid #ff9800; }
+.file-tool-header { font-weight: 600; margin-bottom: 4px; display: flex; align-items: center; gap: 8px; font-size: 0.95rem; }
+.write-header { color: #2e7d32; }
+.edit-header { color: #e65100; }
+.file-tool-icon { font-size: 1rem; }
+.file-tool-path { font-family: monospace; background: rgba(0,0,0,0.08); padding: 2px 8px; border-radius: 4px; }
+.file-tool-fullpath { font-family: monospace; font-size: 0.8rem; color: var(--text-muted); margin-bottom: 8px; word-break: break-all; }
+.file-content { margin: 0; }
+.edit-section { display: flex; margin: 4px 0; border-radius: 4px; overflow: hidden; }
+.edit-label { padding: 8px 12px; font-weight: bold; font-family: monospace; display: flex; align-items: flex-start; }
+.edit-old { background: #fce4ec; }
+.edit-old .edit-label { color: #b71c1c; background: #f8bbd9; }
+.edit-old .edit-content { color: #880e4f; }
+.edit-new { background: #e8f5e9; }
+.edit-new .edit-label { color: #1b5e20; background: #a5d6a7; }
+.edit-new .edit-content { color: #1b5e20; }
+.edit-content { margin: 0; flex: 1; background: transparent; font-size: 0.85rem; }
+.edit-replace-all { font-size: 0.75rem; font-weight: normal; color: var(--text-muted); }
+.write-tool .truncatable.truncated::after { background: linear-gradient(to bottom, transparent, #e6f4ea); }
+.edit-tool .truncatable.truncated::after { background: linear-gradient(to bottom, transparent, #fff0e5); }
+.todo-list { background: linear-gradient(135deg, #e8f5e9 0%, #f1f8e9 100%); border: 1px solid #81c784; border-radius: 8px; padding: 12px; margin: 12px 0; }
+.todo-header { font-weight: 600; color: #2e7d32; margin-bottom: 10px; display: flex; align-items: center; gap: 8px; font-size: 0.95rem; }
+.todo-items { list-style: none; margin: 0; padding: 0; }
+.todo-item { display: flex; align-items: flex-start; gap: 10px; padding: 6px 0; border-bottom: 1px solid rgba(0,0,0,0.06); font-size: 0.9rem; }
+.todo-item:last-child { border-bottom: none; }
+.todo-icon { flex-shrink: 0; width: 20px; height: 20px; display: flex; align-items: center; justify-content: center; font-weight: bold; border-radius: 50%; }
+.todo-completed .todo-icon { color: #2e7d32; background: rgba(46, 125, 50, 0.15); }
+.todo-completed .todo-content { color: #558b2f; text-decoration: line-through; }
+.todo-in-progress .todo-icon { color: #f57c00; background: rgba(245, 124, 0, 0.15); }
+.todo-in-progress .todo-content { color: #e65100; font-weight: 500; }
+.todo-pending .todo-icon { color: #757575; background: rgba(0,0,0,0.05); }
+.todo-pending .todo-content { color: #616161; }
+pre { background: var(--code-bg); color: var(--code-text); padding: 12px; border-radius: 6px; overflow-x: auto; font-size: 0.85rem; line-height: 1.5; margin: 8px 0; white-space: pre-wrap; word-wrap: break-word; }
+pre.json { color: #e0e0e0; }
+code { background: rgba(0,0,0,0.08); padding: 2px 6px; border-radius: 4px; font-size: 0.9em; }
+pre code { background: none; padding: 0; }
+.user-content { margin: 0; }
+.truncatable { position: relative; }
+.truncatable.truncated .truncatable-content { max-height: 200px; overflow: hidden; }
+.truncatable.truncated::after { content: ''; position: absolute; bottom: 32px; left: 0; right: 0; height: 60px; background: linear-gradient(to bottom, transparent, var(--card-bg)); pointer-events: none; }
+.message.user .truncatable.truncated::after { background: linear-gradient(to bottom, transparent, var(--user-bg)); }
+.message.tool-reply .truncatable.truncated::after { background: linear-gradient(to bottom, transparent, #fff8e1); }
+.tool-use .truncatable.truncated::after { background: linear-gradient(to bottom, transparent, var(--tool-bg)); }
+.tool-result .truncatable.truncated::after { background: linear-gradient(to bottom, transparent, var(--tool-result-bg)); }
+.expand-btn { display: none; width: 100%; padding: 8px 16px; margin-top: 4px; background: rgba(0,0,0,0.05); border: 1px solid rgba(0,0,0,0.1); border-radius: 6px; cursor: pointer; font-size: 0.85rem; color: var(--text-muted); }
+.expand-btn:hover { background: rgba(0,0,0,0.1); }
+.truncatable.truncated .expand-btn, .truncatable.expanded .expand-btn { display: block; }
+.pagination { display: flex; justify-content: center; gap: 8px; margin: 24px 0; flex-wrap: wrap; }
+.pagination a, .pagination span { padding: 5px 10px; border-radius: 6px; text-decoration: none; font-size: 0.85rem; }
+.pagination a { background: var(--card-bg); color: var(--user-border); border: 1px solid var(--user-border); }
+.pagination a:hover { background: var(--user-bg); }
+.pagination .current { background: var(--user-border); color: white; }
+.pagination .disabled { color: var(--text-muted); border: 1px solid #ddd; }
+.pagination .index-link { background: var(--user-border); color: white; }
+details.continuation { margin-bottom: 16px; }
+details.continuation summary { cursor: pointer; padding: 12px 16px; background: var(--user-bg); border-left: 4px solid var(--user-border); border-radius: 12px; font-weight: 500; color: var(--text-muted); }
+details.continuation summary:hover { background: rgba(25, 118, 210, 0.15); }
+details.continuation[open] summary { border-radius: 12px 12px 0 0; margin-bottom: 0; }
+.index-item { margin-bottom: 16px; border-radius: 12px; overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,0.1); background: var(--user-bg); border-left: 4px solid var(--user-border); }
+.index-item a { display: block; text-decoration: none; color: inherit; }
+.index-item a:hover { background: rgba(25, 118, 210, 0.1); }
+.index-item-header { display: flex; justify-content: space-between; align-items: center; padding: 8px 16px; background: rgba(0,0,0,0.03); font-size: 0.85rem; }
+.index-item-number { font-weight: 600; color: var(--user-border); }
+.index-item-content { padding: 16px; }
+.index-item-stats { padding: 8px 16px 12px 32px; font-size: 0.85rem; color: var(--text-muted); border-top: 1px solid rgba(0,0,0,0.06); }
+.index-item-commit { margin-top: 6px; padding: 4px 8px; background: #fff3e0; border-radius: 4px; font-size: 0.85rem; color: #e65100; }
+.index-item-commit code { background: rgba(0,0,0,0.08); padding: 1px 4px; border-radius: 3px; font-size: 0.8rem; margin-right: 6px; }
+.commit-card { margin: 8px 0; padding: 10px 14px; background: #fff3e0; border-left: 4px solid #ff9800; border-radius: 6px; }
+.commit-card a { text-decoration: none; color: #5d4037; display: block; }
+.commit-card a:hover { color: #e65100; }
+.commit-card-hash { font-family: monospace; color: #e65100; font-weight: 600; margin-right: 8px; }
+.index-commit { margin-bottom: 12px; padding: 10px 16px; background: #fff3e0; border-left: 4px solid #ff9800; border-radius: 8px; box-shadow: 0 1px 2px rgba(0,0,0,0.05); }
+.index-commit a { display: block; text-decoration: none; color: inherit; }
+.index-commit a:hover { background: rgba(255, 152, 0, 0.1); margin: -10px -16px; padding: 10px 16px; border-radius: 8px; }
+.index-commit-header { display: flex; justify-content: space-between; align-items: center; font-size: 0.85rem; margin-bottom: 4px; }
+.index-commit-hash { font-family: monospace; color: #e65100; font-weight: 600; }
+.index-commit-msg { color: #5d4037; }
+.index-item-long-text { margin-top: 8px; padding: 12px; background: var(--card-bg); border-radius: 8px; border-left: 3px solid var(--assistant-border); }
+.index-item-long-text .truncatable.truncated::after { background: linear-gradient(to bottom, transparent, var(--card-bg)); }
+.index-item-long-text-content { color: var(--text-color); }
+#search-box { display: none; align-items: center; gap: 8px; }
+#search-box input { padding: 6px 12px; border: 1px solid var(--assistant-border); border-radius: 6px; font-size: 16px; width: 180px; }
+#search-box button, #modal-search-btn, #modal-close-btn { background: var(--user-border); color: white; border: none; border-radius: 6px; padding: 6px 10px; cursor: pointer; display: flex; align-items: center; justify-content: center; }
+#search-box button:hover, #modal-search-btn:hover { background: #1565c0; }
+#modal-close-btn { background: var(--text-muted); margin-left: 8px; }
+#modal-close-btn:hover { background: #616161; }
+#search-modal[open] { border: none; border-radius: 12px; box-shadow: 0 4px 24px rgba(0,0,0,0.2); padding: 0; width: 90vw; max-width: 900px; height: 80vh; max-height: 80vh; display: flex; flex-direction: column; }
+#search-modal::backdrop { background: rgba(0,0,0,0.5); }
+.search-modal-header { display: flex; align-items: center; gap: 8px; padding: 16px; border-bottom: 1px solid var(--assistant-border); background: var(--bg-color); border-radius: 12px 12px 0 0; }
+.search-modal-header input { flex: 1; padding: 8px 12px; border: 1px solid var(--assistant-border); border-radius: 6px; font-size: 16px; }
+#search-status { padding: 8px 16px; font-size: 0.85rem; color: var(--text-muted); border-bottom: 1px solid rgba(0,0,0,0.06); }
+#search-results { flex: 1; overflow-y: auto; padding: 16px; }
+.search-result { margin-bottom: 16px; border-radius: 8px; overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+.search-result a { display: block; text-decoration: none; color: inherit; }
+.search-result a:hover { background: rgba(25, 118, 210, 0.05); }
+.search-result-page { padding: 6px 12px; background: rgba(0,0,0,0.03); font-size: 0.8rem; color: var(--text-muted); border-bottom: 1px solid rgba(0,0,0,0.06); }
+.search-result-content { padding: 12px; }
+.search-result mark { background: #fff59d; padding: 1px 2px; border-radius: 2px; }
+@media (max-width: 600px) { body { padding: 8px; } .message, .index-item { border-radius: 8px; } .message-content, .index-item-content { padding: 12px; } pre { font-size: 0.8rem; padding: 8px; } #search-box input { width: 120px; } #search-modal[open] { width: 95vw; height: 90vh; } }
+</style>
+</head>
+<body>
+    <div class="container">
+        <div class="header-row">
+            <h1>Claude Code transcript</h1>
+            <div id="search-box">
+                <input type="text" id="search-input" placeholder="Search..." aria-label="Search transcripts">
+                <button id="search-btn" type="button" aria-label="Search">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><path d="m21 21-4.35-4.35"></path></svg>
+                </button>
+            </div>
+        </div>
+        
+
+<div class="pagination">
+<span class="current">Index</span>
+<span class="disabled">&larr; Prev</span>
+<a href="page-001.html">1</a>
+<a href="page-002.html">2</a>
+<a href="page-003.html">3</a>
+<a href="page-004.html">4</a>
+<a href="page-005.html">5</a>
+<a href="page-006.html">6</a>
+<a href="page-007.html">7</a>
+<a href="page-008.html">8</a>
+<a href="page-009.html">9</a>
+<a href="page-010.html">10</a>
+<a href="page-011.html">11</a>
+<a href="page-001.html">Next &rarr;</a>
+</div>
+
+        <p style="color: var(--text-muted); margin-bottom: 24px;">51 prompts · 784 messages · 229 tool calls · 0 commits · 11 pages</p>
+        
+<div class="index-item"><a href="page-001.html#msg-2026-07-23T22-27-39-888Z"><div class="index-item-header"><span class="index-item-number">#2</span><time datetime="2026-07-23T22:27:39.888Z" data-timestamp="2026-07-23T22:27:39.888Z">2026-07-23T22:27:39.888Z</time></div><div class="index-item-content"><p><command-name>/model</command-name>
+            <command-message>model</command-message>
+            <command-args></command-args></p></div></a></div>
+<div class="index-item"><a href="page-001.html#msg-2026-07-23T22-27-39-888Z"><div class="index-item-header"><span class="index-item-number">#3</span><time datetime="2026-07-23T22:27:39.888Z" data-timestamp="2026-07-23T22:27:39.888Z">2026-07-23T22:27:39.888Z</time></div><div class="index-item-content"><p><local-command-stdout>Set model to [1mFable 5[22m and saved as your default for new sessions</local-command-stdout></p></div></a></div>
+<div class="index-item"><a href="page-001.html#msg-2026-07-23T22-27-39-889Z"><div class="index-item-header"><span class="index-item-number">#1</span><time datetime="2026-07-23T22:27:39.889Z" data-timestamp="2026-07-23T22:27:39.889Z">2026-07-23T22:27:39.889Z</time></div><div class="index-item-content"><p><local-command-caveat>Caveat: The messages below were generated by the user while running local commands. DO NOT respond to these messages or otherwise consider them in your response unless the user explicitly asks you to.</local-command-caveat></p></div></a></div>
+<div class="index-item"><a href="page-001.html#msg-2026-07-23T22-38-16-368Z"><div class="index-item-header"><span class="index-item-number">#4</span><time datetime="2026-07-23T22:38:16.368Z" data-timestamp="2026-07-23T22:38:16.368Z">2026-07-23T22:38:16.368Z</time></div><div class="index-item-content"><p>The current project is a Python CLI tool that deals with the building, maintenance and deployment of containerized software systems. It currently supports deployment of containers that are either a) build from a git repository (allowing arbitrary content but the repository must include a container build), b) pulled as-is from an image registry (allowing any image to be used, but without the knowledge of how to build and hence modify it), or c) specified as a "web app" in which case the stack tool knows how to build a container image that hosts an application it fetches from the specifed repository. The tool does this by having a couple of options for base container images, and a basic understanding of how web apps using nextjs or the like end up being packaged and configured in a container. This allows deployment of (roughly) any web app straight from its host repository, without its developer needing to understand containerization. This is similar in concept to now some public web app hosting platforms such as Vercel work. Ok, so what I'd like to do is to make that "middle route" more generic so that it can support a range of possible kinds of container wrapping. The first most obvious candidate is to host pure static html content. Thus a repository that only contains html could be deployed and served with an http server simply by including its repository in a stack, denoting it as static content. I'd like the definiteions for the base images for these different wrapping schemes to live in their own repositories (similar in concept to the docker-ingress-stack that we already have), rather than being defined in-tree with the stack tool itself. This I think requires some sort of abstraction and way for the wrapping container schemes to be discovered and enumerated at runtime. I'd like your thoughts on this idea. The existing webapp scheme is documented at docs/webapp.md</p></div></a><div class="index-item-stats"><span>1 read · 1 agent</span>
+<div class="index-item-long-text"><div class="truncatable"><div class="truncatable-content"><div class="index-item-long-text-content"><p>This is a solid idea, and the good news is the codebase is already about 70% of the way there structurally. Here's my assessment after reviewing <code>docs/webapp.md</code> and the build machinery.</p>
+<h2>What exists today, and why it helps</h2>
+<p>The webapp path is already a "wrapping scheme" in all but name — it's just hardcoded and lives off to the side:</p>
+<ul>
+<li>Base image recipes live in-tree at <code>src/stack/data/container-build/bozemanpass-webapp-base/</code> and <code>bozemanpass-nextjs-base/</code>. Each has a base <code>Containerfile</code> plus a <code>Containerfile.webapp</code> that does the two-stage "copy app repo in, build, produce runtime image" dance.</li>
+<li>The seam you need already exists: <code>build_webapp.py</code> drives the generic <code>process_container()</code> by overriding three env vars — <code>STACK_CONTAINER_BUILD_CONTAINERFILE</code>, <code>STACK_CONTAINER_BUILD_WORK_DIR</code> (the app repo), and <code>STACK_CONTAINER_BUILD_TAG</code>. That env contract <em>is</em> the wrapper interface; it just isn't formalized.</li>
+<li>External container builds are already supported: <code>process_container()</code> looks for <code>stack-files/containers/&lt;name&gt;/build.sh</code> in fetched repos, and repos are fetched/discovered by convention under <code>STACK_REPO_BASE_DIR</code>. So the "definitions live in their own repos" part has an existing pattern to copy.</li>
+</ul>
+<p>What's missing is exactly what you identified: webapp-ness is not a first-class concept in <code>stack.yml</code> (it's a separate <code>webapp build</code> command family with a special-cased <code>webapp-template</code> stack and some post-hoc YAML rewriting in <code>deploy_webapp.py</code>), and there's no way to enumerate or add wrapping schemes.</p>
+<h2>Proposed shape</h2>
+<p><strong>1. Make the wrapper an explicit attribute on a container entry in <code>stack.yml</code>.</strong> Something like:</p>
+<pre><code class="language-yaml">containers:
+  - name: myorg/my-site
+    ref: github.com/myorg/my-site
+    wrapper: static-content        # resolved by name among fetched wrapper repos
+    # or fully qualified: wrapper: github.com/bozemanpass/static-content-wrapper
+</code></pre>
+<p>This slots cleanly into the decision tree in <code>process_container()</code> as a fourth branch alongside "explicit build script / inferred build.sh / repo Dockerfile fallback": if <code>wrapper</code> is present, resolve the wrapper, then reuse the existing env-var override mechanism to build the app image from the wrapper's Containerfile with the app repo as build context. No new build engine needed.</p>
+<p><strong>2. Define a wrapper repo as a small, declarative artifact.</strong> A git repo (or directory in one) containing a manifest — say <code>wrapper.yml</code> — plus the build materials:</p>
+<pre><code class="language-yaml">name: static-content
+description: Serve static HTML with nginx
+base-container: bozemanpass/static-base   # built/pulled like any other container
+containerfile: Containerfile.app          # the wrapping build, context = app repo
+port: 80
+# optional: runtime-env hook, healthcheck path, detect script
+</code></pre>
+<p>Discovery then mirrors stack discovery exactly: <code>stack fetch repo</code> pulls it into the dev root, and enumeration is an rglob for <code>wrapper.yml</code> (same as <code>locate_stacks_beneath()</code> rglobs <code>stack.yml</code>). Add a <code>stack list wrappers</code> to surface them. <code>clone_all_repos_for_stack()</code> needs to learn to also fetch wrapper refs, same as it fetches container <code>ref</code>s today.</p>
+<p><strong>3. The contract a wrapper must satisfy</strong> is worth writing down explicitly, because it's what keeps this generic rather than a pile of special cases:</p>
+<ul>
+<li>A base image, built once and content-hash tagged like any other container (so it participates in the existing pull-or-build / ghcr publishing path — important so users don't have to build base images locally, and so air-gapped/offline use degrades gracefully).</li>
+<li>An app-image build parameterized only by the app repo as build context.</li>
+<li>A runtime convention: what port it serves on, and how runtime config is injected. This last one is where schemes genuinely differ — nextjs needs the <code>apply-runtime-env.sh</code> env-substitution trick; static content needs nothing. Making it a declared property of the wrapper rather than baked into deploy code is the key abstraction win.</li>
+</ul>
+<p><strong>4. Migrate, don't fork.</strong> The existing <code>webapp-base</code> and <code>nextjs-base</code> should become the first wrapper repos (alongside the new static one, which is trivial: nginx base + <code>COPY . /usr/share/nginx/html</code>). <code>stack webapp build</code> can survive as sugar — auto-detect the wrapper (<code>package.json</code> sniffing already exists in <code>determine_base_container()</code>) and delegate to the generic path. Buildpack-style auto-detection is nice for the convenience CLI, but I'd keep <code>stack.yml</code> explicit, as you suggested — declarative manifests shouldn't guess.</p>
+<h2>Things to watch</h2>
+<ul>
+<li><strong>Prior art:</strong> this is conceptually Cloud Native Buildpacks / Nixpacks territory. I'd deliberately <em>not</em> adopt CNB — it's heavyweight and would replace your build pipeline rather than plug into it — but it's worth borrowing its vocabulary (detect/build phases, builder contract) and being able to answer "why not buildpacks" (answer: you already have a hash-locked container build system; you just need a thin parameterized-Containerfile convention on top of it).</li>
+<li><strong>Reproducibility:</strong> wrapper repos should participate in the existing lock-file scheme (like <code>container.lock</code>), so a deployment pins both the app repo ref <em>and</em> the wrapper ref. Otherwise a wrapper repo update silently changes what everyone's images look like.</li>
+<li><strong>Cleanup opportunity:</strong> the <code>webapp-template</code> special case in <code>stack_is_external()</code> and the <code>_fixup_container_tag</code>/<code>_fixup_url_spec</code> YAML-rewriting in <code>deploy_webapp.py</code> are symptoms of webapp-ness not being in the model. Once a wrapped container is a normal stack component, those should be deletable — a wrapped component with a declared port composes with the existing <code>http-proxy</code> spec machinery like anything else.</li>
+<li><strong>Bootstrap ordering:</strong> building a stack now has a cross-repo dependency (app repo + wrapper repo + possibly a prebuilt base image). The fetch/prepare flow needs to resolve wrappers before the container build starts, and error messages for "wrapper not fetched" should be good, since this will be a common first-run stumble.</li>
+</ul>
+<p>Overall: I'd frame it as "formalize the env-var seam that <code>build_webapp.py</code> already uses into a named, discoverable wrapper contract, hosted in repos and resolved like external containers." The static-content case then becomes a ~20-line wrapper repo and a good proof that the abstraction is real. Happy to sketch the <code>wrapper.yml</code> schema and the <code>process_container()</code> changes in more detail if you want to take it further.</p></div></div><button class="expand-btn">Show more</button></div></div>
+</div></div>
+<div class="index-item"><a href="page-001.html#msg-2026-07-23T22-46-19-596Z"><div class="index-item-header"><span class="index-item-number">#5</span><time datetime="2026-07-23T22:46:19.596Z" data-timestamp="2026-07-23T22:46:19.596Z">2026-07-23T22:46:19.596Z</time></div><div class="index-item-content"><p>That all sounds awesome. As is often the case, I wasn't aware of the prior art -- beyond the event horizon for me it seems. I do like the idea of unbundling the existing webapp wrapping scheme into the new generic mechanism because apart from anything else we can check that the existing webapp test cases still pass.</p></div></a><div class="index-item-stats"><span>1 bash · 1 read</span>
+<div class="index-item-long-text"><div class="truncatable"><div class="truncatable-content"><div class="index-item-long-text-content"><p>The webapp test turns out to be a nearly ideal regression harness for this: it builds the real <code>test-progressive-web-app</code> from scratch with <code>webapp build</code>, runs the image, and — the important part — does a before/after check that a runtime env var (<code>CERC_WEBAPP_DEBUG</code>) shows up in served pages only when set at <code>docker run</code> time. That's a direct test of the runtime-env-injection contract, which is exactly the piece most likely to break when the wrapping machinery moves. It also smoke-tests <code>webapp deploy</code>. So "existing tests still pass" is a genuinely meaningful invariant here, not just a syntax check.</p>
+<p>On the prior art, for your reading list: <strong>Heroku buildpacks</strong> are the original (detect/compile/release contract), <strong>Cloud Native Buildpacks</strong> (buildpacks.io) is the CNCF standardization of that idea with its own image-building machinery (<code>pack</code>, lifecycle phases), and <strong>Nixpacks</strong> / <strong>Railpack</strong> (Railway) are the modern lightweight takes — they auto-detect the app type and <em>generate</em> a build plan rather than running opaque builder images. Vercel/Netlify do the same thing internally but don't expose it as a pluggable artifact. The useful borrowable ideas are the explicit detect-vs-build phase split and the notion that a builder is a versioned, published artifact — not their tooling.</p>
+<p>For the unbundling itself, I'd phase it so the test gates each step independently:</p>
+<p><strong>Phase 1 — abstraction in-tree, nothing moves.</strong> Introduce the <code>wrapper.yml</code> manifest and resolution code, and convert <code>bozemanpass-webapp-base/</code> and <code>nextjs-base/</code> into in-tree wrappers (manifest + their existing Containerfiles, essentially unchanged). Rewire <code>webapp build</code> to go through the generic wrapper path instead of its hardcoded <code>determine_base_container()</code> → env-var plumbing. The webapp test must pass with zero changes to the test script. This is the pure refactor step, and doing it in-tree first means the test failure surface is only the abstraction, not repo fetching.</p>
+<p><strong>Phase 2 — externalize.</strong> Move the two wrappers to their own repo(s) (e.g. <code>bozemanpass/webapp-wrappers</code> or one repo per wrapper, matching how you split docker-ingress-stack), teach resolution to find fetched wrappers under <code>STACK_REPO_BASE_DIR</code>, and have the test fetch the wrapper repo the same way it already clones <code>test-progressive-web-app</code>. One decision to make here: whether the two existing wrappers stay bundled as builtins (resolution order: fetched repos override in-tree) or go fully external. Fully external is cleaner and matches your stated goal; the cost is that <code>webapp build</code> on a fresh machine needs network to fetch the wrapper — mitigated if the base images are published to ghcr so only the small wrapper repo needs cloning.</p>
+<p><strong>Phase 3 — the payoff.</strong> Add the <code>static-content</code> wrapper as a new external repo (nginx + <code>COPY</code>), add the <code>wrapper:</code> field to <code>stack.yml</code> container entries wired into <code>process_container()</code>, and a small test that deploys a static-HTML repo through a stack. This is also when the <code>webapp-template</code> special case and the <code>_fixup_*</code> rewrites in <code>deploy_webapp.py</code> become deletable.</p>
+<p>One thing Phase 1 will surface immediately: the runtime-env scripts (<code>apply-runtime-env.sh</code> etc.) currently live in the base image's <code>scripts/</code> directory and are shared between the two bases. They'll need to belong to the wrapper (baked into its base image), which is the right home anyway — a static wrapper simply won't have them.</p>
+<p>If you want to proceed, I'd start on Phase 1 — it's self-contained in this repo and the webapp test tells us when it's done. Want me to draft the <code>wrapper.yml</code> schema and the resolution module as a first PR-sized chunk?</p></div></div><button class="expand-btn">Show more</button></div></div>
+</div></div>
+<div class="index-item"><a href="page-002.html#msg-2026-07-23T22-49-16-637Z"><div class="index-item-header"><span class="index-item-number">#6</span><time datetime="2026-07-23T22:49:16.637Z" data-timestamp="2026-07-23T22:49:16.637Z">2026-07-23T22:49:16.637Z</time></div><div class="index-item-content"><p>Ok useful background. I suspect that we were doing this (the original webapp idea) prior to some of those "prior art". In particular Railway wasn't even launched when we started work on this internally. Yes, please proceed.</p></div></a><div class="index-item-stats"><span>12 bash · 7 edit · 5 read · 3 write · 1 toolsearch</span>
+<div class="index-item-long-text"><div class="truncatable"><div class="truncatable-content"><div class="index-item-long-text-content"><p>Phase 1 code is in place and the full webapp test is now running in the background (currently pulling the node base image — it'll take a few minutes to build the PWA). I'll report the result when it finishes.</p>
+<p>What's changed so far:</p>
+<ul>
+<li><strong><code>src/stack/build/wrappers.py</code></strong> (new) — the <code>Wrapper</code> class, <code>wrapper.yml</code> manifest loading, discovery (<code>get_available_wrappers()</code>, currently scanning the built-in <code>data/container-build/*/wrapper.yml</code>), name/base-container resolution, and detection (<code>detect:</code> rules with a <code>package-json-dependency</code> rule, falling back to the wrapper marked <code>default: true</code>).</li>
+<li><strong><code>wrapper.yml</code> manifests</strong> for the two existing schemes: <code>webapp</code> (webapp-base, the default) and <code>nextjs</code> (nextjs-base, detected via a <code>next</code> dependency in <code>package.json</code>).</li>
+<li><strong><code>build_webapp.py</code></strong> now resolves a wrapper (new <code>--wrapper</code> option; <code>--base-container</code> kept working for compatibility) and takes the app-build Containerfile path from the manifest instead of the hardcoded name convention.</li>
+<li><strong><code>determine_base_container()</code></strong> in <code>deploy/webapp/util.py</code> now delegates to wrapper detection, preserving its signature for the registry-deploy path.</li>
+<li><strong><code>docs/webapp.md</code></strong> gained a short "Wrappers" section documenting the manifest and <code>--wrapper</code>.</li>
+</ul>
+<p>Lint is clean repo-wide, and unit-level checks confirm resolution/detection behaves identically to the old hardcoded logic (default → webapp-base, <code>next</code> dependency → nextjs-base, <code>webapp/next</code> app type → nextjs-base).</p></div></div><button class="expand-btn">Show more</button></div></div>
+</div></div>
+<div class="index-item"><a href="page-002.html#msg-2026-07-23T22-56-35-982Z"><div class="index-item-header"><span class="index-item-number">#7</span><time datetime="2026-07-23T22:56:35.982Z" data-timestamp="2026-07-23T22:56:35.982Z">2026-07-23T22:56:35.982Z</time></div><div class="index-item-content"><p>Ok excellent. Let me know when I should create the external repos at github.</p></div></a><div class="index-item-stats"><span>1 bash</span>
+<div class="index-item-long-text"><div class="truncatable"><div class="truncatable-content"><div class="index-item-long-text-content"><p>The test is deep into the meaningful part — it auto-detected the <code>nextjs</code> wrapper and is running the Next.js production build inside the wrapper's Containerfile, so the new resolution path is working end-to-end. Still a few minutes from the final before/after env-injection checks; I'll confirm the result when it lands.</p>
+<p>On the repos: you can create them whenever convenient — they're needed at the start of Phase 2, and empty is fine since I'll prepare the content as part of that phase. My suggestion on naming/split:</p>
+<ul>
+<li><strong>One repo per wrapper</strong>, named after the base image: <code>bozemanpass/webapp-base</code> and <code>bozemanpass/nextjs-base</code>. The repo-name-equals-image-name convention pays off directly: <code>image_registry_for_repo()</code> already maps github.com repos to ghcr.io, so the existing pull-or-build machinery would find prebuilt base images at <code>ghcr.io/bozemanpass/webapp-base</code> with no extra plumbing. The two bases don't actually share files today (each has its own copy of <code>scripts/</code>), so there's no shared-code argument for a combined repo, and per-repo locking means each wrapper versions independently.</li>
+<li>Each repo gets: <code>wrapper.yml</code>, <code>Containerfile</code> (base image), <code>Containerfile.webapp</code> (app build), <code>build.sh</code>, <code>scripts/</code>.</li>
+<li>Later, Phase 3 adds a third: something like <code>bozemanpass/static-content</code>.</li>
+</ul>
+<p>If you'd rather not squat those image-style names as repo names, a single <code>bozemanpass/container-wrappers</code> repo with one subdirectory per wrapper also works (the <code>path:</code> field in container refs already supports subdirectory layouts) — but the per-repo version is my recommendation.</p>
+<p>One thing to decide before Phase 2 work starts: whether you want a PR for Phase 1 first so the external-discovery change builds on a merged baseline. I'd suggest yes — once this test passes I can branch, commit, and open it.</p></div></div><button class="expand-btn">Show more</button></div></div>
+</div></div>
+<div class="index-item"><a href="page-002.html#msg-2026-07-23T22-57-20-451Z"><div class="index-item-header"><span class="index-item-number">#8</span><time datetime="2026-07-23T22:57:20.451Z" data-timestamp="2026-07-23T22:57:20.451Z">2026-07-23T22:57:20.451Z</time></div><div class="index-item-content"><p><task-notification>
+<task-id>b30f0o8q0</task-id>
+<tool-use-id>toolu_01Maw9sfGGsCewVeQzov9U9x</tool-use-id>
+<output-file>/tmp/claude-1000/-home-david-projects-bpi-stack/3b4bfe1e-d8ae-4050-b437-0fcc0870de42/tasks/b30f0o8q0.output</output-file>
+<status>completed</status></p>
+<summary>Background command "Run full webapp test suite" completed (exit code 0)</summary>
+<p></task-notification></p></div></a><div class="index-item-stats"><span>1 bash</span>
+<div class="index-item-long-text"><div class="truncatable"><div class="truncatable-content"><div class="index-item-long-text-content"><p>The full webapp test suite passed with the Phase 1 changes — exit code 0, all checks green:</p>
+<ul>
+<li><code>webapp build</code> auto-detected the <code>nextjs</code> wrapper and built <code>bozemanpass/test-progressive-web-app:stack</code> through the new wrapper path.</li>
+<li><strong>BEFORE: PASSED / AFTER: PASSED</strong> — the runtime env-injection contract (the part most at risk in this refactor) behaves identically: the test string appears in served pages only when set at <code>docker run</code> time.</li>
+<li>The <code>webapp deploy</code> deployment-create test also passed.</li>
+</ul>
+<p>So Phase 1 is complete and validated: the wrapper abstraction is in, the two existing schemes are expressed as <code>wrapper.yml</code> manifests, and behavior is unchanged. The working tree has the changes uncommitted (3 modified files, 3 new). Say the word and I'll branch, commit, and open the Phase 1 PR — and as covered earlier, you can create the two external repos (<code>bozemanpass/webapp-base</code>, <code>bozemanpass/nextjs-base</code>) whenever you like; Phase 2 starts by populating them.</p></div></div><button class="expand-btn">Show more</button></div></div>
+</div></div>
+<div class="index-item"><a href="page-002.html#msg-2026-07-23T22-58-42-538Z"><div class="index-item-header"><span class="index-item-number">#9</span><time datetime="2026-07-23T22:58:42.538Z" data-timestamp="2026-07-23T22:58:42.538Z">2026-07-23T22:58:42.538Z</time></div><div class="index-item-content"><p>Great. I suggest we name the new repositories something like bozemanpass/stack-wrapper-webapp and bozemanpass/stack-wrapper-static-content in order to make it easy to discover them (and for me to remember where they are!)</p></div></a><div class="index-item-stats">
+<div class="index-item-long-text"><div class="truncatable"><div class="truncatable-content"><div class="index-item-long-text-content"><p>Good naming — the <code>stack-wrapper-</code> prefix makes them self-describing and greppable in the org, and it costs nothing technically: the base image name (<code>bozemanpass/webapp-base</code> etc.) is declared inside <code>wrapper.yml</code>, not derived from the repo name, and ghcr.io package names don't need to match repo names either, so the prebuilt-base-image pull path is unaffected.</p>
+<p>One detail to settle: the nextjs wrapper. Your two names suggest either a <code>bozemanpass/stack-wrapper-nextjs</code> as a third repo, or folding nextjs into <code>stack-wrapper-webapp</code> as a subdirectory (the two are close cousins — both node bases, and <code>wrapper.yml</code> discovery by rglob handles multiple wrappers per repo fine). I'd lean to the separate <code>stack-wrapper-nextjs</code> repo purely so each wrapper versions and locks independently — but if you'd rather remember one repo for "the node webapp wrappers," a combined <code>stack-wrapper-webapp</code> containing both manifests works just as well with the discovery mechanism as designed. Your call when you create them; Phase 2 code is identical either way.</p>
+<p>Meanwhile, shall I go ahead and branch/commit/open the Phase 1 PR? Everything is validated and sitting uncommitted in the working tree.</p></div></div><button class="expand-btn">Show more</button></div></div>
+</div></div>
+<div class="index-item"><a href="page-002.html#msg-2026-07-23T23-01-33-882Z"><div class="index-item-header"><span class="index-item-number">#10</span><time datetime="2026-07-23T23:01:33.882Z" data-timestamp="2026-07-23T23:01:33.882Z">2026-07-23T23:01:33.882Z</time></div><div class="index-item-content"><p>I'll handle creating the branch and PR. I did make the two external repositories and have cloned them as sibling directories to this one.</p></div></a><div class="index-item-stats"><span>9 edit · 8 bash · 8 write · 4 read</span>
+<div class="index-item-long-text"><div class="truncatable"><div class="truncatable-content"><div class="index-item-long-text-content"><p>Phase 2 implementation is done and locally validated; the full webapp regression test is running in the background now. Status so far:</p>
+<p><strong>Stack tool changes</strong> (on top of Phase 1, all uncommitted in this repo):
+- <code>get_available_wrappers()</code> now also discovers <code>wrapper.yml</code> manifests in repos fetched beneath the repo base dir (<code>STACK_REPO_BASE_DIR</code>), with external wrappers shadowing built-ins of the same name.
+- <code>process_container()</code> honors an absolute build-script path on a <code>ContainerSpec</code>, and <code>webapp build</code> passes the wrapper's own <code>build.sh</code> — so base containers build correctly from external wrapper directories that don't follow the in-tree naming convention.
+- New <code>stack webapp wrappers</code> command lists discovered wrappers with their source (builtin vs. path).
+- <code>docs/webapp.md</code> updated for external wrapper repos and the listing command.</p>
+<p><strong>Wrapper repo clones populated</strong> (files written, not committed — I'll leave commits to you or do them on request):
+- <code>~/projects/bpi/stack-wrapper-webapp</code>: <code>webapp-base/</code> and <code>nextjs-base/</code> (copied verbatim from in-tree), plus a README.
+- <code>~/projects/bpi/stack-wrapper-static-content</code>: the new wrapper — <code>wrapper.yml</code>, nginx-based <code>Containerfile</code>, two-stage <code>Containerfile.app</code> (strips <code>.git</code> from the served content), <code>build.sh</code>, README.</p>
+<p><strong>Validated locally:</strong>
+- <code>stack webapp wrappers</code> with a dev root containing the two repos lists all three wrappers, external paths shadowing builtins.
+- End-to-end static content: built <code>bozemanpass/my-static-site:stack</code> from a bare <code>index.html</code> directory via <code>--wrapper static-content</code>, ran it, and nginx served the marker page correctly.</p>
+<p>I'll report when the regression test finishes. Note the in-tree wrapper copies are deliberately still present — removing them (and deciding whether <code>webapp build</code> should auto-fetch <code>stack-wrapper-webapp</code> when no wrapper is found) is the step that can only land after you push the wrapper repos to GitHub.</p></div></div><button class="expand-btn">Show more</button></div></div>
+</div></div>
+<div class="index-item"><a href="page-003.html#msg-2026-07-23T23-18-41-805Z"><div class="index-item-header"><span class="index-item-number">#11</span><time datetime="2026-07-23T23:18:41.805Z" data-timestamp="2026-07-23T23:18:41.805Z">2026-07-23T23:18:41.805Z</time></div><div class="index-item-content"><p><task-notification>
+<task-id>bo04k37nu</task-id>
+<tool-use-id>toolu_01NUzMHsKFH5igQkowjxKB2r</tool-use-id>
+<output-file>/tmp/claude-1000/-home-david-projects-bpi-stack/3b4bfe1e-d8ae-4050-b437-0fcc0870de42/tasks/bo04k37nu.output</output-file>
+<status>completed</status></p>
+<summary>Background command "Rerun full webapp test suite after Phase 2 changes" completed (exit code 0)</summary>
+<p></task-notification></p></div></a><div class="index-item-stats"><span>1 bash</span>
+<div class="index-item-long-text"><div class="truncatable"><div class="truncatable-content"><div class="index-item-long-text-content"><p>The Phase 2 regression run is green — the full webapp test suite passed again with all the changes in place (BEFORE/AFTER env-injection checks and the deploy-create test all PASSED, exit code 0).</p>
+<p>So the current state is:</p>
+<ul>
+<li><strong><code>stack</code> repo (uncommitted):</strong> Phase 1 (wrapper abstraction, manifests, rewired <code>webapp build</code>) plus Phase 2 (external discovery under <code>STACK_REPO_BASE_DIR</code> with external-shadows-builtin precedence, absolute build-script support for external wrapper dirs, <code>stack webapp wrappers</code> listing, docs). Lint clean, full webapp test passing.</li>
+<li><strong><code>stack-wrapper-webapp</code> clone:</strong> populated with <code>webapp-base/</code> and <code>nextjs-base/</code> plus README (uncommitted).</li>
+<li><strong><code>stack-wrapper-static-content</code> clone:</strong> populated with the new nginx wrapper plus README (uncommitted); proven end to end locally — a bare <code>index.html</code> directory built and served via <code>--wrapper static-content</code>.</li>
+</ul>
+<p>Since you're handling branches/PRs: the stack repo changes and the two wrapper repos are independent and can be pushed in any order.</p>
+<p>Remaining follow-ups once the wrapper repos are on GitHub:</p>
+<ol>
+<li><strong>Remove the in-tree wrapper copies</strong> from <code>src/stack/data/container-build/</code> so the external repos are authoritative. This is the step that needs a decision: either <code>webapp build</code> auto-fetches <code>bozemanpass/stack-wrapper-webapp</code> when no suitable wrapper is found (keeps the zero-config UX and the CI test unchanged), or it errors with a "run <code>stack fetch repo bozemanpass/stack-wrapper-webapp</code>" message (more explicit, needs a one-line test change). I'd lean auto-fetch with a log line saying what it fetched.</li>
+<li><strong>Phase 3:</strong> the <code>wrapper:</code> field on <code>stack.yml</code> container entries wired into <code>process_container()</code>, a static-site deployment test, and then deleting the <code>webapp-template</code> special case and the <code>_fixup_*</code> rewrites in <code>deploy_webapp.py</code>.</li>
+</ol>
+<p>Just tell me when the repos are pushed (and which flavor of step 1 you want) and I'll continue.</p></div></div><button class="expand-btn">Show more</button></div></div>
+</div></div>
+<div class="index-item"><a href="page-003.html#msg-2026-07-23T23-40-13-250Z"><div class="index-item-header"><span class="index-item-number">#12</span><time datetime="2026-07-23T23:40:13.250Z" data-timestamp="2026-07-23T23:40:13.250Z">2026-07-23T23:40:13.250Z</time></div><div class="index-item-content"><p>Ok good work. I pushed the two external repos to github.</p></div></a><div class="index-item-stats"><span>9 bash · 8 edit</span>
+<div class="index-item-long-text"><div class="truncatable"><div class="truncatable-content"><div class="index-item-long-text-content"><p>The cutover is implemented and the decisive test is now running in the background: a rebuilt shiv package (the old one still embedded the in-tree wrappers), deleted base/app images, and the unchanged CI webapp test script — which now must auto-fetch the wrapper repos from GitHub and build everything from external wrapper definitions. I'll report when it completes.</p>
+<p>What changed in this step:</p>
+<ul>
+<li><strong>Deleted</strong> <code>src/stack/data/container-build/bozemanpass-webapp-base/</code> and <code>bozemanpass-nextjs-base/</code> — only the shared <code>build-base.sh</code> and <code>default-build.sh</code> remain in-tree. The external repos are now authoritative.</li>
+<li><strong>Auto-fetch</strong>: <code>wrappers.py</code> gained <code>DEFAULT_WRAPPER_REPOS</code> (<code>stack-wrapper-webapp</code>, <code>stack-wrapper-static-content</code>) and <code>fetch_default_wrapper_repos()</code>. Both <code>webapp build</code> and the legacy <code>determine_base_container()</code> path retry after fetching when no wrapper matches, so zero-config UX is preserved (verified: with a completely empty repo base dir, <code>webapp build --wrapper static-content</code> cloned both repos from GitHub, built, and the container serves the content).</li>
+<li>Docs updated to describe repos-as-source-of-truth and auto-fetch.</li>
+</ul>
+<p>One git housekeeping note: I noticed you had staged the Phase 1 changes in the index. I've left your staging mostly intact, with one exception — the two in-tree <code>wrapper.yml</code> files got unstaged (and are now deleted from the working tree along with their directories, as unstaged deletions). Depending on how you want to slice the PRs, you may prefer to just re-stage everything as one combined commit — the working tree is the correct final state either way.</p></div></div><button class="expand-btn">Show more</button></div></div>
+</div></div>
+<div class="index-item"><a href="page-003.html#msg-2026-07-23T23-52-44-431Z"><div class="index-item-header"><span class="index-item-number">#13</span><time datetime="2026-07-23T23:52:44.431Z" data-timestamp="2026-07-23T23:52:44.431Z">2026-07-23T23:52:44.431Z</time></div><div class="index-item-content"><p><task-notification>
+<task-id>bju0ae6go</task-id>
+<tool-use-id>toolu_01822D9XB3n4EViP3jgu6FKt</tool-use-id>
+<output-file>/tmp/claude-1000/-home-david-projects-bpi-stack/3b4bfe1e-d8ae-4050-b437-0fcc0870de42/tasks/bju0ae6go.output</output-file>
+<status>completed</status></p>
+<summary>Background command "Rebuild shiv package and run full webapp test with external wrappers" completed (exit code 0)</summary>
+<p></task-notification></p></div></a><div class="index-item-stats"><span>1 bash</span>
+<div class="index-item-long-text"><div class="truncatable"><div class="truncatable-content"><div class="index-item-long-text-content"><p>Phase 2 is complete and fully validated. The unchanged CI test script, run cold (fresh repo base dir, rebuilt package with no in-tree wrappers, deleted images), auto-fetched both wrapper repos from GitHub, auto-detected the <code>nextjs</code> wrapper from the external repo, built the PWA through it, and passed every check — BEFORE/AFTER env injection and the deploy-create test, exit code 0.</p>
+<p>Final state:</p>
+<ul>
+<li><strong><code>stack</code> repo (working tree, ready for you to commit/PR):</strong> wrapper abstraction with <code>wrapper.yml</code> manifests; discovery of wrappers in fetched repos; auto-fetch of the two default wrapper repos when nothing matches (zero-config UX preserved, CI needed no changes); <code>stack webapp wrappers</code> listing command; in-tree wrapper directories deleted; docs updated. Lint clean.</li>
+<li><strong><code>stack-wrapper-webapp</code> / <code>stack-wrapper-static-content</code> on GitHub:</strong> authoritative wrapper definitions, proven working via real clones.</li>
+</ul>
+<p>That completes what we scoped as Phases 1 and 2, plus the static-content wrapper itself from Phase 3. What remains of Phase 3, whenever you want it:</p>
+<ol>
+<li>The <code>wrapper:</code> field on <code>stack.yml</code> container entries, wired into <code>process_container()</code> — so a static-HTML repo can be deployed just by listing it in a stack.</li>
+<li>A deployment-level test for that path (static site through a full <code>stack deploy</code>).</li>
+<li>Cleanup of the <code>webapp-template</code> special case in <code>stack_is_external()</code> and the <code>_fixup_*</code> YAML rewrites in <code>deploy_webapp.py</code>, which become unnecessary once wrapped containers are ordinary stack components.</li>
+<li>Optionally later: publishing the base images to ghcr so fresh machines pull rather than build them, and lock-file participation for wrapper repos.</li>
+</ol></div></div><button class="expand-btn">Show more</button></div></div>
+</div></div>
+<div class="index-item"><a href="page-003.html#msg-2026-07-23T23-53-00-849Z"><div class="index-item-header"><span class="index-item-number">#14</span><time datetime="2026-07-23T23:53:00.849Z" data-timestamp="2026-07-23T23:53:00.849Z">2026-07-23T23:53:00.849Z</time></div><div class="index-item-content"><p>Ok I'll do that. btw I realized we should have a test for static content hosting similar to the existing one for webapps. I've created a new repo: bozemanpass/stack-test-static-content to be used for that purpose. It is similarly cloned as sibling of this directory.</p></div></a><div class="index-item-stats"><span>5 write · 3 bash</span>
+<div class="index-item-long-text"><div class="truncatable"><div class="truncatable-content"><div class="index-item-long-text-content"><p>The static content test passes end to end — all four checks green (<code>INDEX</code>, <code>SUBDIR</code>, <code>CSS</code>, and <code>GIT-NOT-SERVED</code>), run against the built shiv package with a fresh repo base dir, so it also exercised the real auto-fetch of the wrapper repos from GitHub.</p>
+<p>What was added:</p>
+<ul>
+<li><strong><code>~/projects/bpi/stack-test-static-content</code></strong> (fixture, uncommitted for you to push): <code>index.html</code> with a marker string, <code>pages/about.html</code> with a second marker, and <code>css/style.css</code> — enough to prove recursive content copying, subdirectory serving, and asset types beyond HTML.</li>
+<li><strong><code>tests/static-content-test/run-static-content-test.sh</code></strong>: mirrors the webapp test structure — clones the fixture from GitHub, builds via <code>webapp build --wrapper static-content</code>, runs the container, and verifies the index page, a subdirectory page, the CSS file, and that <code>/.git/config</code> is <em>not</em> served (validating the <code>.git</code> strip in <code>Containerfile.app</code>). It supports a <code>STACK_TEST_STATIC_CONTENT_REPO</code> override for local runs against an unpushed fixture (which is how I validated it, via a throwaway scratch clone of your fixture content).</li>
+<li><strong><code>.github/workflows/test-static-content.yml</code></strong>: same shape as the webapp workflow (checkout, uv, shiv build, run test).</li>
+</ul>
+<p>Once you commit and push the fixture repo content, the test will work as-is in CI — the script's default clone URL points at <code>github.com/bozemanpass/stack-test-static-content</code>. Everything in the stack repo (test script + workflow) is in the working tree uncommitted, alongside the Phase 2 changes.</p></div></div><button class="expand-btn">Show more</button></div></div>
+</div></div>
+<div class="index-item"><a href="page-003.html#msg-2026-07-24T00-09-12-491Z"><div class="index-item-header"><span class="index-item-number">#15</span><time datetime="2026-07-24T00:09:12.491Z" data-timestamp="2026-07-24T00:09:12.491Z">2026-07-24T00:09:12.491Z</time></div><div class="index-item-content"><p>Ok thanks. I pushed the static content repo and re-staged the files in this directory.</p></div></a><div class="index-item-stats"><span>1 bash</span>
+<div class="index-item-long-text"><div class="truncatable"><div class="truncatable-content"><div class="index-item-long-text-content"><p>Everything is green and ready to go:</p>
+<ul>
+<li>The static content test passed against the real pushed GitHub fixture, exactly as CI will run it — clone from <code>github.com/bozemanpass/stack-test-static-content</code>, auto-fetch of the wrapper repos, build via the <code>static-content</code> wrapper, and all four serving checks passed.</li>
+<li>Your staged set is complete: the wrapper abstraction (<code>wrappers.py</code>), the rewired build/deploy code, the in-tree wrapper deletions, docs, the new test script, and the CI workflow are all in the index with nothing left unstaged.</li>
+</ul>
+<p>So the whole arc is done and validated: wrappers are a first-class, discoverable abstraction; the two webapp schemes live in <code>stack-wrapper-webapp</code> as the source of truth; static content hosting works via <code>stack-wrapper-static-content</code> with its own regression test; and the existing webapp test passes unchanged throughout. Once you commit and push, both the webapp and static-content workflows should pass in CI on the first run.</p>
+<p>Whenever you want to pick up Phase 3 (the <code>wrapper:</code> field in <code>stack.yml</code> so wrapped repos deploy as ordinary stack components, plus retiring the <code>webapp-template</code> special case and the <code>_fixup_*</code> rewrites), just say so.</p></div></div><button class="expand-btn">Show more</button></div></div>
+</div></div>
+<div class="index-item"><a href="page-004.html#msg-2026-07-24T03-32-57-271Z"><div class="index-item-header"><span class="index-item-number">#16</span><time datetime="2026-07-24T03:32:57.271Z" data-timestamp="2026-07-24T03:32:57.271Z">2026-07-24T03:32:57.271Z</time></div><div class="index-item-content"><p>Ok let me make a PR for the work so far.</p></div></a><div class="index-item-stats">
+<div class="index-item-long-text"><div class="truncatable"><div class="truncatable-content"><div class="index-item-long-text-content"><p>Sounds good. If useful, here's a summary you can paste into the PR description:</p>
+<hr />
+<p><strong>Generalize webapp container wrapping into discoverable "wrapper" schemes</strong></p>
+<p>Introduces a wrapper abstraction: a <code>wrapper.yml</code> manifest pairing a base container image with a containerfile that builds app source into a servable image (base image, app containerfile, serving port, optional auto-detection rules).</p>
+<ul>
+<li>Wrapper definitions now live in their own repositories (<a href="https://github.com/bozemanpass/stack-wrapper-webapp">stack-wrapper-webapp</a>, <a href="https://github.com/bozemanpass/stack-wrapper-static-content">stack-wrapper-static-content</a>); the in-tree <code>webapp-base</code>/<code>nextjs-base</code> build files are removed.</li>
+<li>Wrappers are discovered from any repo fetched beneath <code>STACK_REPO_BASE_DIR</code>; <code>stack webapp build</code> auto-fetches the default wrapper repos when none match, so the zero-config UX is unchanged.</li>
+<li>New <code>stack webapp wrappers</code> command lists available schemes.</li>
+<li><code>webapp build</code> gains <code>--wrapper</code>; <code>--base-container</code> still works.</li>
+<li>New static content hosting support (nginx wrapper) with a new test suite (<code>tests/static-content-test/</code>) and CI workflow, using the <a href="https://github.com/bozemanpass/stack-test-static-content">stack-test-static-content</a> fixture repo.</li>
+<li>Existing webapp test suite passes unchanged.</li>
+</ul>
+<hr />
+<p>Two small things worth knowing before you push: the Webapp Test and the new Static Content Test workflows both now depend on network access to the two wrapper repos (that's by design — CI validates the real auto-fetch path), and the first CI run will be the first cold build of the base images from the external repos. Both scenarios passed locally, so I expect green, but if anything surprises us in CI I'm happy to dig in.</p></div></div><button class="expand-btn">Show more</button></div></div>
+</div></div>
+<div class="index-item"><a href="page-004.html#msg-2026-07-24T03-36-14-842Z"><div class="index-item-header"><span class="index-item-number">#17</span><time datetime="2026-07-24T03:36:14.842Z" data-timestamp="2026-07-24T03:36:14.842Z">2026-07-24T03:36:14.842Z</time></div><div class="index-item-content"><p>ok let's push it off the cliff and see if it flies..</p></div></a><div class="index-item-stats"><span>1 bash</span>
+</div></div>
+<div class="index-item"><a href="page-004.html#msg-2026-07-24T03-37-14-061Z"><div class="index-item-header"><span class="index-item-number">#18</span><time datetime="2026-07-24T03:37:14.061Z" data-timestamp="2026-07-24T03:37:14.061Z">2026-07-24T03:37:14.061Z</time></div><div class="index-item-content"><p>[Request interrupted by user for tool use]</p></div></a></div>
+<div class="index-item"><a href="page-004.html#msg-2026-07-24T03-43-52-884Z"><div class="index-item-header"><span class="index-item-number">#19</span><time datetime="2026-07-24T03:43:52.884Z" data-timestamp="2026-07-24T03:43:52.884Z">2026-07-24T03:43:52.884Z</time></div><div class="index-item-content"><p>Ok the PR passed all CI so I will merge and get the local clone onto a new clean branch for the subsequent work.</p></div></a><div class="index-item-stats"><span>2 write · 1 edit</span>
+<div class="index-item-long-text"><div class="truncatable"><div class="truncatable-content"><div class="index-item-long-text-content"><p>Sounds like a plan. I've noted the current state in my project memory so the next session picks up cleanly: the wrapper abstraction and static content support are merged via your PR, the external repos (<code>stack-wrapper-webapp</code>, <code>stack-wrapper-static-content</code>, <code>stack-test-static-content</code>) are the source of truth, and the agreed Phase 3 backlog is:</p>
+<ol>
+<li><code>wrapper:</code> field on <code>stack.yml</code> container entries wired into <code>process_container()</code> — deploy a wrapped repo as an ordinary stack component.</li>
+<li>A deployment-level static-site test through full <code>stack deploy</code>.</li>
+<li>Retiring the <code>webapp-template</code> special case in <code>stack_is_external()</code> and the <code>_fixup_*</code> rewrites in <code>deploy_webapp.py</code>.</li>
+<li>Eventually: publishing base images to ghcr and lock-file participation for wrapper repos.</li>
+</ol>
+<p>Whenever you've got the fresh branch ready, just say go and we'll start on the <code>stack.yml</code> integration.</p></div></div><button class="expand-btn">Show more</button></div></div>
+</div></div>
+<div class="index-item"><a href="page-004.html#msg-2026-07-24T03-45-11-138Z"><div class="index-item-header"><span class="index-item-number">#20</span><time datetime="2026-07-24T03:45:11.138Z" data-timestamp="2026-07-24T03:45:11.138Z">2026-07-24T03:45:11.138Z</time></div><div class="index-item-content"><p>Ok the branch is ready for you to rock and roll.</p></div></a><div class="index-item-stats"><span>12 edit · 10 bash · 3 read · 2 write</span>
+<div class="index-item-long-text"><div class="truncatable"><div class="truncatable-content"><div class="index-item-long-text-content"><p>Phase 3 implementation is in place; the full test (build phase + new deployment phase) is running in the background against a freshly built package. What's implemented:</p>
+<ul>
+<li><strong><code>wrapper:</code> field on stack.yml container entries</strong> — parsed into <code>StackContainer</code>/<code>ContainerSpec</code> (also honored in <code>container.yml</code>, so a repo can declare its own wrapping). <code>process_container()</code> routes wrapped containers to a new <code>_process_wrapped_container()</code>: resolve the wrapper (auto-fetching the default wrapper repos if needed), build its base container, then wrap the app source repo using the wrapper's build script + containerfile. The existing repo-hash/tag/lock machinery in <code>build_containers()</code> is untouched and applies to wrapped containers as-is — so a wrapped container gets content-hash tagging for free.</li>
+<li>I also fixed a latent ordering issue while wiring this: the absolute-build-script branch now runs <em>before</em> the external-stack branch in <code>process_container()</code>, which would otherwise crash on <code>file_path=None</code> when a wrapped build happens inside an external stack (exactly the new test's scenario).</li>
+<li><strong><code>stack-test-stacks</code> clone</strong>: new <code>test-static-content</code> stack — a container entry pointing at the pure-HTML <code>stack-test-static-content</code> repo with <code>wrapper: static-content</code>, plus its compose file. This is the original vision end to end: a repo containing only HTML, deployed by listing it in a stack.</li>
+<li><strong>Test extended</strong>: <code>run-static-content-test.sh</code> now has a deployment phase — <code>fetch</code>/<code>prepare</code>/<code>init</code>/<code>deploy</code>/<code>manage start</code> against the <code>test-static-content</code> stack, verifies the served markers on the mapped port, and tears down with <code>--delete-volumes</code> on exit. It supports a <code>STACK_TEST_STACKS_REPO</code> override for local runs (used now, since your <code>stack-test-stacks</code> additions aren't pushed yet).</li>
+<li><strong>Docs</strong>: <code>wrapper:</code> documented in <code>docs/stack-files.md</code>'s stack.yml reference.</li>
+</ul>
+<p>Lint is clean. I'll report the test outcome when it lands.</p></div></div><button class="expand-btn">Show more</button></div></div>
+</div></div>
+<div class="index-item"><a href="page-005.html#msg-2026-07-24T03-55-38-275Z"><div class="index-item-header"><span class="index-item-number">#21</span><time datetime="2026-07-24T03:55:38.275Z" data-timestamp="2026-07-24T03:55:38.275Z">2026-07-24T03:55:38.275Z</time></div><div class="index-item-content"><p><task-notification>
+<task-id>br0ehd9j0</task-id>
+<tool-use-id>toolu_018iit7cb8RMUuzS7tuneJb5</tool-use-id>
+<output-file>/tmp/claude-1000/-home-david-projects-bpi-stack/3b4bfe1e-d8ae-4050-b437-0fcc0870de42/tasks/br0ehd9j0.output</output-file>
+<status>completed</status></p>
+<summary>Background command "Rebuild package and run full static content test with deploy phase" completed (exit code 0)</summary>
+<p></task-notification></p></div></a><div class="index-item-stats"><span>2 read · 2 bash · 2 edit</span>
+</div></div>
+<div class="index-item"><a href="page-005.html#msg-2026-07-24T04-00-14-323Z"><div class="index-item-header"><span class="index-item-number">#22</span><time datetime="2026-07-24T04:00:14.323Z" data-timestamp="2026-07-24T04:00:14.323Z">2026-07-24T04:00:14.323Z</time></div><div class="index-item-content"><p><task-notification>
+<task-id>bvv9xu9ay</task-id>
+<tool-use-id>toolu_016XuyESqzaazYY2o6xngCZ8</tool-use-id>
+<output-file>/tmp/claude-1000/-home-david-projects-bpi-stack/3b4bfe1e-d8ae-4050-b437-0fcc0870de42/tasks/bvv9xu9ay.output</output-file>
+<status>completed</status></p>
+<summary>Background command "Rebuild and rerun full static content test" completed (exit code 0)</summary>
+<p></task-notification></p></div></a><div class="index-item-stats"><span>2 bash · 1 read</span>
+<div class="index-item-long-text"><div class="truncatable"><div class="truncatable-content"><div class="index-item-long-text-content"><p>The <code>wrapper:</code> field is confirmed working through <code>prepare</code> — the wrapped build ran inside the normal container pipeline. Both regression suites (webapp + docker deploy) are now running sequentially in the background, since the <code>process_container()</code> reordering touches code paths they exercise. I'll summarize once they're done.</p></div></div><button class="expand-btn">Show more</button></div></div>
+</div></div>
+<div class="index-item"><a href="page-005.html#msg-2026-07-24T04-01-14-819Z"><div class="index-item-header"><span class="index-item-number">#23</span><time datetime="2026-07-24T04:01:14.819Z" data-timestamp="2026-07-24T04:01:14.819Z">2026-07-24T04:01:14.819Z</time></div><div class="index-item-content"><p>Note that I've pushed the changes made to the test stacks repo.</p></div></a><div class="index-item-stats">
+<div class="index-item-long-text"><div class="truncatable"><div class="truncatable-content"><div class="index-item-long-text-content"><p>Thanks — that unblocks the final validation: once the regression suites finish, I'll rerun the static content test <em>without</em> the local override, so it exercises the exact CI path (<code>stack fetch repo bozemanpass/stack-test-stacks</code> from GitHub). The webapp and deploy regression runs are still going; I'll report all three results together.</p></div></div><button class="expand-btn">Show more</button></div></div>
+</div></div>
+<div class="index-item"><a href="page-005.html#msg-2026-07-24T04-05-22-792Z"><div class="index-item-header"><span class="index-item-number">#24</span><time datetime="2026-07-24T04:05:22.792Z" data-timestamp="2026-07-24T04:05:22.792Z">2026-07-24T04:05:22.792Z</time></div><div class="index-item-content"><p>Ok, firing on all cylinders!</p></div></a><div class="index-item-stats">
+<div class="index-item-long-text"><div class="truncatable"><div class="truncatable-content"><div class="index-item-long-text-content"><p>Indeed! Waiting on the regression runs — the Next.js build in the webapp test plus the full todo-stack deploy test take a few minutes combined. As soon as they land I'll do the final no-override run of the static content test against the pushed <code>stack-test-stacks</code>, then give you the full Phase 3 wrap-up so you can PR it.</p></div></div><button class="expand-btn">Show more</button></div></div>
+</div></div>
+<div class="index-item"><a href="page-005.html#msg-2026-07-24T04-07-04-515Z"><div class="index-item-header"><span class="index-item-number">#25</span><time datetime="2026-07-24T04:07:04.515Z" data-timestamp="2026-07-24T04:07:04.515Z">2026-07-24T04:07:04.515Z</time></div><div class="index-item-content"><p><task-notification>
+<task-id>br4leh2a8</task-id>
+<tool-use-id>toolu_014AZYq9AmkP6wmwc4m8ArNP</tool-use-id>
+<output-file>/tmp/claude-1000/-home-david-projects-bpi-stack/3b4bfe1e-d8ae-4050-b437-0fcc0870de42/tasks/br4leh2a8.output</output-file>
+<status>completed</status></p>
+<summary>Background command "Run webapp and deploy regression suites sequentially" completed (exit code 0)</summary>
+<p></task-notification></p></div></a><div class="index-item-stats"><span>2 bash · 1 edit</span>
+<div class="index-item-long-text"><div class="truncatable"><div class="truncatable-content"><div class="index-item-long-text-content"><p>And here's a PR description if you want it:</p>
+<hr />
+<p><strong>Add <code>wrapper:</code> support to stack.yml container entries</strong></p>
+<p>A container entry can now specify a wrapper scheme, so a repository containing no container build files (e.g. pure static HTML) can be deployed just by listing it in a stack:</p>
+<pre><code class="language-yaml">containers:
+  - name: bozemanpass/my-static-site
+    ref: myorg/my-static-site
+    wrapper: static-content
+</code></pre>
+<ul>
+<li>Wrapped containers build through the normal container pipeline (<code>_process_wrapped_container</code> in <code>build_containers.py</code>): the wrapper's base image is built first, then the app source repo is wrapped using the wrapper's containerfile. Content-repo hash tagging and repo fetching apply as for any container; wrapper repos are auto-fetched if not present.</li>
+<li><code>wrapper</code> may also be declared in a repo's own <code>container.yml</code>.</li>
+<li>Fixes a latent <code>UnboundLocalError</code> in <code>get_repo_ref()</code> (both <code>Stack</code> and <code>ContainerSpec</code>) for remote URLs that are neither <code>https://</code> nor <code>git@</code> form.</li>
+<li>Extends the static content test with a full deployment phase (<code>prepare</code>/<code>init</code>/<code>deploy</code>/<code>start</code> of the new <code>test-static-content</code> stack from <code>stack-test-stacks</code>, marker verification, teardown).</li>
+<li>Documents the field in <code>docs/stack-files.md</code>.</li>
+</ul>
+<p>All of: static content test (build + deploy phases, CI configuration), webapp test, and docker deploy test pass locally.</p>
+<hr />
+<p>That wraps this phase — over to you for the PR.</p></div></div><button class="expand-btn">Show more</button></div></div>
+</div></div>
+<div class="index-item"><a href="page-006.html#msg-2026-07-24T04-14-58-188Z"><div class="index-item-header"><span class="index-item-number">#26</span><time datetime="2026-07-24T04:14:58.188Z" data-timestamp="2026-07-24T04:14:58.188Z">2026-07-24T04:14:58.188Z</time></div><div class="index-item-content"><p>Thank you. I pushed the current work and created a PR. It is baking in CI at present. Do you think there is any additional documentation needed over what currently exists? (I'm not a huge fan of including long/detailed feature descriptions in PRs -- I'd rather the PR contain additions to project documentation and the description for the PR a short summary. That way the documentation lives on in the project without the need to track down old merged PRs to learn about the feature.</p></div></a><div class="index-item-stats"><span>5 edit · 2 bash · 2 write · 1 read</span>
+<div class="index-item-long-text"><div class="truncatable"><div class="truncatable-content"><div class="index-item-long-text-content"><p>Yes, there was a real gap, and I've filled it — the changes are in the working tree ready to add to the baking PR (they're docs-only, so pushing them onto the same branch is low-risk):</p>
+<p><strong>The gap:</strong> wrapper <em>authorship</em> was undocumented — the <code>wrapper.yml</code> schema, the build.sh env-var contract, the base-tag convention, and the detection rule vocabulary existed only as a code comment and by example. Anyone wanting to create a <code>stack-wrapper-hugo</code> would have had to reverse-engineer the existing repos. Also, the wrappers documentation lived inside <code>webapp.md</code>, which no longer fits now that wrappers cover non-webapp content and stack.yml deployment.</p>
+<p><strong>What I wrote:</strong></p>
+<ul>
+<li><strong><code>docs/wrappers.md</code></strong> (new, the canonical home): what a wrapper is, the available-wrappers table with repo links, both usage modes (<code>webapp build --wrapper</code> and the stack.yml <code>wrapper:</code> field), and an "Authoring a wrapper" section with the full <code>wrapper.yml</code> schema, the base-build vs. app-build env contract as a table, and the recommended two-stage containerfile pattern.</li>
+<li><strong><code>docs/webapp.md</code></strong>: wrappers section trimmed to a summary plus a pointer to <code>wrappers.md</code>.</li>
+<li><strong><code>docs/stack-files.md</code></strong>: cross-reference fixed to point at <code>wrappers.md</code>.</li>
+<li><strong><code>docs/recent-features.md</code></strong>: two one-liner entries added, following the existing convention — I used #160 (confirmed from the merge commit) and <strong>assumed #161 for the current PR</strong> since <code>gh</code> isn't available here; correct that number if the PR got a different one.</li>
+<li><strong><code>README.md</code></strong>: the "Learn More" list now links stack-files, wrappers, and webapp docs (previously only commands and recent-features were linked).</li>
+</ul>
+<p>I've also noted your docs-in-project/short-PRs preference in my memory so future work follows it by default.</p></div></div><button class="expand-btn">Show more</button></div></div>
+</div></div>
+<div class="index-item"><a href="page-006.html#msg-2026-07-24T04-18-57-255Z"><div class="index-item-header"><span class="index-item-number">#27</span><time datetime="2026-07-24T04:18:57.255Z" data-timestamp="2026-07-24T04:18:57.255Z">2026-07-24T04:18:57.255Z</time></div><div class="index-item-content"><p>Great, I'll push those changes to the PR branch now.</p></div></a><div class="index-item-stats">
+<div class="index-item-long-text"><div class="truncatable"><div class="truncatable-content"><div class="index-item-long-text-content"><p>Sounds good. Only thing to double-check when you push: the PR number in <code>docs/recent-features.md</code> — I guessed #161 for the in-flight PR, so fix that line if the actual number differs.</p>
+<p>Once this merges, the remaining backlog on my list is the <code>webapp-template</code>/<code>_fixup_*</code> cleanup PR, and later the ghcr base-image publishing and wrapper lock-file participation. Just say the word whenever you want to tackle any of them.</p></div></div><button class="expand-btn">Show more</button></div></div>
+</div></div>
+<div class="index-item"><a href="page-006.html#msg-2026-07-24T04-20-35-494Z"><div class="index-item-header"><span class="index-item-number">#28</span><time datetime="2026-07-24T04:20:35.494Z" data-timestamp="2026-07-24T04:20:35.494Z">2026-07-24T04:20:35.494Z</time></div><div class="index-item-content"><p>Ok I have to sleep for a few hours but we can pick this up in the morning.</p></div></a><div class="index-item-stats"><span>1 edit</span>
+</div></div>
+<div class="index-item"><a href="page-006.html#msg-2026-07-24T12-01-13-799Z"><div class="index-item-header"><span class="index-item-number">#29</span><time datetime="2026-07-24T12:01:13.799Z" data-timestamp="2026-07-24T12:01:13.799Z">2026-07-24T12:01:13.799Z</time></div><div class="index-item-content"><p>Ok I'm back. The local tree is on main with the recent PRs merged.</p></div></a><div class="index-item-stats"><span>15 bash · 3 read · 1 write · 1 edit</span>
+<div class="index-item-long-text"><div class="truncatable"><div class="truncatable-content"><div class="index-item-long-text-content"><p>The cleanup is implemented and the compose path is proven live; the webapp regression suite (which includes the k8s-type <code>webapp deploy</code> smoke test) is running in the background. Summary of the cleanup so far:</p>
+<ul>
+<li><strong><code>deploy_webapp.py</code> rewritten</strong>: <code>create_deployment</code> now generates a real single-pod stack (stack.yml + compose with the actual image) into a temp dir, and passes the URL through <code>init_operation</code>'s native <code>http_proxy_fqdn</code>/<code>http_proxy_targets</code> parameters. Both <code>_fixup_container_tag</code> and <code>_fixup_url_spec</code> are gone — no more post-hoc YAML rewriting. The generated stack is discarded after create, since <code>create_operation</code> copies everything the deployment needs into the deployment dir (verified live).</li>
+<li><strong><code>stack_is_external()</code></strong>: the <code>webapp-template</code> hack removed.</li>
+<li><strong><code>data/stacks/webapp-template/</code> and <code>data/compose/composefile-webapp-template.yml</code> deleted</strong> — which emptied <code>data/stacks</code> and <code>data/compose</code> entirely. I checked all <code>STACK_USE_BUILTIN_STACK</code>/internal-dir code paths: they only construct paths, never enumerate those directories, so their absence is safe.</li>
+<li>Verified end to end for compose: <code>webapp deploy</code> → <code>manage start</code> → content served → <code>stop --delete-volumes</code>, all clean. A side observation: compose deployments now get the standard per-cluster image tag rewrite that ordinary deployments get (the old fixup bypassed it); k8s deployments keep the raw image reference exactly as before, so the documented <code>push-images</code> flow is unaffected.</li>
+</ul>
+<p>I'll report the regression result when it lands, and then run the smoke test suite as an extra check since two data directories vanished from the package.</p></div></div><button class="expand-btn">Show more</button></div></div>
+</div></div>
+<div class="index-item"><a href="page-006.html#msg-2026-07-24T12-09-13-154Z"><div class="index-item-header"><span class="index-item-number">#30</span><time datetime="2026-07-24T12:09:13.154Z" data-timestamp="2026-07-24T12:09:13.154Z">2026-07-24T12:09:13.154Z</time></div><div class="index-item-content"><p><task-notification>
+<task-id>b38v52rtg</task-id>
+<tool-use-id>toolu_01DVsJg14p2G4uKvfSjLpiCd</tool-use-id>
+<output-file>/tmp/claude-1000/-home-david-projects-bpi-stack/3b4bfe1e-d8ae-4050-b437-0fcc0870de42/tasks/b38v52rtg.output</output-file>
+<status>completed</status></p>
+<summary>Background command "Check internal-stack refs and run webapp regression suite" completed (exit code 0)</summary>
+<p></task-notification></p></div></a><div class="index-item-stats"><span>2 bash · 1 edit</span>
+<div class="index-item-long-text"><div class="truncatable"><div class="truncatable-content"><div class="index-item-long-text-content"><p>That closes out the entire arc we scoped at the start: wrappers are a first-class discoverable abstraction, definitions live in their own repos, static content hosting works both standalone and as a stack component with test coverage, and the last of the webapp special-casing is gone. The only items left on the long-term list are the nice-to-haves: ghcr publishing for wrapper base images and wrapper lock-file participation.</p>
+<p>Over to you for the PR whenever you're ready.</p></div></div><button class="expand-btn">Show more</button></div></div>
+</div></div>
+<div class="index-item"><a href="page-007.html#msg-2026-07-24T12-12-27-781Z"><div class="index-item-header"><span class="index-item-number">#31</span><time datetime="2026-07-24T12:12:27.781Z" data-timestamp="2026-07-24T12:12:27.781Z">2026-07-24T12:12:27.781Z</time></div><div class="index-item-content"><p>Ok let me cut a PR for the current work then we can proceed to look at those things.</p></div></a><div class="index-item-stats">
+<div class="index-item-long-text"><div class="truncatable"><div class="truncatable-content"><div class="index-item-long-text-content"><p>Go ahead — I'll keep my hands off the working tree until it's cut. Meanwhile, here's my thinking on the two remaining items so we can hit the ground running:</p>
+<p><strong>1. Prebuilt base images on ghcr</strong></p>
+<p>Two halves:
+- <em>Publishing</em> belongs in the wrapper repos themselves — a GitHub Actions workflow in <code>stack-wrapper-webapp</code> and <code>stack-wrapper-static-content</code> that builds the base image(s) and pushes to ghcr on merge to main. The wrapper repo owns its base image the same way any container repo does.
+- <em>Consuming</em>: today <code>_process_wrapped_container()</code> and <code>webapp build</code> always run the base build (cheap when docker-cached, but a cold machine builds node/nginx bases from scratch). The natural fix is to give base images the same treatment ordinary containers already get: compute a version tag from the wrapper repo's git hash (the wrapper dir is inside a git repo we cloned, so <code>get_repo_current_hash()</code> applies), check <code>container_exists_locally</code> / <code>container_exists_remotely</code> against ghcr, and pull instead of build when available — reusing the existing machinery in <code>build_containers()</code>. Falls back to local build exactly as now (offline, dirty wrapper checkout, etc.).</p>
+<p><strong>2. Wrapper lock-file participation</strong></p>
+<p>The gap: a stack pins its <em>content</em> repo via <code>container.lock</code>, but the wrapper repo is fetched at whatever HEAD happens to be, so a wrapper repo update silently changes everyone's images. Sketch:
+- Let the <code>wrapper:</code> value optionally carry a full locator (<code>wrapper: github.com/bozemanpass/stack-wrapper-static-content@&lt;branch-or-hash&gt;:static-content</code> is ugly; nicer is a sibling field, e.g. <code>wrapper-ref:</code> with the standard <code>[host/]org/repo[@ref]</code> format next to <code>wrapper: static-content</code>).
+- On first successful build, write the resolved wrapper repo hash into a lock file beside the stack.yml (a <code>wrapper.lock</code>, mirroring <code>container.lock</code> semantics: warn if the fetched repo drifts from the lock, honor it when cloning fresh).
+- This also composes with item 1: the locked wrapper hash <em>is</em> the base image tag to pull from ghcr, which makes deployments byte-reproducible in the base layer too.</p>
+<p>My suggested order is 1-consuming + 2 together in the stack repo (they share the "wrapper repo hash" plumbing), with the publishing workflows as small separate additions to the two wrapper repos. Ping me when the PR is cut and you're on a fresh branch, and tell me if you want the design adjusted before I start.</p></div></div><button class="expand-btn">Show more</button></div></div>
+</div></div>
+<div class="index-item"><a href="page-007.html#msg-2026-07-24T12-22-41-245Z"><div class="index-item-header"><span class="index-item-number">#32</span><time datetime="2026-07-24T12:22:41.245Z" data-timestamp="2026-07-24T12:22:41.245Z">2026-07-24T12:22:41.245Z</time></div><div class="index-item-content"><p>Ok this sounds about right. We already have some repositories that host containers with ghcr publication. The pattern used there is to have a CI job in the container repository that pushes the built image to ghcr with a name and tag such that stack can find it and match it to the source branch/tag (the commit hash is the tag). This CI job doesn't use the stack tool, only bare docker. I'm not sure if that pattern can be used for the base wrapper images. The idea is that container repos can be stand-alone, without a dependency on the stack tool to build them. You can see one of these container repositories cloned here: /home/david/projects/bpi/siwe-express-example</p></div></a><div class="index-item-stats"><span>2 bash · 2 write</span>
+<div class="index-item-long-text"><div class="truncatable"><div class="truncatable-content"><div class="index-item-long-text-content"><p>So yes — the pattern works verbatim for wrapper base images, and the publishing half is now written in both wrapper repo clones for you to push:</p>
+<ul>
+<li><strong><code>stack-wrapper-webapp/.github/workflows/publish-images.yml</code></strong> — matrix over the two wrapper dirs, publishing <code>ghcr.io/bozemanpass/webapp-base</code> and <code>ghcr.io/bozemanpass/nextjs-base</code>, both tagged with the repo commit SHA (they version together, which is correct since they live in one repo) plus <code>latest</code> on main.</li>
+<li><strong><code>stack-wrapper-static-content/.github/workflows/publish-images.yml</code></strong> — same for <code>ghcr.io/bozemanpass/static-content-base</code>.</li>
+</ul>
+<p>Both are pure docker + <code>docker/build-push-action</code>, no stack tool involved, exactly like <code>siwe-express-example</code>. One operational note: on first push, ghcr packages default to <strong>private</strong> — you'll need to flip the three packages to public in the GitHub package settings (or grant access) before anonymous <code>docker pull</code> works from the stack tool.</p>
+<p>The consuming half goes in the stack repo once you're on a fresh branch after the cleanup PR: in the base-build step, compute the wrapper repo's commit hash (<code>get_repo_current_hash</code> of the wrapper directory's repo root), check <code>&lt;base-container&gt;:&lt;hash&gt;</code> locally, then remotely at the registry derived from the wrapper repo's origin (github.com → ghcr.io via the existing <code>image_registry_for_repo</code> mapping), pull-and-tag if found, and fall back to building locally exactly as today (including when the wrapper checkout is dirty). That same hash then becomes the natural value for the wrapper lock file, which is why I'd do those two stack-side changes together in the next branch.</p></div></div><button class="expand-btn">Show more</button></div></div>
+</div></div>
+<div class="index-item"><a href="page-007.html#msg-2026-07-24T12-26-24-162Z"><div class="index-item-header"><span class="index-item-number">#33</span><time datetime="2026-07-24T12:26:24.162Z" data-timestamp="2026-07-24T12:26:24.162Z">2026-07-24T12:26:24.162Z</time></div><div class="index-item-content"><p>Great, thanks. I was aware of the "magically private" issue with ghcr, but the memory was hazy!</p></div></a><div class="index-item-stats">
+<div class="index-item-long-text"><div class="truncatable"><div class="truncatable-content"><div class="index-item-long-text-content"><p>It bites everyone at least once — usually as a mysterious <code>docker pull</code> 401 in CI weeks later, so cheap to preempt now. Since the workflows tag <code>latest</code> on main too, an easy way to verify the visibility flip worked: <code>docker pull ghcr.io/bozemanpass/static-content-base:latest</code> from any machine without ghcr credentials.</p>
+<p>Standing by for the fresh branch — then I'll do the stack-side consuming logic (pull-or-build base images by wrapper repo hash) and the wrapper lock-file support together.</p></div></div><button class="expand-btn">Show more</button></div></div>
+</div></div>
+<div class="index-item"><a href="page-007.html#msg-2026-07-24T12-31-19-308Z"><div class="index-item-header"><span class="index-item-number">#34</span><time datetime="2026-07-24T12:31:19.308Z" data-timestamp="2026-07-24T12:31:19.308Z">2026-07-24T12:31:19.308Z</time></div><div class="index-item-content"><p>I've made the PRs in the wrapper container repos, but I noticed the CI jobs are set to run only on merge to main. Let's add build on PR too please, which will allow us to test new wrapper versions end to end by specifying a wrapper ref as you mentioned above.</p></div></a><div class="index-item-stats"><span>2 edit</span>
+<div class="index-item-long-text"><div class="truncatable"><div class="truncatable-content"><div class="index-item-long-text-content"><p>Good idea — one subtlety though: a <code>pull_request:</code> trigger checks out and stamps the <em>merge</em> commit (<code>github.sha</code> is the synthetic merge ref), so the pushed tag wouldn't match the branch head hash that stack computes from a fetched wrapper repo. The clean way to get "test a wrapper ref end to end" is to trigger on <strong>push to any branch</strong> instead — every branch push publishes an image tagged with the real commit SHA (and fork PRs couldn't push to ghcr anyway, so a <code>pull_request</code> trigger adds nothing there). <code>latest</code> stays main-only via the existing <code>is_default_branch</code> condition:</p></div></div><button class="expand-btn">Show more</button></div></div>
+<div class="index-item-long-text"><div class="truncatable"><div class="truncatable-content"><div class="index-item-long-text-content"><p>Both workflows now trigger on push to any branch. The flow this enables: push a wrapper change on a branch → CI publishes <code>ghcr.io/bozemanpass/&lt;base&gt;:&lt;commit-sha&gt;</code> → a stack (or <code>webapp build</code>) pointing at that wrapper ref pulls exactly that prebuilt base — which is precisely the <code>wrapper-ref</code>/lock-file consuming logic I'll build on the stack side next. Every image stays addressable by the commit that produced it, and <code>latest</code> still only moves on main.</p>
+<p>These edits are in your local clones on top of your PR branches (or main, wherever each clone sits) — ready for you to push to the wrapper repo PRs.</p></div></div><button class="expand-btn">Show more</button></div></div>
+</div></div>
+<div class="index-item"><a href="page-007.html#msg-2026-07-24T12-34-47-996Z"><div class="index-item-header"><span class="index-item-number">#35</span><time datetime="2026-07-24T12:34:47.996Z" data-timestamp="2026-07-24T12:34:47.996Z">2026-07-24T12:34:47.996Z</time></div><div class="index-item-content"><p>I pushed the updates but no actions running on the branch. Probably actions are desabled by default in these repos. Let me check..</p></div></a><div class="index-item-stats">
+<div class="index-item-long-text"><div class="truncatable"><div class="truncatable-content"><div class="index-item-long-text-content"><p>Could be — for org-owned repos, Actions can be disabled by an org-level policy default for new repositories (Settings → Actions → General, both at the org and repo level). One other thing worth ruling out while you're in there: if the push that added the workflow file was to a non-default branch, GitHub <em>should</em> still trigger <code>push</code> workflows for it, but some org policies restrict which workflows can run until the file exists on the default branch. If the Actions tab shows the workflow listed but no runs, it's the enablement setting; if the workflow isn't listed at all, it's the default-branch visibility case — merging the wrapper PR once would fix that variant.</p></div></div><button class="expand-btn">Show more</button></div></div>
+</div></div>
+<div class="index-item"><a href="page-008.html#msg-2026-07-24T12-36-43-158Z"><div class="index-item-header"><span class="index-item-number">#36</span><time datetime="2026-07-24T12:36:43.158Z" data-timestamp="2026-07-24T12:36:43.158Z">2026-07-24T12:36:43.158Z</time></div><div class="index-item-content"><p>It's not that. Actions are enabled. I think perhaps the push with the branch wildcard didn't trigger because that change needs to be in the target branch already.</p></div></a><div class="index-item-stats"><span>2 edit</span>
+<div class="index-item-long-text"><div class="truncatable"><div class="truncatable-content"><div class="index-item-long-text-content"><p>Actually I think it's simpler than that — for <code>push</code> events GitHub does use the workflow file from the pushed branch itself, so it doesn't need to exist on main first. The likely culprit is the wildcard: in Actions branch filters, <code>'*'</code> <strong>does not match <code>/</code></strong>, so if your PR branch is named <code>dboreham/something</code>, <code>branches: ['*']</code> doesn't match it. <code>'**'</code> is the cross-slash wildcard. (The stack repo gets away with <code>'*'</code> because its workflows also have <code>pull_request</code> triggers, which is what fires on those PRs.) Fixing both:</p></div></div><button class="expand-btn">Show more</button></div></div>
+</div></div>
+<div class="index-item"><a href="page-008.html#msg-2026-07-24T12-40-15-079Z"><div class="index-item-header"><span class="index-item-number">#37</span><time datetime="2026-07-24T12:40:15.079Z" data-timestamp="2026-07-24T12:40:15.079Z">2026-07-24T12:40:15.079Z</time></div><div class="index-item-content"><p>Ok good. That's all merged and the CI jobs running. Let me flip the image visibility to public once they're baked.</p></div></a><div class="index-item-stats">
+<div class="index-item-long-text"><div class="truncatable"><div class="truncatable-content"><div class="index-item-long-text-content"><p>While those bake, a quick way to confirm everything lines up once you flip visibility — from any machine without ghcr credentials:</p>
+<pre><code>docker pull ghcr.io/bozemanpass/static-content-base:latest
+docker pull ghcr.io/bozemanpass/webapp-base:latest
+docker pull ghcr.io/bozemanpass/nextjs-base:latest
+</code></pre>
+<p>Then the last piece is the stack-side work: pull-or-build for base images keyed on the wrapper repo commit hash, the <code>wrapper-ref</code> field, and the wrapper lock file. Just tell me when the stack clone is on a fresh branch for it (and once the packages are public I can verify the pulls myself as part of testing that change).</p></div></div><button class="expand-btn">Show more</button></div></div>
+</div></div>
+<div class="index-item"><a href="page-008.html#msg-2026-07-24T12-42-57-003Z"><div class="index-item-header"><span class="index-item-number">#38</span><time datetime="2026-07-24T12:42:57.003Z" data-timestamp="2026-07-24T12:42:57.003Z">2026-07-24T12:42:57.003Z</time></div><div class="index-item-content"><p>Ok the jobs finished. I noticed a github warning though: it is complaining about the use of Node.js 20 in the docker build push action. Can you check for a newer version of that action and update if appropriate?</p></div></a><div class="index-item-stats"><span>3 fetch · 1 toolsearch · 1 bash</span>
+<div class="index-item-long-text"><div class="truncatable"><div class="truncatable-content"><div class="index-item-long-text-content"><p>Done — both workflows now use <code>actions/checkout@v5</code>, <code>docker/metadata-action@v6</code>, <code>docker/login-action@v4</code>, and <code>docker/build-push-action@v7</code>, all of which run on the Node 24 runtime, so the deprecation warning will clear. (The Node 24 majors require Actions Runner v2.327.1+, which GitHub-hosted runners already satisfy — only a concern if you ever run these on old self-hosted runners.)</p>
+<p>Worth noting: <code>siwe-express-example</code> (and presumably your other container repos following that pattern) use the same old versions, so they'll be emitting the same warning — same four-line bump whenever you feel like it.</p>
+<p>Ready for you to push. After that, the remaining work is the stack-side consuming logic (<code>wrapper-ref</code>, hash-keyed pull-or-build, lock file) whenever the stack clone is on a fresh branch.</p></div></div><button class="expand-btn">Show more</button></div></div>
+</div></div>
+<div class="index-item"><a href="page-008.html#msg-2026-07-24T12-52-05-107Z"><div class="index-item-header"><span class="index-item-number">#39</span><time datetime="2026-07-24T12:52:05.107Z" data-timestamp="2026-07-24T12:52:05.107Z">2026-07-24T12:52:05.107Z</time></div><div class="index-item-content"><p>The wrapper repositories are all merged and the container images are in ghcr. I've changed their visibility to public.</p></div></a><div class="index-item-stats"><span>21 edit · 13 bash · 3 read</span>
+<div class="index-item-long-text"><div class="truncatable"><div class="truncatable-content"><div class="index-item-long-text-content"><p>The full implementation is done and unit-validated; both regression suites are now running cold (all base and app images deleted), which means they'll exercise the new ghcr pull path for real — including the webapp test, which should now <em>pull</em> the node base images instead of building them, a nice CI speedup as a side effect.</p>
+<p>What's implemented and locally verified so far:</p>
+<ul>
+<li><strong>Prebuilt base consumption</strong>: <code>prepare_wrapper_base_container()</code> — keyed on the wrapper repo's commit hash: local <code>&lt;base&gt;:&lt;hash&gt;</code> → registry (derived from the wrapper repo's origin, github.com → ghcr.io) → local build fallback. Dirty wrapper checkouts and <code>--force-rebuild</code> always build locally; local builds get hash-tagged so subsequent runs skip. Verified: cold <code>webapp build</code> pulled <code>ghcr.io/bozemanpass/static-content-base:69bfeb0…</code> instead of building.</li>
+<li><strong><code>wrapper-ref</code></strong>: on stack.yml container entries, <code>container.yml</code>, and as <code>--wrapper-ref</code> on <code>webapp build</code> — fetches the named repo (any branch/hash) and resolves the wrapper only within it. Verified, including the error case.</li>
+<li><strong><code>wrapper.lock</code></strong>: written beside stack.yml on first successful wrapped build (<code>ref</code> + <code>hash</code> per wrapper), honored when the wrapper repo is freshly cloned (checked out at the locked hash, base pulled by that exact tag), drift warning otherwise. Verified through the full cycle: build → lock written → wrapper repo deleted → rebuild fetched the repo at the locked hash and pulled the matching base from ghcr.</li>
+<li><strong>Docs</strong>: <code>wrappers.md</code> gained "Prebuilt base images" and "Pinning and locking" sections plus the CI-publishing expectation in the authoring section; <code>stack-files.md</code> documents <code>wrapper-ref</code> and <code>wrapper.lock</code>.</li>
+</ul>
+<p>I'll report when the suites finish.</p></div></div><button class="expand-btn">Show more</button></div></div>
+</div></div>
+<div class="index-item"><a href="page-008.html#msg-2026-07-24T13-06-15-504Z"><div class="index-item-header"><span class="index-item-number">#40</span><time datetime="2026-07-24T13:06:15.504Z" data-timestamp="2026-07-24T13:06:15.504Z">2026-07-24T13:06:15.504Z</time></div><div class="index-item-content"><p>Ok that's awesome. Perhaps later we can visit the subject of adding more test coverage for image fetching and the lock mechanism (e.g. tests that check the image is not fetched from ghcr but built locally when the tag has no corresponding built image).</p></div></a><div class="index-item-stats"><span>1 edit</span>
+<div class="index-item-long-text"><div class="truncatable"><div class="truncatable-content"><div class="index-item-long-text-content"><p>Good call — those paths currently ride along implicitly (the cold suite runs happen to exercise pull, but nothing asserts <em>which</em> path was taken, and the build-fallback and lock-drift cases have no coverage at all). Worth a dedicated test that manipulates the wrapper repo state (unpushed commit → must build locally; lock present → must fetch at hash; dirty checkout → must build and not lock). Noting it so it doesn't get lost:</p></div></div><button class="expand-btn">Show more</button></div></div>
+</div></div>
+<div class="index-item"><a href="page-009.html#msg-2026-07-24T13-07-58-016Z"><div class="index-item-header"><span class="index-item-number">#41</span><time datetime="2026-07-24T13:07:58.016Z" data-timestamp="2026-07-24T13:07:58.016Z">2026-07-24T13:07:58.016Z</time></div><div class="index-item-content"><p><task-notification>
+<task-id>bspcrj0b8</task-id>
+<tool-use-id>toolu_01JyULYNhbhmhvaV8izYrSCZ</tool-use-id>
+<output-file>/tmp/claude-1000/-home-david-projects-bpi-stack/3b4bfe1e-d8ae-4050-b437-0fcc0870de42/tasks/bspcrj0b8.output</output-file>
+<status>completed</status></p>
+<summary>Background command "Rebuild package and run both regression suites cold" completed (exit code 0)</summary>
+<p></task-notification></p></div></a><div class="index-item-stats"><span>1 bash · 1 edit</span>
+<div class="index-item-long-text"><div class="truncatable"><div class="truncatable-content"><div class="index-item-long-text-content"><p>Everything is green and the working tree is ready for your PR:</p>
+<ul>
+<li><strong>Code</strong>: <code>wrappers.py</code> (scoped resolution, <code>fetch_wrapper_repo</code>, <code>wrapper_repo_info</code>, lock read/write), <code>build_containers.py</code> (<code>prepare_wrapper_base_container</code> pull-or-build, <code>wrapper-ref</code>/lock handling in the wrapped path), <code>build_util.py</code> (<code>wrapper-ref</code> field), <code>build_webapp.py</code> (<code>--wrapper-ref</code>, prebuilt base path), <code>constants.py</code> (<code>wrapper.lock</code> name).</li>
+<li><strong>Docs</strong>: <code>wrappers.md</code> (prebuilt bases, pinning/locking, CI-publish expectation for wrapper authors), <code>stack-files.md</code> (<code>wrapper-ref</code>, <code>wrapper.lock</code> section), <code>recent-features.md</code> (entry as #163 — fix if the number lands differently).</li>
+<li><strong>Validation</strong>: lint clean; scenario tests for pull, local-fallback tagging, lock write/honor/refetch-at-hash, and <code>--wrapper-ref</code> incl. error case; both full suites pass cold with the pull path proven in the logs.</li>
+</ul>
+<p>Suggested short PR description: <em>"Pull prebuilt wrapper base images from ghcr (keyed on the wrapper repo commit hash, published by wrapper repo CI), falling back to local build. Add <code>wrapper-ref</code> to pin a wrapper repository/branch, and <code>wrapper.lock</code> (analogous to container.lock) for repeatable wrapped builds."</em></p>
+<p>And the test-coverage work for the fetch/lock paths is queued in my notes as the next item whenever you want it.</p></div></div><button class="expand-btn">Show more</button></div></div>
+</div></div>
+<div class="index-item"><a href="page-009.html#msg-2026-07-24T13-11-45-367Z"><div class="index-item-header"><span class="index-item-number">#42</span><time datetime="2026-07-24T13:11:45.367Z" data-timestamp="2026-07-24T13:11:45.367Z">2026-07-24T13:11:45.367Z</time></div><div class="index-item-content"><p>Thanks, this all sounds great. Wondering: are there links from the docs in this repo to the wrapper repos, so someone looking to figure out how the whole system works can find them?</p></div></a><div class="index-item-stats"><span>2 bash · 1 edit</span>
+<div class="index-item-long-text"><div class="truncatable"><div class="truncatable-content"><div class="index-item-long-text-content"><p>So to answer directly: yes, and now more completely. The link graph is:</p>
+<ul>
+<li><strong>Stack repo → wrapper repos</strong>: <code>README.md</code> → <code>docs/wrappers.md</code>, whose available-wrappers table links both wrapper repos, the authoring section links <code>stack-wrapper-static-content</code> as the minimal example, and (new just now) the stack.yml usage section links the full working example — the pure-HTML <code>stack-test-static-content</code> repo plus the <code>test-static-content</code> stack in <code>stack-test-stacks</code> that deploys it.</li>
+<li><strong>Wrapper repos → stack repo</strong>: both READMEs link the stack repo and now reference <code>docs/wrappers.md</code> (was <code>docs/webapp.md</code>) — that's a two-line change sitting in your wrapper repo clones to push whenever convenient.</li>
+</ul>
+<p>So someone landing in any of the repos can walk the whole system. The stack-repo side of these edits is in the working tree along with the rest of the batch for your PR.</p></div></div><button class="expand-btn">Show more</button></div></div>
+</div></div>
+<div class="index-item"><a href="page-009.html#msg-2026-07-24T13-14-31-604Z"><div class="index-item-header"><span class="index-item-number">#43</span><time datetime="2026-07-24T13:14:31.604Z" data-timestamp="2026-07-24T13:14:31.604Z">2026-07-24T13:14:31.604Z</time></div><div class="index-item-content"><p>Awesome, thanks. I'll push a PR with the new changes.</p></div></a><div class="index-item-stats">
+<div class="index-item-long-text"><div class="truncatable"><div class="truncatable-content"><div class="index-item-long-text-content"><p>Sounds good. Two small reminders for the push: verify the PR number in <code>docs/recent-features.md</code> (I guessed #163), and the wrapper repo clones each have the two-line README pointer update (<code>docs/webapp.md</code> → <code>docs/wrappers.md</code>) to push separately whenever convenient.</p>
+<p>That completes the whole wrapper roadmap — abstraction, external repos, static content, stack.yml integration, cleanup, prebuilt bases, and version locking. The only queued follow-up is the dedicated test coverage for the fetch/lock paths, noted in my memory for whenever you want to pick it up.</p></div></div><button class="expand-btn">Show more</button></div></div>
+</div></div>
+<div class="index-item"><a href="page-009.html#msg-2026-07-24T13-17-28-577Z"><div class="index-item-header"><span class="index-item-number">#44</span><time datetime="2026-07-24T13:17:28.577Z" data-timestamp="2026-07-24T13:17:28.577Z">2026-07-24T13:17:28.577Z</time></div><div class="index-item-content"><p>Yes the PR got number 163.</p></div></a></div>
+<div class="index-item"><a href="page-009.html#msg-2026-07-24T13-24-43-963Z"><div class="index-item-header"><span class="index-item-number">#45</span><time datetime="2026-07-24T13:24:43.963Z" data-timestamp="2026-07-24T13:24:43.963Z">2026-07-24T13:24:43.963Z</time></div><div class="index-item-content"><p>Ok the PR passed all CI checks and has been merged. Are we all done with this feature now?</p></div></a><div class="index-item-stats"><span>1 edit</span>
+<div class="index-item-long-text"><div class="truncatable"><div class="truncatable-content"><div class="index-item-long-text-content"><p>Yes — the feature as we scoped it across this whole arc is complete:</p>
+<ol>
+<li>✅ Wrapper abstraction with <code>wrapper.yml</code> manifests (#160)</li>
+<li>✅ Definitions in external repos with discovery + auto-fetch, static content wrapper, build-level test (#160)</li>
+<li>✅ <code>wrapper:</code> in stack.yml, deployment-level test, docs consolidation (#161)</li>
+<li>✅ <code>webapp-template</code> special case and fixups retired (#162)</li>
+<li>✅ Prebuilt base images on ghcr, <code>wrapper-ref</code> pinning, <code>wrapper.lock</code> (#163)</li>
+</ol>
+<p>The original goal — "a repository that only contains HTML can be deployed just by including it in a stack, with wrapping schemes discovered at runtime from their own repos" — is fully realized and regression-tested at every step.</p>
+<p>Two loose ends, both minor and non-blocking:</p>
+<ul>
+<li>The two-line README pointer updates (<code>docs/webapp.md</code> → <code>docs/wrappers.md</code>) sitting in your wrapper repo clones, if you haven't pushed those yet.</li>
+<li>The deliberate deferral: dedicated test coverage for the base-image fetch and lock mechanics (build-locally-when-no-published-image, lock honored on fresh clone, dirty-checkout-doesn't-lock). That's queued in my notes as its own piece of work whenever you want it.</li>
+</ul>
+<p>Updating my memory to mark the arc closed:</p></div></div><button class="expand-btn">Show more</button></div></div>
+<div class="index-item-long-text"><div class="truncatable"><div class="truncatable-content"><div class="index-item-long-text-content"><p>All done — the wrapper system is shipped end to end. It was a satisfying arc: four PRs, each gated by the existing webapp test passing unchanged, ending with the static-content case that motivated the whole idea working from a bare <code>index.html</code> repo to a served deployment. Ready for the test-coverage round or anything else whenever you are.</p></div></div><button class="expand-btn">Show more</button></div></div>
+</div></div>
+<div class="index-item"><a href="page-010.html#msg-2026-07-24T13-29-36-510Z"><div class="index-item-header"><span class="index-item-number">#46</span><time datetime="2026-07-24T13:29:36.510Z" data-timestamp="2026-07-24T13:29:36.510Z">2026-07-24T13:29:36.510Z</time></div><div class="index-item-content"><p>Thanks, I'd missed those readme updates. They're also pushed now. One question before we move on: what other kinds of wrapper should we be thinking about for the future? I wondered about one for some subset of back-end and API type services but I'm not sure if those have sufficient generic properties to be handled with the wrapper pattern.</p></div></a><div class="index-item-stats">
+<div class="index-item-long-text"><div class="truncatable"><div class="truncatable-content"><div class="index-item-long-text-content"><p>Good question to ask now, because the answer clarifies what the wrapper abstraction is really for. My take: a wrapper is viable whenever an ecosystem gives you two things by convention — a way to turn source into a runnable artifact, and a runtime contract (how it starts, what port it listens on, how config gets in). The buildpack ecosystems (Heroku, CNB, Nixpacks) are a useful map here, since what they support is essentially the empirical answer to "what's generic enough."</p>
+<p>On backend/API services specifically: I think they're <em>more</em> tractable than they first appear, because the objection that usually kills the idea — "backends have databases, migrations, queues, sidecars" — is answered by your architecture. The wrapper only has to containerize one repo; <em>composition</em> is the stack's job, and the stack already does it (including <code>pre_start_command</code> for things like migrations). A 12-factor-style HTTP service has exactly the same runtime shape as a webapp: one process, one port, config via environment. What varies by ecosystem is only the build step and entrypoint discovery:</p>
+<ul>
+<li><strong>Node services</strong> (Express/Fastify/Nest): the strongest candidate. <code>package.json</code> is a genuine contract — dependencies, <code>engines</code>, and crucially <code>scripts.start</code>. A <code>node-service</code> wrapper is mostly the existing <code>webapp-base</code> with a different start behavior (<code>npm start</code> + <code>PORT</code> env instead of serving build output). Cheap to build, immediately useful.</li>
+<li><strong>Go services</strong>: also excellent — <code>go.mod</code> + <code>go build</code> yields one static binary, and the result is a tiny image. Entrypoint ambiguity (which <code>cmd/</code>?) is the only wrinkle.</li>
+<li><strong>Python services</strong>: the weakest of the three, because there's no start convention — every buildpack ends up requiring a Procfile or guessing at <code>main:app</code> for uvicorn/gunicorn. Doable, but needs the app to declare one line.</li>
+<li><strong>JVM/Rust</strong>: conventional but heavier; do them when a real repo demands it.</li>
+</ul>
+<p>The entrypoint problem suggests a small future extension worth keeping in mind: letting the stack.yml container entry pass parameters to the wrapper (e.g. <code>wrapper-config: {start-command: ..., port: ...}</code>). That keeps the app repo pristine — the <em>deployer</em> declares the one ambiguous fact — and it would unlock several ecosystems without inventing per-repo config files.</p>
+<p>Two other families that are arguably better candidates than backends:</p>
+<ul>
+<li><strong>Static site generators</strong> — Hugo, MkDocs, Jekyll, mdBook. These sit exactly between your two existing wrappers: a build step, then nginx serving the output. Trivially generic per tool, and high-value (every project's docs site becomes deployable by listing its repo). A <code>hugo</code> wrapper would be ~the static-content wrapper plus one build stage.</li>
+<li><strong>Scheduled/one-shot jobs</strong> — a repo with a script that runs to completion. No port, but nothing in the wrapper contract actually requires a port; the manifest just wouldn't declare one.</li>
+</ul>
+<p>Poor fits, for the record: anything needing system-level native dependencies (that's where buildpack systems sprawl into composition complexity — your escape hatch is "add a Dockerfile," which stack already handles as the ordinary route), and stateful infrastructure like databases, where there's no user source to build and a plain image reference is already the right tool.</p>
+<p>If I were sequencing: <code>node-service</code> first (smallest delta, tests the wrapper pattern against the API-service question directly), then a static-site-generator wrapper (probably Hugo or MkDocs, whichever you'd actually use), and let real repos drive the rest — the pattern is cheap enough per-wrapper that speculative ones aren't worth building.</p></div></div><button class="expand-btn">Show more</button></div></div>
+</div></div>
+<div class="index-item"><a href="page-010.html#msg-2026-07-24T13-34-33-539Z"><div class="index-item-header"><span class="index-item-number">#47</span><time datetime="2026-07-24T13:34:33.539Z" data-timestamp="2026-07-24T13:34:33.539Z">2026-07-24T13:34:33.539Z</time></div><div class="index-item-content"><p>Ok that's a useful summary. Perhaps we can see what comes up in internal use that looks like it merits a new wrapper. That's actually how the static content requirement arose -- we needed to re-deploy a web site onto modern infrastructure from an old wordpress setup.</p></div></a><div class="index-item-stats"><span>2 edit · 1 write · 1 read</span>
+<div class="index-item-long-text"><div class="truncatable"><div class="truncatable-content"><div class="index-item-long-text-content"><p>All noted. Nice arc, from "make the middle route more generic" to a shipped, documented, locked, registry-backed wrapper system in four PRs — and a WordPress rescue as the origin story. When the next internal need surfaces (or you want the fetch/lock test coverage done), I'll have the context ready.</p></div></div><button class="expand-btn">Show more</button></div></div>
+</div></div>
+<div class="index-item"><a href="page-010.html#msg-2026-07-24T13-35-56-249Z"><div class="index-item-header"><span class="index-item-number">#48</span><time datetime="2026-07-24T13:35:56.249Z" data-timestamp="2026-07-24T13:35:56.249Z">2026-07-24T13:35:56.249Z</time></div><div class="index-item-content"><p>Thanks, good going business with you.</p></div></a></div>
+<div class="index-item"><a href="page-010.html#msg-2026-07-24T13-36-17-422Z"><div class="index-item-header"><span class="index-item-number">#50</span><time datetime="2026-07-24T13:36:17.422Z" data-timestamp="2026-07-24T13:36:17.422Z">2026-07-24T13:36:17.422Z</time></div><div class="index-item-content"><p><command-name>/exit</command-name>
+            <command-message>exit</command-message>
+            <command-args></command-args></p></div></a></div>
+<div class="index-item"><a href="page-011.html#msg-2026-07-24T13-36-17-422Z"><div class="index-item-header"><span class="index-item-number">#51</span><time datetime="2026-07-24T13:36:17.422Z" data-timestamp="2026-07-24T13:36:17.422Z">2026-07-24T13:36:17.422Z</time></div><div class="index-item-content"><p><local-command-stdout>See ya!</local-command-stdout></p></div></a></div>
+<div class="index-item"><a href="page-010.html#msg-2026-07-24T13-36-17-424Z"><div class="index-item-header"><span class="index-item-number">#49</span><time datetime="2026-07-24T13:36:17.424Z" data-timestamp="2026-07-24T13:36:17.424Z">2026-07-24T13:36:17.424Z</time></div><div class="index-item-content"><p><local-command-caveat>Caveat: The messages below were generated by the user while running local commands. DO NOT respond to these messages or otherwise consider them in your response unless the user explicitly asks you to.</local-command-caveat></p></div></a></div>
+        
+
+<div class="pagination">
+<span class="current">Index</span>
+<span class="disabled">&larr; Prev</span>
+<a href="page-001.html">1</a>
+<a href="page-002.html">2</a>
+<a href="page-003.html">3</a>
+<a href="page-004.html">4</a>
+<a href="page-005.html">5</a>
+<a href="page-006.html">6</a>
+<a href="page-007.html">7</a>
+<a href="page-008.html">8</a>
+<a href="page-009.html">9</a>
+<a href="page-010.html">10</a>
+<a href="page-011.html">11</a>
+<a href="page-001.html">Next &rarr;</a>
+</div>
+
+
+        <dialog id="search-modal">
+            <div class="search-modal-header">
+                <input type="text" id="modal-search-input" placeholder="Search..." aria-label="Search transcripts">
+                <button id="modal-search-btn" type="button" aria-label="Search">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><path d="m21 21-4.35-4.35"></path></svg>
+                </button>
+                <button id="modal-close-btn" type="button" aria-label="Close">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18"></path><path d="m6 6 12 12"></path></svg>
+                </button>
+            </div>
+            <div id="search-status"></div>
+            <div id="search-results"></div>
+        </dialog>
+        <script>
+(function() {
+    var totalPages = 11;
+    var searchBox = document.getElementById('search-box');
+    var searchInput = document.getElementById('search-input');
+    var searchBtn = document.getElementById('search-btn');
+    var modal = document.getElementById('search-modal');
+    var modalInput = document.getElementById('modal-search-input');
+    var modalSearchBtn = document.getElementById('modal-search-btn');
+    var modalCloseBtn = document.getElementById('modal-close-btn');
+    var searchStatus = document.getElementById('search-status');
+    var searchResults = document.getElementById('search-results');
+
+    if (!searchBox || !modal) return;
+
+    // Hide search on file:// protocol (doesn't work due to CORS restrictions)
+    if (window.location.protocol === 'file:') return;
+
+    // Show search box (progressive enhancement)
+    searchBox.style.display = 'flex';
+
+    // Gist preview support - detect if we're on gisthost.github.io or gistpreview.github.io
+    var hostname = window.location.hostname;
+    var isGistPreview = hostname === 'gisthost.github.io' || hostname === 'gistpreview.github.io';
+    var gistId = null;
+    var gistOwner = null;
+    var gistInfoLoaded = false;
+
+    if (isGistPreview) {
+        // Extract gist ID from URL query string like ?78a436a8a9e7a2e603738b8193b95410/index.html
+        var queryMatch = window.location.search.match(/^\?([a-f0-9]+)/i);
+        if (queryMatch) {
+            gistId = queryMatch[1];
+        }
+    }
+
+    async function loadGistInfo() {
+        if (!isGistPreview || !gistId || gistInfoLoaded) return;
+        try {
+            var response = await fetch('https://api.github.com/gists/' + gistId);
+            if (response.ok) {
+                var info = await response.json();
+                gistOwner = info.owner.login;
+                gistInfoLoaded = true;
+            }
+        } catch (e) {
+            console.error('Failed to load gist info:', e);
+        }
+    }
+
+    function getPageFetchUrl(pageFile) {
+        if (isGistPreview && gistOwner && gistId) {
+            // Use raw gist URL for fetching content
+            return 'https://gist.githubusercontent.com/' + gistOwner + '/' + gistId + '/raw/' + pageFile;
+        }
+        return pageFile;
+    }
+
+    function getPageLinkUrl(pageFile) {
+        if (isGistPreview && gistId) {
+            // Use gistpreview URL format for navigation links
+            return '?' + gistId + '/' + pageFile;
+        }
+        return pageFile;
+    }
+
+    function escapeHtml(text) {
+        var div = document.createElement('div');
+        div.textContent = text;
+        return div.innerHTML;
+    }
+
+    function escapeRegex(string) {
+        return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    }
+
+    function openModal(query) {
+        modalInput.value = query || '';
+        searchResults.innerHTML = '';
+        searchStatus.textContent = '';
+        modal.showModal();
+        modalInput.focus();
+        if (query) {
+            performSearch(query);
+        }
+    }
+
+    function closeModal() {
+        modal.close();
+        // Update URL to remove search fragment, preserving path and query string
+        if (window.location.hash.startsWith('#search=')) {
+            history.replaceState(null, '', window.location.pathname + window.location.search);
+        }
+    }
+
+    function updateUrlHash(query) {
+        if (query) {
+            // Preserve path and query string when adding hash
+            history.replaceState(null, '', window.location.pathname + window.location.search + '#search=' + encodeURIComponent(query));
+        }
+    }
+
+    function highlightTextNodes(element, searchTerm) {
+        var walker = document.createTreeWalker(element, NodeFilter.SHOW_TEXT, null, false);
+        var nodesToReplace = [];
+
+        while (walker.nextNode()) {
+            var node = walker.currentNode;
+            if (node.nodeValue.toLowerCase().indexOf(searchTerm.toLowerCase()) !== -1) {
+                nodesToReplace.push(node);
+            }
+        }
+
+        nodesToReplace.forEach(function(node) {
+            var text = node.nodeValue;
+            var regex = new RegExp('(' + escapeRegex(searchTerm) + ')', 'gi');
+            var parts = text.split(regex);
+            if (parts.length > 1) {
+                var span = document.createElement('span');
+                parts.forEach(function(part) {
+                    if (part.toLowerCase() === searchTerm.toLowerCase()) {
+                        var mark = document.createElement('mark');
+                        mark.textContent = part;
+                        span.appendChild(mark);
+                    } else {
+                        span.appendChild(document.createTextNode(part));
+                    }
+                });
+                node.parentNode.replaceChild(span, node);
+            }
+        });
+    }
+
+    function fixInternalLinks(element, pageFile) {
+        // Update all internal anchor links to include the page file
+        var links = element.querySelectorAll('a[href^="#"]');
+        links.forEach(function(link) {
+            var href = link.getAttribute('href');
+            link.setAttribute('href', pageFile + href);
+        });
+    }
+
+    function processPage(pageFile, html, query) {
+        var parser = new DOMParser();
+        var doc = parser.parseFromString(html, 'text/html');
+        var resultsFromPage = 0;
+
+        // Find all message blocks
+        var messages = doc.querySelectorAll('.message');
+        messages.forEach(function(msg) {
+            var text = msg.textContent || '';
+            if (text.toLowerCase().indexOf(query.toLowerCase()) !== -1) {
+                resultsFromPage++;
+
+                // Get the message ID for linking
+                var msgId = msg.id || '';
+                var pageLinkUrl = getPageLinkUrl(pageFile);
+                var link = pageLinkUrl + (msgId ? '#' + msgId : '');
+
+                // Clone the message HTML and highlight matches
+                var clone = msg.cloneNode(true);
+                // Fix internal links to include the page file
+                fixInternalLinks(clone, pageLinkUrl);
+                highlightTextNodes(clone, query);
+
+                var resultDiv = document.createElement('div');
+                resultDiv.className = 'search-result';
+                resultDiv.innerHTML = '<a href="' + link + '">' +
+                    '<div class="search-result-page">' + escapeHtml(pageFile) + '</div>' +
+                    '<div class="search-result-content">' + clone.innerHTML + '</div>' +
+                    '</a>';
+                searchResults.appendChild(resultDiv);
+            }
+        });
+
+        return resultsFromPage;
+    }
+
+    async function performSearch(query) {
+        if (!query.trim()) {
+            searchStatus.textContent = 'Enter a search term';
+            return;
+        }
+
+        updateUrlHash(query);
+        searchResults.innerHTML = '';
+        searchStatus.textContent = 'Searching...';
+
+        // Load gist info if on gistpreview (needed for constructing URLs)
+        if (isGistPreview && !gistInfoLoaded) {
+            searchStatus.textContent = 'Loading gist info...';
+            await loadGistInfo();
+            if (!gistOwner) {
+                searchStatus.textContent = 'Failed to load gist info. Search unavailable.';
+                return;
+            }
+        }
+
+        var resultsFound = 0;
+        var pagesSearched = 0;
+
+        // Build list of pages to fetch
+        var pagesToFetch = [];
+        for (var i = 1; i <= totalPages; i++) {
+            pagesToFetch.push('page-' + String(i).padStart(3, '0') + '.html');
+        }
+
+        searchStatus.textContent = 'Searching...';
+
+        // Process pages in batches of 3, but show results immediately as each completes
+        var batchSize = 3;
+        for (var i = 0; i < pagesToFetch.length; i += batchSize) {
+            var batch = pagesToFetch.slice(i, i + batchSize);
+
+            // Create promises that process results immediately when each fetch completes
+            var promises = batch.map(function(pageFile) {
+                return fetch(getPageFetchUrl(pageFile))
+                    .then(function(response) {
+                        if (!response.ok) throw new Error('Failed to fetch');
+                        return response.text();
+                    })
+                    .then(function(html) {
+                        // Process and display results immediately
+                        var count = processPage(pageFile, html, query);
+                        resultsFound += count;
+                        pagesSearched++;
+                        searchStatus.textContent = 'Found ' + resultsFound + ' result(s) in ' + pagesSearched + '/' + totalPages + ' pages...';
+                    })
+                    .catch(function() {
+                        pagesSearched++;
+                        searchStatus.textContent = 'Found ' + resultsFound + ' result(s) in ' + pagesSearched + '/' + totalPages + ' pages...';
+                    });
+            });
+
+            // Wait for this batch to complete before starting the next
+            await Promise.all(promises);
+        }
+
+        searchStatus.textContent = 'Found ' + resultsFound + ' result(s) in ' + totalPages + ' pages';
+    }
+
+    // Event listeners
+    searchBtn.addEventListener('click', function() {
+        openModal(searchInput.value);
+    });
+
+    searchInput.addEventListener('keydown', function(e) {
+        if (e.key === 'Enter') {
+            openModal(searchInput.value);
+        }
+    });
+
+    modalSearchBtn.addEventListener('click', function() {
+        performSearch(modalInput.value);
+    });
+
+    modalInput.addEventListener('keydown', function(e) {
+        if (e.key === 'Enter') {
+            performSearch(modalInput.value);
+        }
+    });
+
+    modalCloseBtn.addEventListener('click', closeModal);
+
+    modal.addEventListener('click', function(e) {
+        if (e.target === modal) {
+            closeModal();
+        }
+    });
+
+    // Check for #search= in URL on page load
+    if (window.location.hash.startsWith('#search=')) {
+        var query = decodeURIComponent(window.location.hash.substring(8));
+        if (query) {
+            searchInput.value = query;
+            openModal(query);
+        }
+    }
+})();
+        </script>
+    </div>
+    <script>
+document.querySelectorAll('time[data-timestamp]').forEach(function(el) {
+    const timestamp = el.getAttribute('data-timestamp');
+    const date = new Date(timestamp);
+    const now = new Date();
+    const isToday = date.toDateString() === now.toDateString();
+    const timeStr = date.toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' });
+    if (isToday) { el.textContent = timeStr; }
+    else { el.textContent = date.toLocaleDateString(undefined, { month: 'short', day: 'numeric' }) + ' ' + timeStr; }
+});
+document.querySelectorAll('pre.json').forEach(function(el) {
+    let text = el.textContent;
+    text = text.replace(/"([^"]+)":/g, '<span style="color: #ce93d8">"$1"</span>:');
+    text = text.replace(/: "([^"]*)"/g, ': <span style="color: #81d4fa">"$1"</span>');
+    text = text.replace(/: (\d+)/g, ': <span style="color: #ffcc80">$1</span>');
+    text = text.replace(/: (true|false|null)/g, ': <span style="color: #f48fb1">$1</span>');
+    el.innerHTML = text;
+});
+document.querySelectorAll('.truncatable').forEach(function(wrapper) {
+    const content = wrapper.querySelector('.truncatable-content');
+    const btn = wrapper.querySelector('.expand-btn');
+    if (content.scrollHeight > 250) {
+        wrapper.classList.add('truncated');
+        btn.addEventListener('click', function() {
+            if (wrapper.classList.contains('truncated')) { wrapper.classList.remove('truncated'); wrapper.classList.add('expanded'); btn.textContent = 'Show less'; }
+            else { wrapper.classList.remove('expanded'); wrapper.classList.add('truncated'); btn.textContent = 'Show more'; }
+        });
+    }
+});
+</script>
+</body>
+</html>
